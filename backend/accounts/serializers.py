@@ -1,6 +1,6 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, Dosen, Mahasiswa
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -17,14 +17,14 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'tempat_lahir', 'birth_date', 'gender', 'profile_picture']
+        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'tempat_lahir', 'birth_date', 'gender', 'profile_picture']
         read_only_fields = ['id', 'username']
 
 class DosenProfileSerializer(serializers.ModelSerializer):
     user = UserProfileSerializer()
 
     class Meta:
-        model = Dosen
+        model = UserDosen
         fields = ['user', 'nidn', 'nip', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
 
 class NoteSerializer(serializers.ModelSerializer):
@@ -46,10 +46,10 @@ class ProgramStudiSerializer(serializers.ModelSerializer):
 
 class DosenSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Dosen
+        model = UserDosen
         fields = '__all__'
 
 class MahasiswaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Mahasiswa
+        model = UserMahasiswa
         fields = '__all__'

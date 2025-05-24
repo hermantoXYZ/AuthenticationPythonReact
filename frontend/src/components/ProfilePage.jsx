@@ -19,8 +19,7 @@ function ProfilePage() {
     id: '',
     username: '',
     email: '',
-    first_name: '',
-    last_name: '',
+    full_name: '',
     phone_number: '',
     position: '',
     nip: '',
@@ -72,7 +71,7 @@ function ProfilePage() {
     setIsSaving(true);
     try {
       // Validate required fields
-      if (!profileData.first_name || !profileData.last_name) {
+      if (!profileData.full_name) {
         toast.alert('Nama depan dan nama belakang wajib diisi!');
         return;
       }
@@ -84,8 +83,7 @@ function ProfilePage() {
 
       // Create payload with only changed fields or all fields based on backend requirement
       const payload = {
-        first_name: profileData.first_name || '',
-        last_name: profileData.last_name || '',
+        full_name: profileData.full_name || '',
         email: profileData.email || '',
         phone_number: profileData.phone_number || '',
         birth_date: profileData.birth_date || '',
@@ -193,8 +191,7 @@ function ProfilePage() {
 
   const getFieldDisplayName = (field) => {
     const fieldNames = {
-      first_name: 'Nama Depan',
-      last_name: 'Nama Belakang',
+      full_name: 'Nama Lengkap',
       email: 'Email',
       phone_number: 'Nomor Telepon',
       birth_date: 'Tanggal Lahir',
@@ -312,7 +309,7 @@ function ProfilePage() {
             />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{profileData.first_name || 'Nama Depan'} {profileData.last_name || 'Nama Belakang'}</h1>
+            <h1 className="text-2xl font-bold">{profileData.full_name || 'Nama Lengkap'}</h1>
             <p className="text-blue-100 text-lg">{profileData.position || 'Posisi'}</p>
             <p className="text-blue-200 text-sm">NIP: {profileData.nip || '-'}</p>
           </div>
@@ -382,36 +379,18 @@ function ProfilePage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 flex items-center">
                     <User className="h-4 w-4 mr-2" />
-                    Nama Depan *
+                    Nama Lengkap *
                   </label>
                   {isEditing ? (
                     <input
                       type="text"
-                      value={profileData.first_name || ''}
-                      onChange={(e) => handleInputChange('first_name', e.target.value)}
+                      value={profileData.full_name || ''}
+                      onChange={(e) => handleInputChange('full_name', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.first_name || '-'}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center">
-                    <User className="h-4 w-4 mr-2" />
-                    Nama Belakang *
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={profileData.last_name || ''}
-                      onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  ) : (
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.last_name || '-'}</p>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.full_name || '-'}</p>
                   )}
                 </div>
 
