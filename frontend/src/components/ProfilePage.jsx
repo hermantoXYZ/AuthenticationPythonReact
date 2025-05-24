@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { User, Shield, Bell, Mail, Phone, Calendar, Camera } from 'lucide-react';
 import api from "../api";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 function ProfilePage() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -45,7 +47,7 @@ function ProfilePage() {
         setOriginalProfileData(response.data); // Store original data
       } catch (error) {
         console.error('Error fetching profile:', error);
-        alert('Gagal memuat data profil. Silakan refresh halaman.');
+        toast.alert('Gagal memuat data profil. Silakan refresh halaman.');
       }
     };
 
@@ -71,12 +73,12 @@ function ProfilePage() {
     try {
       // Validate required fields
       if (!profileData.first_name || !profileData.last_name) {
-        alert('Nama depan dan nama belakang wajib diisi!');
+        toast.alert('Nama depan dan nama belakang wajib diisi!');
         return;
       }
 
       if (profileData.email && !isValidEmail(profileData.email)) {
-        alert('Format email tidak valid!');
+        toast.alert('Format email tidak valid!');
         return;
       }
 
@@ -110,7 +112,7 @@ function ProfilePage() {
       setOriginalProfileData(response.data);
       
       setIsEditing(false);
-      alert('Profil berhasil diperbarui!');
+      toast.success('Profil berhasil diperbarui!');
     } catch (error) {
       console.error('Error updating profile:', error);
       
@@ -147,7 +149,7 @@ function ProfilePage() {
         errorMessage += 'Terjadi kesalahan tidak terduga.';
       }
       
-      alert(errorMessage);
+      toast.warning(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -161,12 +163,12 @@ function ProfilePage() {
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Password baru dan konfirmasi tidak sama!');
+      toast.warning('Password baru dan konfirmasi tidak sama!');
       return;
     }
     
     if (passwordData.newPassword.length < 6) {
-      alert('Password baru harus minimal 6 karakter!');
+      toast.warning('Password baru harus minimal 6 karakter!');
       return;
     }
     
@@ -176,11 +178,11 @@ function ProfilePage() {
         new_password: passwordData.newPassword
       });
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-      alert('Password berhasil diubah!');
+      toast.success('Password berhasil diubah!');
     } catch (error) {
       console.error('Error changing password:', error);
       const errorMessage = error.response?.data?.error || 'Gagal mengubah password. Silakan coba lagi.';
-      alert(errorMessage);
+      toast.warning(errorMessage);
     }
   };
 
@@ -221,14 +223,14 @@ function ProfilePage() {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
+      toast.alert('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
       return;
     }
 
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      alert('Ukuran file terlalu besar. Maksimal 5MB.');
+      toast.alert('Ukuran file terlalu besar. Maksimal 5MB.');
       return;
     }
 
@@ -252,15 +254,14 @@ function ProfilePage() {
         profile_picture: response.data.profile_picture
       }));
       
-      alert('Foto profil berhasil diperbarui!');
+      toast.alert('Foto profil berhasil diperbarui!');
     } catch (error) {
       console.error('Error updating profile picture:', error);
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      const errorMessage = error.response?.data?.error || 'Gagal memperbarui foto profil. Silakan coba lagi.';
-      alert(errorMessage);
+      toast.info(errorMessage);
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -631,6 +632,7 @@ function ProfilePage() {
           )}
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }
