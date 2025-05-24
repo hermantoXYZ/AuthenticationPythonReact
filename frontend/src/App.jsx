@@ -5,6 +5,9 @@ import Register from "./pages/Register"
 import Home from "./pages/Home"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
+import DashboardHome from "./pages/Dashboard/DashboardHome"
+import FakultasPage from "./pages/Dashboard/FakultasPage"
+
 
 function Logout() {
   localStorage.clear()
@@ -28,6 +31,25 @@ function App() {
             </ProtectedRoute>
           }
         />
+           {/* Dashboard Routes */}
+           <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/fakultas"
+          element={
+            <ProtectedRoute>
+              <FakultasPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Tambahkan route untuk halaman dashboard lainnya */}
+        
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />

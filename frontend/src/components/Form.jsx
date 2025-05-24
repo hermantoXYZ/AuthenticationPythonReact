@@ -38,7 +38,8 @@ function Form({ route, method }) {
     };
 
     return (
-        <Card className="w-[350px] mx-auto mt-8">
+        <div className="space-y-4">
+        <Card className="w-[320px] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold text-center">{name}</CardTitle>
             </CardHeader>
@@ -65,8 +66,18 @@ function Form({ route, method }) {
                         {name}
                     </Button>
                 </form>
+                {method === "login" && (
+                    <p className="text-sm text-gray-600 text-center mt-4">Belum punya akun? <a href="/register" className="text-blue-600 hover:underline">Daftar disini</a></p>
+                )}
+                {method === "register" && (
+                     <p className="text-sm text-gray-600 text-center mt-4">
+                     Sudah punya akun? <a href="/login" className="text-blue-600 hover:underline">Login disini</a>
+                 </p>
+                )}
+
             </CardContent>
         </Card>
+        </div>
     );
 }
 
