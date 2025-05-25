@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, viewsets
-from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer
+from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen
-
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -80,6 +79,21 @@ class DosenProfileView(generics.RetrieveAPIView):
         except UserDosen.DoesNotExist:
             from rest_framework.exceptions import NotFound
             raise NotFound("Profil dosen tidak ditemukan")
+            
+class StaffProfileView(generics.RetrieveAPIView):
+    serializer_class = StaffProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return UserStaffProdi.objects.select_related('user', 'program_studi').get(user=self.request.user)
+
+class StaffFakultasProfileView(generics.RetrieveAPIView):
+    serializer_class = StaffFakultasProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return UserStaffFakultas.objects.select_related('user', 'fakultas').get(user=self.request.user)
+
 
 class MahasiswaProfileView(generics.RetrieveAPIView):
     serializer_class = MahasiswaProfileSerializer

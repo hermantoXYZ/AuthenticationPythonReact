@@ -58,7 +58,11 @@ function ProfilePage() {
     jabatan: '',
     periode_mulai: '',
     periode_selesai: '',
+    tgl_mulai: '',
+    tgl_selesai: '',
   });
+
+  console.log(profileData); 
 
   const [originalProfileData, setOriginalProfileData] = useState({}); 
 
@@ -441,7 +445,7 @@ function ProfilePage() {
               <Users className="h-4 w-4 mr-2" />
               Dosen Wali
             </label>
-            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.dosen_wali || '-'}</p>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg"> {profileData.dosen_wali?.user?.full_name || '-'}</p>
           </div>
 
           <div className="space-y-2">
@@ -455,7 +459,7 @@ function ProfilePage() {
       );
     }
 
-    if (['dosen', 'dekan_fakultas', 'ketua_prodi', 'pejabat_jurusan'].includes(userType)) {
+    if (['dekan_fakultas', 'ketua_prodi', 'pejabat_jurusan', 'dosen'].includes(userType)) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -513,7 +517,7 @@ function ProfilePage() {
                   <Calendar className="h-4 w-4 mr-2" />
                   Periode Mulai
                 </label>
-                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.periode_mulai || '-'}</p>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.ketua_prodi.periode_mulai || '-'}</p>
               </div>
 
               <div className="space-y-2">
@@ -521,10 +525,72 @@ function ProfilePage() {
                   <Calendar className="h-4 w-4 mr-2" />
                   Periode Selesai
                 </label>
-                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.periode_selesai || '-'}</p>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.ketua_prodi.periode_selesai || '-'}</p>
               </div>
             </>
           )}
+
+
+          {userType === 'pejabat_jurusan' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Periode Mulai
+                </label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg"> {profileData.pejabat_jurusan?.tgl_mulai || '-'}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Periode Selesai
+                </label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">  {profileData.pejabat_jurusan?.tgl_selesai || '-'}</p>
+              </div>
+
+                <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center">
+              <UserCheck className="h-4 w-4 mr-2" />
+                Jabatan
+              </label>
+              <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                {profileData.pejabat_jurusan?.jabatan || '-'}
+              </p>
+            </div>
+
+              <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center">
+          <UserCheck className="h-4 w-4 mr-2" />
+            Label
+          </label>
+          <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+            {profileData.pejabat_jurusan?.label || '-'}
+          </p>
+        </div>
+
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700 flex items-center">
+      <Building className="h-4 w-4 mr-2" />
+        Jurusan
+      </label>
+      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+        {profileData.pejabat_jurusan?.jurusan?.nama_jurusan || '-'}
+      </p>
+    </div>
+
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700 flex items-center">
+      <UserCheck className="h-4 w-4 mr-2" />
+        PLT
+      </label>
+      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+        {profileData.pejabat_jurusan?.plt ? 'Ya' : 'Tidak'}
+      </p>
+    </div>
+            </>
+          )}
+
         </div>
       );
     }
@@ -611,7 +677,8 @@ function ProfilePage() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{profileData.full_name || 'Nama Lengkap'}</h1>
             <p className="text-blue-100 text-lg">{getUserTypeLabel(profileData.user_type)}</p>
-            <p className="text-blue-200 text-sm">NIP: {profileData.nip || profileData.nim || '-'}</p>
+            <p className="text-blue-100 text-sm">{profileData.email || 'null' }</p>
+            <p className="text-blue-200 text-sm">{profileData.nip || profileData.nim || '-'}</p>
           </div>
         </div>
       </div>

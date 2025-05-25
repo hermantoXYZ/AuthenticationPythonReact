@@ -321,8 +321,8 @@ class UserStaffProdi(models.Model):
     )
     program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='staff_prodi')
     jabatan = models.CharField(max_length=50, choices=[
-            ('admin_prodi', 'Admin Prodi'),
-            ('sekretaris_prodi', 'Sekretaris Prodi'),
+            ('Admin Prodi', 'Admin Prodi'),
+            ('Sekretaris Prodi', 'Sekretaris Prodi'),
         ], blank=True)
     nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")  # Added NIP field
     
