@@ -27,6 +27,21 @@ class DosenProfileSerializer(serializers.ModelSerializer):
         model = UserDosen
         fields = ['user', 'nidn', 'nip', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
 
+
+class MahasiswaProfileSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer()
+    class Meta:
+        model = UserMahasiswa
+        fields = ['user', 'nim', 'program_studi', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk']
+
+class DosenProfileSerializer(serializers.ModelSerializer):
+    user = UserProfileSerializer()
+    
+    class Meta:
+        model = UserDosen
+        fields = ['user', 'nip', 'jabatan_akademik', 'program_studi', 'pendidikan_terakhir', 'bidang_keahlian','status_kepegawaian']
+
+
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note

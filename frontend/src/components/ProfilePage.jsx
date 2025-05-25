@@ -1,5 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, Shield, Bell, Mail, Phone, Calendar, Camera } from 'lucide-react';
+import { 
+  User, 
+  Shield, 
+  Bell, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  Camera,
+  BookOpen,
+  Building,
+  GraduationCap,
+  UserCheck,
+  Award,
+  Users
+} from 'lucide-react';
 import api from "../api";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,7 +25,7 @@ function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // Added loading state for save
+  const [isSaving, setIsSaving] = useState(false); 
   
   const fileInputRef = useRef(null);
   
@@ -22,14 +36,31 @@ function ProfilePage() {
     full_name: '',
     phone_number: '',
     user_type: '',
-    nip: '',
     birth_date: '',
     gender: '',
     tempat_lahir: '',
     profile_picture: null,
+    nip: '',
+    nim: '',
+    program_studi: null,
+    fakultas: null,
+    jurusan: null,
+    jabatan_akademik: '',
+    pendidikan_terakhir: '',
+    bidang_keahlian: '',
+    status_kepegawaian: '',
+    angkatan: '',
+    semester: '',
+    status: '',
+    ipk: '',
+    dosen_wali: '',
+    tanggal_masuk: '',
+    jabatan: '',
+    periode_mulai: '',
+    periode_selesai: '',
   });
 
-  const [originalProfileData, setOriginalProfileData] = useState({}); // Store original data
+  const [originalProfileData, setOriginalProfileData] = useState({}); 
 
   const [passwordData, setPasswordData] = useState({
     oldPassword: '',
@@ -37,16 +68,70 @@ function ProfilePage() {
     confirmPassword: ''
   });
 
+  // Model lama belum diatur type of usernya
+  // useEffect(() => {
+  //   const fetchProfileData = async () => {
+  //     try {
+  //       const response = await api.get('/api/profile/');
+  //       console.log('Profile data fetched:', response.data);
+  //       setProfileData(response.data);
+  //       setOriginalProfileData(response.data); // Store original data
+  //     } catch (error) {
+  //       console.error('Error fetching profile:', error);
+  //       toast.alert('Gagal memuat data profil. Silakan refresh halaman.');
+  //     }
+  //   };
+
+  //   fetchProfileData();
+  // }, []);
+
+  // Fetch comprehensive profile data based on user type
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         const response = await api.get('/api/profile/');
         console.log('Profile data fetched:', response.data);
-        setProfileData(response.data);
-        setOriginalProfileData(response.data); // Store original data
+        
+        // Fetch additional data based on user type
+        let additionalData = {};
+        const userType = response.data.user_type;
+        
+        if (userType === 'dosen' || userType === 'dekan_fakultas' || userType === 'ketua_prodi' || userType === 'pejabat_jurusan') {
+          try {
+            const dosenResponse = await api.get('/api/dosen-profile/');
+            additionalData = { ...dosenResponse.data };
+          } catch (error) {
+            console.log('No dosen profile found');
+          }
+        } else if (userType === 'mahasiswa') {
+          try {
+            const mahasiswaResponse = await api.get('/api/mahasiswa-profile/');
+            additionalData = { ...mahasiswaResponse.data };
+          } catch (error) {
+            console.log('No mahasiswa profile found');
+          }
+        } else if (userType === 'staff_prodi') {
+          try {
+            const staffProdiResponse = await api.get('/api/staff-prodi-profile/');
+            additionalData = { ...staffProdiResponse.data };
+          } catch (error) {
+            console.log('No staff prodi profile found');
+          }
+        } else if (userType === 'staff_fakultas') {
+          try {
+            const staffFakultasResponse = await api.get('/api/staff-fakultas-profile/');
+            additionalData = { ...staffFakultasResponse.data };
+          } catch (error) {
+            console.log('No staff fakultas profile found');
+          }
+        }
+        
+        const combinedData = { ...response.data, ...additionalData };
+        setProfileData(combinedData);
+        setOriginalProfileData(combinedData);
       } catch (error) {
         console.error('Error fetching profile:', error);
-        toast.alert('Gagal memuat data profil. Silakan refresh halaman.');
+        toast.error('Gagal memuat data profil. Silakan refresh halaman.');
       }
     };
 
@@ -201,8 +286,23 @@ function ProfilePage() {
     return fieldNames[field] || field;
   };
 
+  const getUserTypeLabel = (userType) => {
+    const labels = {
+      'super_admin': 'Super Admin',
+      'dekan_fakultas': 'Dekan Fakultas',
+      'pejabat_jurusan': 'Pejabat Jurusan',
+      'ketua_prodi': 'Ketua Program Studi',
+      'staff_fakultas': 'Staff Fakultas',
+      'staff_prodi': 'Staff Program Studi',
+      'dosen': 'Dosen',
+      'mahasiswa': 'Mahasiswa'
+    };
+    return labels[userType] || userType;
+  };
+
   const tabs = [
     { id: 'personal', label: 'Informasi Personal', icon: User },
+    { id: 'academic', label: 'Informasi Akademik', icon: BookOpen },
     { id: 'security', label: 'Keamanan', icon: Shield },
     { id: 'notifications', label: 'Notifikasi', icon: Bell }
   ];
@@ -246,19 +346,32 @@ function ProfilePage() {
       console.log('Profile picture upload response:', response.data);
       
       // Update profile data with new picture URL
-      setProfileData(prev => ({
+       // Update profile data with new picture URL
+       setProfileData(prev => ({
         ...prev,
         profile_picture: response.data.profile_picture
       }));
       
-      toast.alert('Foto profil berhasil diperbarui!');
+      toast.success('Foto profil berhasil diperbarui!');
     } catch (error) {
       console.error('Error updating profile picture:', error);
+      
+      let errorMessage = 'Gagal memperbarui foto profil. ';
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
+        if (error.response.status === 400) {
+          errorMessage += 'File tidak valid atau terlalu besar.';
+        } else if (error.response.status === 413) {
+          errorMessage += 'File terlalu besar.';
+        } else {
+          errorMessage += 'Silakan coba lagi.';
+        }
+      } else {
+        errorMessage += 'Periksa koneksi internet Anda.';
       }
-      toast.info(errorMessage);
+      
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -266,6 +379,193 @@ function ProfilePage() {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  // Render academic information based on user type
+  const renderAcademicInfo = () => {
+    const userType = profileData.user_type;
+
+    if (userType === 'mahasiswa') {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              NIM
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.nim || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Building className="h-4 w-4 mr-2" />
+              Program Studi
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.program_studi?.nama || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Angkatan
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.angkatan || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Semester
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.semester || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Status
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.status || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Award className="h-4 w-4 mr-2" />
+              IPK
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.ipk || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              Dosen Wali
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.dosen_wali || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              Tanggal Masuk
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.tanggal_masuk || '-'}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (['dosen', 'dekan_fakultas', 'ketua_prodi', 'pejabat_jurusan'].includes(userType)) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              NIP
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.nip || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Building className="h-4 w-4 mr-2" />
+              Program Studi
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.program_studi?.nama || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Award className="h-4 w-4 mr-2" />
+              Jabatan Akademik
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.jabatan_akademik || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Pendidikan Terakhir
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.pendidikan_terakhir || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Bidang Keahlian
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.bidang_keahlian || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Status Kepegawaian
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.status_kepegawaian || '-'}</p>
+          </div>
+
+          {userType === 'ketua_prodi' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Periode Mulai
+                </label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.periode_mulai || '-'}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Periode Selesai
+                </label>
+                <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.periode_selesai || '-'}</p>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (['staff_prodi', 'staff_fakultas'].includes(userType)) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <BookOpen className="h-4 w-4 mr-2" />
+              NIP
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.nip || '-'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Building className="h-4 w-4 mr-2" />
+              {userType === 'staff_prodi' ? 'Program Studi' : 'Fakultas'}
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+              {userType === 'staff_prodi' ? (profileData.program_studi?.nama || '-') : (profileData.fakultas?.nama || '-')}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Jabatan
+            </label>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profileData.jabatan || '-'}</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Tidak ada informasi akademik untuk tipe user ini.</p>
+      </div>
+    );
   };
 
   return (
@@ -310,11 +610,8 @@ function ProfilePage() {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{profileData.full_name || 'Nama Lengkap'}</h1>
-            <p className="text-blue-100 text-lg">{(profileData.user_type || 'Type User').replace(/_/g, ' ')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(' ')}</p>
-            <p className="text-blue-200 text-sm">NIP: {profileData.nip || '-'}</p>
+            <p className="text-blue-100 text-lg">{getUserTypeLabel(profileData.user_type)}</p>
+            <p className="text-blue-200 text-sm">NIP: {profileData.nip || profileData.nim || '-'}</p>
           </div>
         </div>
       </div>
@@ -489,6 +786,15 @@ function ProfilePage() {
               </div>
             </div>
           )}
+
+           {/* Tab Content - Academic Information */}
+           {activeTab === 'academic' && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Informasi Akademik</h2>
+              {renderAcademicInfo()}
+            </div>
+          )}
+
 
           {/* Tab Content - Security */}
           {activeTab === 'security' && (

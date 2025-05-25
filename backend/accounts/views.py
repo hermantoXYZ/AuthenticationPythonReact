@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, viewsets
-from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer
+from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -70,6 +70,27 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
 
+class DosenProfileView(generics.RetrieveAPIView):
+    serializer_class = DosenProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        try:
+            return UserDosen.objects.get(user=self.request.user)
+        except UserDosen.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Profil dosen tidak ditemukan")
+
+class MahasiswaProfileView(generics.RetrieveAPIView):
+    serializer_class = MahasiswaProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        try:
+            return UserMahasiswa.objects.get(user=self.request.user)
+        except UserMahasiswa.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Profil mahasiswa tidak ditemukan")
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

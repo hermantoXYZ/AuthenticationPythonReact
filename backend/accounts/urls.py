@@ -6,4 +6,6 @@ urlpatterns = [
     path("notes/delete/<int:pk>/", views.NoteDelete.as_view(), name="delete-note"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("change-password/", views.ChangePasswordView.as_view(), name="change-password"),
+    path('mahasiswa-profile/', views.MahasiswaProfileView.as_view(), name='mahasiswa-profile'),
+    path('dosen-profile/', views.DosenProfileView.as_view(), name='dosen-profile'),
 ]
