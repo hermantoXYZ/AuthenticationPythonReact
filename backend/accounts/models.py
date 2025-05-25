@@ -4,21 +4,21 @@ from django.core.exceptions import ValidationError
 
 # Choices untuk jenis user
 class UserType(models.TextChoices):
-    MAHASISWA = 'mahasiswa', 'USER MAHASISWA'
-    DOSEN = 'dosen', 'USER DOSEN'
-    PRODI = 'prodi', 'USER KETUA PRODI'
-    DEKAN_FAKULTAS = 'fakultas', 'USER DEKAN'
     SUPER_ADMIN = 'super_admin', 'SUPER ADMIN'
-    PEJABAT_JURUSAN = 'jurusan', 'USER PEJABAT JURUSAN'
+    DEKAN_FAKULTAS = 'dekan_fakultas', 'USER DEKAN'  # Fixed: changed from 'fakultas'
+    PEJABAT_JURUSAN = 'pejabat_jurusan', 'USER PEJABAT JURUSAN'  # Fixed: changed from 'jurusan'
+    KETUA_PRODI = 'ketua_prodi', 'USER KETUA PRODI'  # Fixed: changed from 'prodi'
     STAFF_FAKULTAS = 'staff_fakultas', 'USER STAFF FAKULTAS'
     STAFF_PRODI = 'staff_prodi', 'USER STAFF PRODI'
+    DOSEN = 'dosen', 'USER DOSEN'
+    MAHASISWA = 'mahasiswa', 'USER MAHASISWA'
 
 # Custom User Model
 class CustomUser(AbstractUser):
     # Override first_name dan last_name menjadi tidak digunakan
     first_name = None
     last_name = None
-    
+
     # Gunakan full_name sebagai pengganti
     full_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="Nama Lengkap")
     
@@ -37,10 +37,9 @@ class CustomUser(AbstractUser):
     gender = models.CharField(max_length=15, choices=[
         ('Laki-laki', 'Laki-laki'),
         ('Perempuan', 'Perempuan'),
-    ])
+    ], blank=True, null=True)  # Fixed: removed placeholder choice
     is_active = models.BooleanField(default=True)
     
-    # Method untuk mendapatkan nama lengkap (kompatibilitas dengan get_full_name())
     def get_full_name(self):
         return self.full_name or self.username
     
@@ -56,7 +55,44 @@ class CustomUser(AbstractUser):
             except:
                 nim = "N/A"
             return f"{name} (Mahasiswa) - {nim}"
-        
+
+        elif self.user_type == UserType.DEKAN_FAKULTAS:
+            try: 
+                nip = self.dosen_profile.nip
+            except:
+                nip = "N/A"
+            return f"{name} (Dekan) - {nip}"
+
+        elif self.user_type == UserType.KETUA_PRODI:
+            try:
+                nip = self.dosen_profile.nip
+            except:
+                nip = "N/A"
+            return f"{name} (Ketua Prodi) - {nip}"
+
+        elif self.user_type == UserType.STAFF_FAKULTAS:
+            try:
+                nip = getattr(self.staff_fakultas_profile, 'nip', 'N/A')  # Fixed: added handling for staff fakultas
+            except:
+                nip = "N/A"
+            return f"{name} (Staff Fakultas) - {nip}"
+
+        elif self.user_type == UserType.STAFF_PRODI:
+            try:
+                nip = getattr(self.staff_prodi_profile, 'nip', 'N/A')  # Fixed: added handling for staff prodi
+            except:
+                nip = "N/A"
+            return f"{name} (Staff Prodi) - {nip}"
+
+        elif self.user_type == UserType.PEJABAT_JURUSAN:
+            try:
+                nip = self.dosen_profile.nip
+                jabatan = self.pejabat_jurusan.jabatan
+            except:
+                nip = "N/A"
+                jabatan = "N/A"
+            return f"{name} (Pejabat Jurusan) - {jabatan} - {nip}"
+           
         elif self.user_type == UserType.DOSEN:
             try:
                 nip = self.dosen_profile.nip
@@ -70,7 +106,6 @@ class CustomUser(AbstractUser):
         verbose_name_plural = "All User"
         verbose_name = "All User"
         ordering = ['-created_at']
-
 
 # Model untuk Jurusan
 class Jurusan(models.Model):
@@ -89,7 +124,7 @@ class Jurusan(models.Model):
             verbose_name_plural = 'Nama Jurusan'
 
 
-class JurusanPejabat(models.Model):
+class PejabatJurusan(models.Model):
     jabatan = models.CharField(max_length=15, choices=[
         ('Ketua', 'Ketua'),
         ('Sekretaris', 'Sekretaris'),
@@ -128,13 +163,11 @@ class Fakultas(models.Model):
     )
     
     class Meta:
-        verbose_name_plural = "Nama Fakultas"
+        verbose_name = "Nama Fakultas"  # Fixed: was inconsistent
         verbose_name_plural = "Nama Fakultas"
     
     def __str__(self):
         return self.nama
-
-    
 
 # Model untuk Program Studi
 class ProgramStudi(models.Model):
@@ -149,7 +182,7 @@ class ProgramStudi(models.Model):
         null=True, 
         blank=True,
         related_name='prodi_dipimpin',
-        limit_choices_to={'user_type': UserType.PRODI}
+        limit_choices_to={'user_type': UserType.KETUA_PRODI}
     )
     jenjang = models.CharField(
         max_length=20,
@@ -180,13 +213,14 @@ class ProgramStudi(models.Model):
     def __str__(self):
         return f"{self.nama} - {self.fakultas.nama}"
 
+
 # Model untuk Dosen
 class UserDosen(models.Model):
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE, 
         related_name='dosen_profile',
-        limit_choices_to={'user_type__in': [UserType.DOSEN, UserType.DEKAN_FAKULTAS, UserType.PRODI]}
+        limit_choices_to={'user_type__in': [UserType.DOSEN, UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN]}
     )
     nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")
     program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='dosen')
@@ -222,10 +256,11 @@ class UserDosen(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.nip}"
-    
+
     def clean(self):
-        if self.user.user_type != UserType.DOSEN:
-            raise ValidationError('User harus bertipe Dosen')
+        allowed_types = [UserType.DOSEN, UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN]
+        if self.user.user_type not in allowed_types:
+            raise ValidationError('User harus bertipe Dosen, Dekan Fakultas, Ketua Prodi, atau Pejabat Jurusan')
 
     class Meta:
         verbose_name_plural = "User Dosen"
@@ -276,33 +311,59 @@ class UserMahasiswa(models.Model):
         verbose_name = "User Mahasiswa"  
         
 
-# Model untuk User Prodi (Staff Program Studi)
-class UserProdi(models.Model):
+# Fixed: Model untuk User Staff Prodi 
+class UserStaffProdi(models.Model):
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE, 
-        related_name='staff_prodi_profile',
-        limit_choices_to={'user_type': UserType.PRODI}
+        related_name='staff_prodi_profile',  # Fixed: consistent naming
+        limit_choices_to={'user_type': UserType.STAFF_PRODI}  # Fixed: correct user type
     )
-    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='staff')
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='staff_prodi')
     jabatan = models.CharField(max_length=50, choices=[
-            ('ketua_prodi', 'Ketua Program Studi'),
             ('admin_prodi', 'Admin Prodi'),
+            ('sekretaris_prodi', 'Sekretaris Prodi'),
         ], blank=True)
+    nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")  # Added NIP field
     
     def __str__(self):
         return f"{self.user.get_full_name()} - Staff {self.program_studi.nama}"
     
     def clean(self):
-        if self.user.user_type != UserType.PRODI:
-            raise ValidationError('User harus bertipe Program Studi')
+        if self.user.user_type != UserType.STAFF_PRODI:
+            raise ValidationError('User harus bertipe Staff Program Studi')
 
     class Meta:
-        verbose_name_plural = "User Program Studi"
-        verbose_name = "User Program Studi"
+        verbose_name_plural = "User Staff Program Studi"
+        verbose_name = "User Staff Program Studi"
 
-# Model untuk User Fakultas (Staff Fakultas)
-class UserFakultas(models.Model):
+# Fixed: Separate model for Ketua Prodi
+class UserKetuaProdi(models.Model):
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='ketua_prodi_profile',
+        limit_choices_to={'user_type': UserType.KETUA_PRODI}
+    )
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='ketua_prodi_rel')
+    periode_mulai = models.DateField()
+    periode_selesai = models.DateField()
+    label = models.CharField(max_length=255, blank=True, null=True)
+    plt = models.BooleanField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} - Ketua Prodi {self.program_studi.nama}"
+    
+    def clean(self):
+        if self.user.user_type != UserType.KETUA_PRODI:
+            raise ValidationError('User harus bertipe Ketua Program Studi')
+
+    class Meta:
+        verbose_name_plural = "User Ketua Program Studi"
+        verbose_name = "User Ketua Program Studi"
+
+# Fixed: Model untuk User Staff Fakultas
+class UserStaffFakultas(models.Model):
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE, 
@@ -311,17 +372,18 @@ class UserFakultas(models.Model):
     )
     fakultas = models.ForeignKey(Fakultas, on_delete=models.CASCADE, related_name='staff')
     jabatan = models.CharField(max_length=50, blank=True)
+    nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")  # Added NIP field
     
     def __str__(self):
         return f"{self.user.get_full_name()} - Staff {self.fakultas.nama}"
     
     def clean(self):
-        if self.user.user_type != UserType.FAKULTAS:
-            raise ValidationError('User harus bertipe Fakultas')
+        if self.user.user_type != UserType.STAFF_FAKULTAS:
+            raise ValidationError('User harus bertipe Staff Fakultas')
 
     class Meta:
-        verbose_name_plural = "User Fakultas"
-        verbose_name = "User Fakultas"
+        verbose_name_plural = "User Staff Fakultas"
+        verbose_name = "User Staff Fakultas"
 
 # Model Note yang sudah ada (diperbarui)
 class Note(models.Model):

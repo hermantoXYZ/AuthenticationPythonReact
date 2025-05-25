@@ -5,7 +5,8 @@ from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.models import Group
 from .models import (
     CustomUser, Fakultas, ProgramStudi, 
-    UserDosen, UserMahasiswa, UserProdi, UserFakultas, Note, Jurusan, JurusanPejabat
+    UserDosen, UserMahasiswa, UserKetuaProdi, UserStaffProdi, 
+    UserStaffFakultas, Note, Jurusan, PejabatJurusan
 )
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -52,14 +53,11 @@ class FakultasAdmin(ModelAdmin):
     list_display = ('nama', 'kode', 'dekan')
     search_fields = ('nama', 'kode')
 
-
-
 @admin.register(ProgramStudi)
 class ProgramStudiAdmin(ModelAdmin):
     list_display = ('nama', 'kode', 'fakultas', 'kaprodi', 'jenjang', 'akreditasi')
     list_filter = ('jenjang', 'akreditasi', 'fakultas')
     search_fields = ('nama', 'kode')
-
 
 @admin.register(UserDosen)
 class UserDosenAdmin(ModelAdmin):
@@ -81,45 +79,62 @@ class MahasiswaAdmin(ModelAdmin):
         return obj.user.full_name or obj.user.username
     get_full_name.short_description = 'Nama Lengkap'
 
-@admin.register(UserProdi)
-class UserProdiAdmin(ModelAdmin):
-    list_display = ('get_full_name', 'program_studi', 'jabatan')
-    list_filter = ('program_studi',)
-    search_fields = ('user__username', 'user__full_name', 'jabatan')
+# New: Admin for UserKetuaProdi (replacing UserProdi)
+@admin.register(UserKetuaProdi)
+class UserKetuaProdiAdmin(ModelAdmin):
+    list_display = ('get_full_name', 'program_studi', 'periode_mulai', 'periode_selesai')
+    list_filter = ('program_studi', 'periode_mulai')
+    search_fields = ('user__username', 'user__full_name', 'program_studi__nama')
+    date_hierarchy = 'periode_mulai'
     
     def get_full_name(self, obj):
         return obj.user.full_name or obj.user.username
     get_full_name.short_description = 'Nama Lengkap'
 
-@admin.register(UserFakultas)
-class UserFakultasAdmin(ModelAdmin):
-    list_display = ('get_full_name', 'fakultas', 'jabatan')
-    list_filter = ('fakultas',)
-    search_fields = ('user__username', 'user__full_name', 'jabatan')
+# New: Admin for UserStaffProdi
+@admin.register(UserStaffProdi)
+class UserStaffProdiAdmin(ModelAdmin):
+    list_display = ('get_full_name', 'nip', 'program_studi', 'jabatan')
+    list_filter = ('program_studi', 'jabatan')
+    search_fields = ('user__username', 'user__full_name', 'nip', 'jabatan')
     
     def get_full_name(self, obj):
         return obj.user.full_name or obj.user.username
     get_full_name.short_description = 'Nama Lengkap'
 
+# Updated: Admin for UserStaffFakultas (renamed from UserFakultas)
+@admin.register(UserStaffFakultas)
+class UserStaffFakultasAdmin(ModelAdmin):
+    list_display = ('get_full_name', 'nip', 'fakultas', 'jabatan')
+    list_filter = ('fakultas', 'jabatan')
+    search_fields = ('user__username', 'user__full_name', 'nip', 'jabatan')
+    
+    def get_full_name(self, obj):
+        return obj.user.full_name or obj.user.username
+    get_full_name.short_description = 'Nama Lengkap'
 
 @admin.register(Note)
 class NoteAdmin(ModelAdmin):
-    list_display = ('title', 'author', 'created_at')
-    list_filter = ('created_at', 'author')
+    list_display = ('title', 'author', 'visibility', 'created_at')
+    list_filter = ('visibility', 'created_at', 'author')
     search_fields = ('title', 'content')
 
 @admin.register(Jurusan)
 class JurusanAdmin(ModelAdmin):
     list_display = ['nama_jurusan', 'kode_surat', 'status']
     list_filter = ['status']
+    search_fields = ['nama_jurusan', 'kode_surat']
 
-
-@admin.register(JurusanPejabat)
-class JurusanPejabatAdmin(ModelAdmin):
-    list_display = ('jurusan', 'jabatan', 'pejabat', 'tgl_mulai', 'tgl_selesai', 'plt')
-    list_filter = ('jabatan', 'plt', 'jurusan')
-
-
+@admin.register(PejabatJurusan)
+class PejabatJurusanAdmin(ModelAdmin):
+    list_display = ('jurusan', 'jabatan', 'get_pejabat_name', 'tgl_mulai', 'tgl_selesai', 'plt')
+    list_filter = ('jabatan', 'plt', 'jurusan', 'tgl_mulai')
+    search_fields = ('jurusan__nama_jurusan', 'pejabat__full_name', 'label')
+    date_hierarchy = 'tgl_mulai'
+    
+    def get_pejabat_name(self, obj):
+        return obj.pejabat.full_name if obj.pejabat else 'Belum Ditentukan'
+    get_pejabat_name.short_description = 'Nama Pejabat'
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):

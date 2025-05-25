@@ -21,7 +21,7 @@ function ProfilePage() {
     email: '',
     full_name: '',
     phone_number: '',
-    position: '',
+    user_type: '',
     nip: '',
     birth_date: '',
     gender: '',
@@ -310,7 +310,10 @@ function ProfilePage() {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{profileData.full_name || 'Nama Lengkap'}</h1>
-            <p className="text-blue-100 text-lg">{profileData.position || 'Posisi'}</p>
+            <p className="text-blue-100 text-lg">{(profileData.user_type || 'Type User').replace(/_/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ')}</p>
             <p className="text-blue-200 text-sm">NIP: {profileData.nip || '-'}</p>
           </div>
         </div>

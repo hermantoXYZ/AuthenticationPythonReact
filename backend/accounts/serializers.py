@@ -17,8 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'tempat_lahir', 'birth_date', 'gender', 'profile_picture']
-        read_only_fields = ['id', 'username']
+        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'tempat_lahir', 'birth_date', 'gender', 'profile_picture', 'user_type']
+        read_only_fields = ['id', 'username', 'user_type']
 
 class DosenProfileSerializer(serializers.ModelSerializer):
     user = UserProfileSerializer()
