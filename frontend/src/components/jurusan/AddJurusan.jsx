@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { School } from 'lucide-react';
 import api from '../../api';
-import { toast } from 'sonner';
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 const AddJurusan = () => {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ const AddJurusan = () => {
     try {
       await api.post('/api/jurusan/', formData);
       toast.success('Jurusan berhasil ditambahkan');
-      navigate('/dashboard/jurusan');
     } catch (error) {
       console.error('Error adding jurusan:', error);
       toast.error(error.response?.data?.error || 'Gagal menambahkan jurusan');
@@ -123,6 +123,7 @@ const AddJurusan = () => {
           </div>
         </form>
       </div>
+      <Toaster />
     </div>
   );
 };

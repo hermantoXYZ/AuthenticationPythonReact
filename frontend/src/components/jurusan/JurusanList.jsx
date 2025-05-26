@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, SortAsc, SortDesc, School, BookOpen, Hash, X } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'sonner';
+import { Toaster } from "@/components/ui/sonner";
 import { useNavigate } from 'react-router-dom';
 
 const JurusanList = () => {
@@ -343,6 +344,7 @@ const JurusanList = () => {
           </div>
         </div>
       )}
+      <Toaster />
     </div>
   );
 };

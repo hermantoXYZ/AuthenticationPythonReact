@@ -33,8 +33,7 @@ import ProdiList from "./prodi/ProdiList";
 import UserList from "./users/UserList";
 import JurusanList from "./jurusan/JurusanList";
 import AddJurusan from "./jurusan/AddJurusan";
-import ManageJurusan from "./jurusan/ManageJurusan";
-import EditJurusan from "./jurusan/EditJurusan";
+
 
 // Komponen Dashboard yang diperbarui
 function Dashboard({ children, activeMenu = "/dashboard" }) {
@@ -103,7 +102,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             submenu: [
               { icon: List, label: "List Jurusan", path: "/dashboard/jurusan" },
               { icon: Plus, label: "Tambah Jurusan", path: "/dashboard/jurusan/add" },
-              { icon: Settings, label: "Kelola Jurusan", path: "/dashboard/jurusan/manage" }
             ]
           },
           {
@@ -600,8 +598,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/users/manage": UserList,
     "/dashboard/jurusan": JurusanList,
     "/dashboard/jurusan/add": AddJurusan,
-    "/dashboard/jurusan/manage": ManageJurusan,
-    "/dashboard/jurusan/edit": EditJurusan,
   };
 
   const renderContent = () => {
