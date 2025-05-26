@@ -30,6 +30,11 @@ import api from "../api";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ProdiList from "./prodi/ProdiList";
+import UserList from "./users/UserList";
+import JurusanList from "./jurusan/JurusanList";
+import AddJurusan from "./jurusan/AddJurusan";
+import ManageJurusan from "./jurusan/ManageJurusan";
+import EditJurusan from "./jurusan/EditJurusan";
 
 // Komponen Dashboard yang diperbarui
 function Dashboard({ children, activeMenu = "/dashboard" }) {
@@ -375,10 +380,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             key: "akademik",
             type: "dropdown",
             submenu: [
-              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/akademik/jadwal" },
-              { icon: Award, label: "Nilai & IPK", path: "/dashboard/akademik/nilai" },
-              { icon: FileText, label: "Transkrip", path: "/dashboard/akademik/transkrip" },
-              { icon: ClipboardList, label: "KRS", path: "/dashboard/akademik/krs" }
+              { icon: Calendar, label: "Jadwal Seminar/Ujian", path: "/dashboard/akademik/jadwal" },
+              { icon: Award, label: "Nilai Seminar/Ujian", path: "/dashboard/akademik/nilai" },
             ]
           },
           {
@@ -589,10 +592,26 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
   const componentMap = {
     "/dashboard/profile": ProfilePage,
     "/dashboard/prodi": ProdiList,
+    "/dashboard/users": UserList,
+    "/dashboard/users/dosen": UserList,
+    "/dashboard/users/staff-fakultas": UserList,
+    "/dashboard/users/staff-prodi": UserList,
+    "/dashboard/users/mahasiswa": UserList,
+    "/dashboard/users/manage": UserList,
+    "/dashboard/jurusan": JurusanList,
+    "/dashboard/jurusan/add": AddJurusan,
+    "/dashboard/jurusan/manage": ManageJurusan,
+    "/dashboard/jurusan/edit": EditJurusan,
   };
 
   const renderContent = () => {
-      const Component = componentMap[currentPage];
+    // Handle dynamic routes
+    const editJurusanMatch = currentPage.match(/^\/dashboard\/jurusan\/edit\/(\d+)$/);
+    if (editJurusanMatch) {
+      return <EditJurusan />;
+    }
+
+    const Component = componentMap[currentPage];
     if (Component) {
       return <Component />;
     }

@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, viewsets
-from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer
+from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -147,3 +147,42 @@ class ChangePasswordView(APIView):
             return Response({'message': 'Password berhasil diubah'}, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({'error': e.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        return CustomUser.objects.all().order_by('-created_at')
+
+class JurusanViewSet(viewsets.ModelViewSet):
+    queryset = Jurusan.objects.all()
+    serializer_class = JurusanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response({'message': 'Jurusan berhasil dihapus'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

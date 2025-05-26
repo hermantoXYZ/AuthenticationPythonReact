@@ -4,7 +4,7 @@ from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMah
 class JurusanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Jurusan
-        fields = '__all__'
+        fields = ['id', 'nama_jurusan', 'status', 'kode_surat']
 
 
 class PejabatJurusanSerializer(serializers.ModelSerializer):
