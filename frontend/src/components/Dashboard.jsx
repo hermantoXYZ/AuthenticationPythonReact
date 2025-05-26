@@ -23,7 +23,8 @@ import {
   Calendar,
   Award,
   School,
-  Bell
+  Bell,
+  ChevronRight
 } from "lucide-react";
 import ProfilePage from './ProfilePage';
 import api from "../api";
@@ -38,6 +39,14 @@ import DaftarPengajuan from "./skripsi/DaftarPengajuan";
 import ReviewPengajuan from "./skripsi/ReviewPengajuan";
 import StatusPengajuan from "./skripsi/StatusPengajuan";
 import BimbinganSkripsi from "./skripsi/BimbinganSkripsi";
+import SkripsiRoadmap from "./skripsi/SkripsiRoadmap";
+import NilaiSeminar from "./skripsi/NilaiSeminar";
+import TracerForm from './tracer/TracerForm';
+import TracerHistory from './tracer/TracerHistory';
+import TracerStats from './tracer/TracerStats';
+import Pengumuman from './informasi/Pengumuman';
+import KalenderAkademik from './informasi/KalenderAkademik';
+import PanduanAkademik from './informasi/PanduanAkademik';
 
 
 
@@ -365,9 +374,22 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             key: "skripsi",
             type: "dropdown",
             submenu: [
+              { icon: FileText, label: "Roadmap Skripsi", path: "/dashboard/skripsi/roadmap" },
               { icon: Plus, label: "Pengajuan Judul", path: "/dashboard/skripsi/pengajuan" },
               { icon: List, label: "Status Pengajuan", path: "/dashboard/skripsi/status" },
-              { icon: FileCheck, label: "Bimbingan", path: "/dashboard/skripsi/bimbingan" }
+              { icon: FileCheck, label: "Bimbingan", path: "/dashboard/skripsi/bimbingan" },
+              { icon: Award, label: "Nilai Seminar/Ujian", path: "/dashboard/skripsi/nilai" }
+            ]
+          },
+          {
+            icon: ChevronRight,
+            label: "Tracer Study",
+            key: "tracer",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Isi Tracer Study", path: "/dashboard/tracer/form" },
+              { icon: List, label: "Riwayat Pengisian", path: "/dashboard/tracer/history" },
+              { icon: Award, label: "Statistik Alumni", path: "/dashboard/tracer/stats" }
             ]
           },
           {
@@ -575,12 +597,22 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/jurusan": JurusanList,
     "/dashboard/jurusan/add": AddJurusan,
     // Skripsi Routes for Mahasiswa
+    "/dashboard/skripsi/roadmap": SkripsiRoadmap,
     "/dashboard/skripsi/pengajuan": PengajuanJudul,
     "/dashboard/skripsi/status": StatusPengajuan,
     "/dashboard/skripsi/bimbingan": BimbinganSkripsi,
+    "/dashboard/skripsi/nilai": NilaiSeminar,
     // Skripsi Routes for Staff/Dosen
     "/dashboard/skripsi/list": DaftarPengajuan,
     "/dashboard/skripsi/review": ReviewPengajuan,
+    // Tracer Study Routes
+    "/dashboard/tracer/form": TracerForm,
+    "/dashboard/tracer/history": TracerHistory,
+    "/dashboard/tracer/stats": TracerStats,
+    // Informasi Routes
+    "/dashboard/informasi/pengumuman": Pengumuman,
+    "/dashboard/informasi/kalender": KalenderAkademik,
+    "/dashboard/informasi/panduan": PanduanAkademik,
     // Additional routes based on user type
     ...(user?.user_type === 'staff_prodi' || user?.user_type === 'staff_fakultas' ? {
       "/dashboard/skripsi/verify": ReviewPengajuan,
