@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from rest_framework import generics, viewsets
-from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer
+from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, SkripsiJudulSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from rest_framework.exceptions import PermissionDenied
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -186,3 +188,120 @@ class JurusanViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class SkripsiJudulViewSet(viewsets.ModelViewSet):
+    serializer_class = SkripsiJudulSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        print(f"User type: {user.user_type}")  # Debug print
+        
+        if user.user_type == 'mahasiswa':
+            queryset = SkripsiJudul.objects.filter(mahasiswa__user=user)
+            print(f"Mahasiswa queryset count: {queryset.count()}")  # Debug print
+            return queryset
+        elif user.user_type == 'staff_prodi':
+            return SkripsiJudul.objects.filter(
+                mahasiswa__program_studi=user.staff_prodi_profile.program_studi
+            )
+        elif user.user_type == 'staff_fakultas':
+            return SkripsiJudul.objects.filter(
+                mahasiswa__program_studi__fakultas=user.staff_fakultas_profile.fakultas
+            )
+        elif user.user_type == 'dosen':
+            return SkripsiJudul.objects.filter(
+                Q(pembimbing_1__user=user) | 
+                Q(pembimbing_2__user=user)
+            )
+        return SkripsiJudul.objects.all()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        print(f"Creating submission for user: {user.username}, type: {user.user_type}")  # Debug print
+        
+        if user.user_type != 'mahasiswa':
+            raise PermissionDenied("Hanya mahasiswa yang dapat mengajukan judul skripsi")
+        
+        try:
+            mahasiswa = UserMahasiswa.objects.get(user=user)
+            print(f"Found mahasiswa profile: {mahasiswa.nim}")  # Debug print
+            
+            # Check if student already has a pending submission
+            existing_submission = SkripsiJudul.objects.filter(
+                mahasiswa=mahasiswa,
+                status__in=['pending', 'revision']
+            ).exists()
+            
+            if existing_submission:
+                raise ValidationError("Anda masih memiliki pengajuan judul yang sedang diproses")
+            
+            serializer.save(mahasiswa=mahasiswa, status='pending')
+            print("Submission created successfully")  # Debug print
+            
+        except UserMahasiswa.DoesNotExist:
+            print(f"No mahasiswa profile found for user: {user.username}")  # Debug print
+            raise ValidationError("Profil mahasiswa tidak ditemukan")
+        except Exception as e:
+            print(f"Error creating submission: {str(e)}")  # Debug print
+            raise ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        print("Request data:", request.data)  # Debug print
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"Error in create method: {str(e)}")  # Debug print
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user = request.user
+        partial = kwargs.pop('partial', False)
+
+        # Validasi berdasarkan user type
+        if user.user_type == 'mahasiswa':
+            # Mahasiswa hanya bisa update jika status masih pending atau perlu revisi
+            if instance.status not in ['pending', 'revision']:
+                raise PermissionDenied("Tidak dapat mengubah pengajuan yang sudah diproses")
+            
+        elif user.user_type == 'staff_prodi':
+            # Staff prodi hanya bisa update status dan catatan prodi
+            allowed_fields = ['status', 'catatan_prodi']
+            request.data.update({
+                k: v for k, v in request.data.items() 
+                if k in allowed_fields
+            })
+            
+        elif user.user_type == 'staff_fakultas':
+            # Staff fakultas bisa update status, catatan fakultas, dan menentukan pembimbing
+            allowed_fields = ['status', 'catatan_fakultas', 'pembimbing_1', 'pembimbing_2', 'judul_diterima']
+            request.data.update({
+                k: v for k, v in request.data.items() 
+                if k in allowed_fields
+            })
+            
+        elif user.user_type == 'dosen':
+            # Dosen (pembimbing) hanya bisa memberikan catatan
+            if user.dosen_profile not in [instance.pembimbing_1, instance.pembimbing_2]:
+                raise PermissionDenied("Anda bukan pembimbing untuk pengajuan ini")
+            request.data.update({'catatan_pembimbing': request.data.get('catatan_pembimbing')})
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user = request.user
+
+        # Hanya mahasiswa yang bisa menghapus, dan hanya jika masih pending
+        if user.user_type != 'mahasiswa' or instance.status != 'pending':
+            raise PermissionDenied("Tidak dapat menghapus pengajuan yang sudah diproses")
+
+        return super().destroy(request, *args, **kwargs)

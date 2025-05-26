@@ -385,7 +385,77 @@ class UserStaffFakultas(models.Model):
         verbose_name_plural = "User Staff Fakultas"
         verbose_name = "User Staff Fakultas"
 
-# Model Note yang sudah ada (diperbarui)
+# Model untuk Pengajuan Judul Skripsi
+class SkripsiJudul(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu Review'),
+        ('reviewed_prodi', 'Sudah Direview Prodi'),
+        ('reviewed_fakultas', 'Sudah Direview Fakultas'),
+        ('accepted', 'Diterima'),
+        ('rejected', 'Ditolak'),
+        ('revision', 'Perlu Revisi')
+    ]
+
+    mahasiswa = models.ForeignKey(
+        UserMahasiswa,
+        on_delete=models.CASCADE,
+        related_name='pengajuan_judul'
+    )
+    
+    # Judul 1
+    judul_1 = models.CharField(max_length=255)
+    deskripsi_1 = models.TextField()
+    
+    # Judul 2
+    judul_2 = models.CharField(max_length=255)
+    deskripsi_2 = models.TextField()
+    
+    # Judul 3
+    judul_3 = models.CharField(max_length=255)
+    deskripsi_3 = models.TextField()
+    
+    # Judul yang dipilih (setelah disetujui)
+    judul_diterima = models.CharField(max_length=255, null=True, blank=True)
+    
+    # Status dan tanggal
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    tanggal_pengajuan = models.DateTimeField(auto_now_add=True)
+    tanggal_update = models.DateTimeField(auto_now=True)
+    
+    # Pembimbing
+    pembimbing_1 = models.ForeignKey(
+        UserDosen,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='bimbingan_1'
+    )
+    pembimbing_2 = models.ForeignKey(
+        UserDosen,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='bimbingan_2'
+    )
+    
+    # Catatan review
+    catatan_prodi = models.TextField(null=True, blank=True)
+    catatan_fakultas = models.TextField(null=True, blank=True)
+    catatan_pembimbing = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Pengajuan Judul Skripsi'
+        verbose_name_plural = 'Pengajuan Judul Skripsi'
+        ordering = ['-tanggal_pengajuan']
+    
+    def __str__(self):
+        return f"Pengajuan Judul Skripsi - {self.mahasiswa.user.full_name}"
+
+# Model Note yang sudah ada
 class Note(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()

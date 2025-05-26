@@ -33,6 +33,12 @@ import ProdiList from "./prodi/ProdiList";
 import UserList from "./users/UserList";
 import JurusanList from "./jurusan/JurusanList";
 import AddJurusan from "./jurusan/AddJurusan";
+import PengajuanJudul from "./skripsi/PengajuanJudul";
+import DaftarPengajuan from "./skripsi/DaftarPengajuan";
+import ReviewPengajuan from "./skripsi/ReviewPengajuan";
+import StatusPengajuan from "./skripsi/StatusPengajuan";
+import BimbinganSkripsi from "./skripsi/BimbinganSkripsi";
+
 
 
 // Komponen Dashboard yang diperbarui
@@ -82,7 +88,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     switch (userType) {
       case 'super_admin':
         return [
-          ...baseMenu.slice(0, 1), // Dashboard only at start
+          ...baseMenu.slice(0, 1),
           {
             icon: Building2, 
             label: "Fakultas",
@@ -129,6 +135,16 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             ]
           },
           {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Semua Pengajuan", path: "/dashboard/skripsi/pengajuan" },
+              { icon: Settings, label: "Pengaturan Skripsi", path: "/dashboard/skripsi/settings" }
+            ]
+          },
+          {
             icon: Settings,
             label: "Sistem",
             key: "sistem",
@@ -139,7 +155,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               { icon: Award, label: "Backup & Restore", path: "/dashboard/sistem/backup" }
             ]
           },
-          baseMenu[1] // Profile
+          baseMenu[1]
         ];
 
       case 'dekan_fakultas':
@@ -156,6 +172,17 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             ]
           },
           {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: FileCheck, label: "Persetujuan Judul", path: "/dashboard/skripsi/approve" },
+              { icon: ClipboardList, label: "Laporan Skripsi", path: "/dashboard/skripsi/reports" }
+            ]
+          },
+          {
             icon: Users,
             label: "Dosen Fakultas",
             key: "dosen",
@@ -166,33 +193,23 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               { icon: Edit, label: "Kelola Dosen", path: "/dashboard/dosen/manage" }
             ]
           },
-          {
-            icon: BookOpen,
-            label: "Mahasiswa Fakultas",
-            key: "mahasiswa",
-            type: "dropdown",
-            submenu: [
-              { icon: List, label: "List Mahasiswa", path: "/dashboard/mahasiswa" },
-              { icon: FileCheck, label: "Verifikasi Pengajuan", path: "/dashboard/mahasiswa/verifikasi" },
-              { icon: ClipboardList, label: "Laporan Akademik", path: "/dashboard/mahasiswa/laporan" }
-            ]
-          },
-          {
-            icon: FileText,
-            label: "Laporan",
-            key: "laporan",
-            type: "dropdown",
-            submenu: [
-              { icon: FileText, label: "Laporan Fakultas", path: "/dashboard/laporan/fakultas" },
-              { icon: Award, label: "Statistik Akademik", path: "/dashboard/laporan/statistik" }
-            ]
-          },
           baseMenu[1]
         ];
 
       case 'ketua_prodi':
         return [
           ...baseMenu.slice(0, 1),
+          {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: UserCheck, label: "Penentuan Pembimbing", path: "/dashboard/skripsi/pembimbing" },
+              { icon: ClipboardList, label: "Laporan Skripsi", path: "/dashboard/skripsi/reports" }
+            ]
+          },
           {
             icon: Users,
             label: "Dosen Prodi",
@@ -213,16 +230,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               { icon: UserPlus, label: "Tambah Mahasiswa", path: "/dashboard/mahasiswa/add" },
               { icon: FileCheck, label: "Verifikasi Pengajuan", path: "/dashboard/mahasiswa/verifikasi" },
               { icon: Award, label: "Monitoring IPK", path: "/dashboard/mahasiswa/ipk" }
-            ]
-          },
-          {
-            icon: GraduationCap,
-            label: "Kurikulum",
-            key: "kurikulum",
-            type: "dropdown",
-            submenu: [
-              { icon: BookOpen, label: "Mata Kuliah", path: "/dashboard/kurikulum/matkul" },
-              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/kurikulum/jadwal" }
             ]
           },
           baseMenu[1]
@@ -268,14 +275,14 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
         return [
           ...baseMenu.slice(0, 1),
           {
-            icon: BookOpen,
-            label: "Perkuliahan",
-            key: "perkuliahan",
+            icon: FileText,
+            label: "Bimbingan Skripsi",
+            key: "skripsi",
             type: "dropdown",
             submenu: [
-              { icon: Calendar, label: "Jadwal Mengajar", path: "/dashboard/perkuliahan/jadwal" },
-              { icon: BookOpen, label: "Mata Kuliah", path: "/dashboard/perkuliahan/matkul" },
-              { icon: FileText, label: "Materi Kuliah", path: "/dashboard/perkuliahan/materi" }
+              { icon: List, label: "Mahasiswa Bimbingan", path: "/dashboard/skripsi/bimbingan" },
+              { icon: FileCheck, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: ClipboardList, label: "Riwayat Bimbingan", path: "/dashboard/skripsi/history" }
             ]
           },
           {
@@ -287,16 +294,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               { icon: List, label: "Mahasiswa Bimbingan", path: "/dashboard/mahasiswa/bimbingan" },
               { icon: Award, label: "Nilai Mahasiswa", path: "/dashboard/mahasiswa/nilai" },
               { icon: FileCheck, label: "Presensi", path: "/dashboard/mahasiswa/presensi" }
-            ]
-          },
-          {
-            icon: FileText,
-            label: "Penelitian",
-            key: "penelitian",
-            type: "dropdown",
-            submenu: [
-              { icon: FileText, label: "Proposal Penelitian", path: "/dashboard/penelitian/proposal" },
-              { icon: Award, label: "Publikasi", path: "/dashboard/penelitian/publikasi" }
             ]
           },
           baseMenu[1]
@@ -334,6 +331,17 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
         return [
           ...baseMenu.slice(0, 1),
           {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Daftar Pengajuan", path: "/dashboard/skripsi/list" },
+              { icon: FileCheck, label: "Verifikasi Berkas", path: "/dashboard/skripsi/verify" },
+              { icon: ClipboardList, label: "Laporan", path: "/dashboard/skripsi/reports" }
+            ]
+          },
+          {
             icon: BookOpen,
             label: "Mahasiswa Prodi",
             key: "mahasiswa",
@@ -344,27 +352,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               { icon: Award, label: "Transkrip Nilai", path: "/dashboard/mahasiswa/transkrip" }
             ]
           },
-          {
-            icon: Calendar,
-            label: "Akademik",
-            key: "akademik",
-            type: "dropdown",
-            submenu: [
-              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/akademik/jadwal" },
-              { icon: BookOpen, label: "Kurikulum", path: "/dashboard/akademik/kurikulum" },
-              { icon: FileCheck, label: "Evaluasi", path: "/dashboard/akademik/evaluasi" }
-            ]
-          },
-          {
-            icon: FileText,
-            label: "Administrasi",
-            key: "administrasi",
-            type: "dropdown",
-            submenu: [
-              { icon: FileText, label: "Surat Keterangan", path: "/dashboard/administrasi/surat" },
-              { icon: Award, label: "Sertifikat", path: "/dashboard/administrasi/sertifikat" }
-            ]
-          },
           baseMenu[1]
         ];
 
@@ -373,25 +360,14 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
         return [
           ...baseMenu.slice(0, 1),
           {
-            icon: BookOpen,
-            label: "Akademik",
-            key: "akademik",
-            type: "dropdown",
-            submenu: [
-              { icon: Calendar, label: "Jadwal Seminar/Ujian", path: "/dashboard/akademik/jadwal" },
-              { icon: Award, label: "Nilai Seminar/Ujian", path: "/dashboard/akademik/nilai" },
-            ]
-          },
-          {
             icon: FileText,
-            label: "Pengajuan",
-            key: "pengajuan",
+            label: "Skripsi",
+            key: "skripsi",
             type: "dropdown",
             submenu: [
-              { icon: FileText, label: "Surat Keterangan", path: "/dashboard/pengajuan/surat" },
-              { icon: Award, label: "Beasiswa", path: "/dashboard/pengajuan/beasiswa" },
-              { icon: Calendar, label: "Cuti Akademik", path: "/dashboard/pengajuan/cuti" },
-              { icon: FileCheck, label: "Status Pengajuan", path: "/dashboard/pengajuan/status" }
+              { icon: Plus, label: "Pengajuan Judul", path: "/dashboard/skripsi/pengajuan" },
+              { icon: List, label: "Status Pengajuan", path: "/dashboard/skripsi/status" },
+              { icon: FileCheck, label: "Bimbingan", path: "/dashboard/skripsi/bimbingan" }
             ]
           },
           {
@@ -598,6 +574,22 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/users/manage": UserList,
     "/dashboard/jurusan": JurusanList,
     "/dashboard/jurusan/add": AddJurusan,
+    // Skripsi Routes for Mahasiswa
+    "/dashboard/skripsi/pengajuan": PengajuanJudul,
+    "/dashboard/skripsi/status": StatusPengajuan,
+    "/dashboard/skripsi/bimbingan": BimbinganSkripsi,
+    // Skripsi Routes for Staff/Dosen
+    "/dashboard/skripsi/list": DaftarPengajuan,
+    "/dashboard/skripsi/review": ReviewPengajuan,
+    // Additional routes based on user type
+    ...(user?.user_type === 'staff_prodi' || user?.user_type === 'staff_fakultas' ? {
+      "/dashboard/skripsi/verify": ReviewPengajuan,
+      "/dashboard/skripsi/reports": DaftarPengajuan,
+    } : {}),
+    ...(user?.user_type === 'dosen' ? {
+      "/dashboard/skripsi/bimbingan": BimbinganSkripsi,
+      "/dashboard/skripsi/history": BimbinganSkripsi,
+    } : {})
   };
 
   const renderContent = () => {

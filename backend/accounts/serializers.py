@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul
 
 class JurusanSerializer(serializers.ModelSerializer):
     class Meta:
@@ -118,3 +118,40 @@ class MahasiswaSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserMahasiswa
         fields = '__all__'
+
+class SkripsiJudulSerializer(serializers.ModelSerializer):
+    mahasiswa_name = serializers.CharField(source='mahasiswa.user.full_name', read_only=True)
+    pembimbing_1_name = serializers.CharField(source='pembimbing_1.user.full_name', read_only=True)
+    pembimbing_2_name = serializers.CharField(source='pembimbing_2.user.full_name', read_only=True)
+    program_studi = serializers.CharField(source='mahasiswa.program_studi.nama', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = SkripsiJudul
+        fields = [
+            'id', 'mahasiswa', 'mahasiswa_name', 'program_studi',
+            'judul_1', 'deskripsi_1',
+            'judul_2', 'deskripsi_2',
+            'judul_3', 'deskripsi_3',
+            'judul_diterima',
+            'status', 'status_display',
+            'tanggal_pengajuan', 'tanggal_update',
+            'pembimbing_1', 'pembimbing_1_name',
+            'pembimbing_2', 'pembimbing_2_name',
+            'catatan_prodi', 'catatan_fakultas', 'catatan_pembimbing'
+        ]
+        read_only_fields = ['mahasiswa', 'status', 'judul_diterima', 'pembimbing_1', 'pembimbing_2', 'tanggal_pengajuan', 'tanggal_update']
+
+    def validate(self, data):
+        # Validate that all required fields are present
+        required_fields = ['judul_1', 'deskripsi_1', 'judul_2', 'deskripsi_2', 'judul_3', 'deskripsi_3']
+        for field in required_fields:
+            if not data.get(field):
+                raise serializers.ValidationError(f"{field.replace('_', ' ').title()} harus diisi")
+        
+        # Validate that titles are unique
+        titles = [data.get('judul_1'), data.get('judul_2'), data.get('judul_3')]
+        if len(set(titles)) != len(titles):
+            raise serializers.ValidationError("Judul skripsi tidak boleh sama")
+        
+        return data
