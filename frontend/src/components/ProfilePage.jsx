@@ -62,7 +62,7 @@ function ProfilePage() {
     tgl_selesai: '',
   });
 
-  console.log(profileData); 
+  // console.log(profileData); 
 
   const [originalProfileData, setOriginalProfileData] = useState({}); 
 
@@ -94,7 +94,7 @@ function ProfilePage() {
     const fetchProfileData = async () => {
       try {
         const response = await api.get('/api/profile/');
-        console.log('Profile data fetched:', response.data);
+        // console.log('Profile data fetched:', response.data);
         
         // Fetch additional data based on user type
         let additionalData = {};

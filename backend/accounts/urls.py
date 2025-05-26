@@ -9,5 +9,9 @@ urlpatterns = [
     path('mahasiswa-profile/', views.MahasiswaProfileView.as_view(), name='mahasiswa-profile'),
     path('dosen-profile/', views.DosenProfileView.as_view(), name='dosen-profile'),
     path('staff-prodi-profile/', views.StaffProfileView.as_view(), name='staff-profile'),
-    path('staff-fakultas-profile/', views.StaffFakultasProfileView.as_view(), name='staff-fakultas-profile')
+    path('staff-fakultas-profile/', views.StaffFakultasProfileView.as_view(), name='staff-fakultas-profile'),
+
+    # Tambahkan URL untuk Program Studi
+    path('prodi/', views.ProgramStudiListView.as_view(), name='prodi-list'),
+    path('prodi/<int:pk>/', views.ProgramStudiDetailView.as_view(), name='prodi-detail'),
 ]

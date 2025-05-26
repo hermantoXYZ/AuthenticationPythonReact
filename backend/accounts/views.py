@@ -45,11 +45,34 @@ class FakultasViewSet(viewsets.ModelViewSet):
     serializer_class = FakultasSerializer
     permission_classes = [IsAuthenticated]
 
-class ProgramStudiViewSet(viewsets.ModelViewSet):
+class ProgramStudiListView(generics.ListCreateAPIView):
+    serializer_class = ProgramStudiSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.user_type == 'pejabat_jurusan':
+            try:
+                pejabat = self.request.user.pejabat_jurusan
+                return ProgramStudi.objects.filter(jurusan=pejabat.jurusan)
+            except PejabatJurusan.DoesNotExist:
+                return ProgramStudi.objects.none()
+        return ProgramStudi.objects.all()
+
+class ProgramStudiDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProgramStudi.objects.all()
     serializer_class = ProgramStudiSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        if self.request.user.user_type == 'pejabat_jurusan':
+            try:
+                pejabat = self.request.user.pejabat_jurusan
+                return ProgramStudi.objects.filter(jurusan=pejabat.jurusan)
+            except PejabatJurusan.DoesNotExist:
+                return ProgramStudi.objects.none()
+        return ProgramStudi.objects.all()
+
+        
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]

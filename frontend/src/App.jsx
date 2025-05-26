@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
 import DashboardHome from "./pages/Dashboard/DashboardHome"
 import FakultasPage from "./pages/Dashboard/FakultasPage"
+import ProdiList from './components/prodi/ProdiList';
 
 
 function Logout() {
