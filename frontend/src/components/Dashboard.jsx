@@ -47,6 +47,7 @@ import TracerStats from './tracer/TracerStats';
 import Pengumuman from './informasi/Pengumuman';
 import KalenderAkademik from './informasi/KalenderAkademik';
 import PanduanAkademik from './informasi/PanduanAkademik';
+import UserDetailEdit from './users/UserDetailEdit';
 
 
 
@@ -134,15 +135,10 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             icon: Users,
             label: "Manajemen User",
             key: "users",
-            type: "dropdown",
-            submenu: [
-              { icon: UserCheck, label: "Dosen", path: "/dashboard/users/dosen" },
-              { icon: Users, label: "Staff Fakultas", path: "/dashboard/users/staff-fakultas" },
-              { icon: Users, label: "Staff Prodi", path: "/dashboard/users/staff-prodi" },
-              { icon: BookOpen, label: "Mahasiswa", path: "/dashboard/users/mahasiswa" },
-              { icon: Settings, label: "Kelola Semua User", path: "/dashboard/users/manage" }
-            ]
+            path: "/dashboard/users",
+            type: "single",
           },
+
           {
             icon: FileText,
             label: "Skripsi",
@@ -589,11 +585,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/profile": ProfilePage,
     "/dashboard/prodi": ProdiList,
     "/dashboard/users": UserList,
-    "/dashboard/users/dosen": UserList,
-    "/dashboard/users/staff-fakultas": UserList,
-    "/dashboard/users/staff-prodi": UserList,
-    "/dashboard/users/mahasiswa": UserList,
-    "/dashboard/users/manage": UserList,
     "/dashboard/jurusan": JurusanList,
     "/dashboard/jurusan/add": AddJurusan,
     // Skripsi Routes for Mahasiswa
@@ -613,15 +604,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/informasi/pengumuman": Pengumuman,
     "/dashboard/informasi/kalender": KalenderAkademik,
     "/dashboard/informasi/panduan": PanduanAkademik,
-    // Additional routes based on user type
-    ...(user?.user_type === 'staff_prodi' || user?.user_type === 'staff_fakultas' ? {
-      "/dashboard/skripsi/verify": ReviewPengajuan,
-      "/dashboard/skripsi/reports": DaftarPengajuan,
-    } : {}),
-    ...(user?.user_type === 'dosen' ? {
-      "/dashboard/skripsi/bimbingan": BimbinganSkripsi,
-      "/dashboard/skripsi/history": BimbinganSkripsi,
-    } : {})
   };
 
   const renderContent = () => {
@@ -631,6 +613,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
       return <EditJurusan />;
     }
 
+    // Handle static routes
     const Component = componentMap[currentPage];
     if (Component) {
       return <Component />;

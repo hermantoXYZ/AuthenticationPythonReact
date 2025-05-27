@@ -33,43 +33,52 @@ class KetuaProdiSerializer(serializers.ModelSerializer):
         model = UserKetuaProdi
         fields = ['program_studi', 'periode_mulai', 'periode_selesai', 'plt']
 
-class UserSerializer(serializers.ModelSerializer):
+class UserBasicSerializer(serializers.ModelSerializer):
+    """Basic user serializer without profiles to avoid circular dependencies"""
     class Meta:
         model = CustomUser
-        fields = ["id", "username", "password", "user_type"]
-        extra_kwargs = {"password": {"write_only": True}}
-
-    def create(self, validated_data):
-        print(validated_data)
-        user = CustomUser.objects.create_user(**validated_data)
-        return user
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'full_name', 'phone_number', 'tempat_lahir', 'birth_date', 'gender', 'profile_picture', 'user_type']
+        fields = [
+            'id', 'email', 'full_name', 'phone_number', 'tempat_lahir', 
+            'birth_date', 'gender', 'profile_picture', 'user_type', 'is_active'
+        ]
         read_only_fields = ['id', 'username', 'user_type']
 
+class DosenBasicSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    program_studi = ProgramStudiSerializer(read_only=True)
+    
+    class Meta:
+        model = UserDosen
+        fields = ['user', 'nip', 'program_studi', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
+
+class MahasiswaProfileSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    program_studi = ProgramStudiSerializer(read_only=True)
+    dosen_wali = DosenBasicSerializer(read_only=True)
+
+    class Meta:
+        model = UserMahasiswa
+        fields = ['user', 'nim', 'program_studi', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali']
+
 class StaffProfileSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer()
+    user = UserBasicSerializer(read_only=True)
     program_studi = ProgramStudiSerializer(read_only=True)
     class Meta:
         model = UserStaffProdi
         fields = ['user', 'nip', 'program_studi', 'jabatan']
 
 class StaffFakultasProfileSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer()
+    user = UserBasicSerializer(read_only=True)
     fakultas = FakultasSerializer(read_only=True)
     class Meta:
         model = UserStaffProdi
         fields = ['user', 'nip', 'jabatan', 'fakultas']
 
 class DosenProfileSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer()
+    user = UserBasicSerializer(read_only=True)
     program_studi = ProgramStudiSerializer(read_only=True)
-    pejabat_jurusan = serializers.SerializerMethodField()
-    ketua_prodi = serializers.SerializerMethodField()
-
+    pejabat_jurusan = PejabatJurusanSerializer(read_only=True)
+    ketua_prodi = KetuaProdiSerializer(read_only=True)
 
     class Meta:
         model = UserDosen
@@ -79,28 +88,32 @@ class DosenProfileSerializer(serializers.ModelSerializer):
             'status_kepegawaian', 'ketua_prodi'
         ]
 
-    def get_ketua_prodi(self, obj):
-        user = obj.user
-        if hasattr(user, 'ketua_prodi_profile'):
-            ketua_prodi = user.ketua_prodi_profile
-            return KetuaProdiSerializer(ketua_prodi).data
-        return None
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ["id", "username", "password", "user_type"]
+        extra_kwargs = {"password": {"write_only": True}}
 
-    def get_pejabat_jurusan(self, obj):
-        user = obj.user
-        if hasattr(user, 'pejabat_jurusan'):
-            return PejabatJurusanSerializer(user.pejabat_jurusan).data
-        return None
+    def create(self, validated_data):
+        user = CustomUser.objects.create_user(**validated_data)
+        return user
 
-
-class MahasiswaProfileSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer()
-    program_studi = ProgramStudiSerializer(read_only=True)
-    dosen_wali = DosenProfileSerializer(read_only=True)
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Full user serializer with all profiles"""
+    mahasiswa_profile = MahasiswaProfileSerializer(read_only=True)
+    dosen_profile = DosenProfileSerializer(read_only=True)
+    staff_prodi_profile = StaffProfileSerializer(read_only=True)
+    ketua_prodi_profile = KetuaProdiSerializer(read_only=True)
 
     class Meta:
-        model = UserMahasiswa
-        fields = ['user', 'nim', 'program_studi', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali']
+        model = CustomUser
+        fields = [
+            'id', 'email', 'full_name', 'phone_number', 'tempat_lahir', 
+            'birth_date', 'gender', 'profile_picture', 'user_type', 'is_active',
+            'mahasiswa_profile', 'dosen_profile', 'staff_prodi_profile', 
+            'ketua_prodi_profile'
+        ]
+        read_only_fields = ['id', 'username', 'user_type']
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:

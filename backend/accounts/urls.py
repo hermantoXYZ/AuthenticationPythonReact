@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import UserListView, JurusanViewSet, SkripsiJudulViewSet
+from .views import UserListView, JurusanViewSet, SkripsiJudulViewSet, UserDetailView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -24,4 +24,5 @@ urlpatterns = [
     path('prodi/', views.ProgramStudiListView.as_view(), name='prodi-list'),
     path('prodi/<int:pk>/', views.ProgramStudiDetailView.as_view(), name='prodi-detail'),
     path('users/', UserListView.as_view(), name='user-list'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
 ]

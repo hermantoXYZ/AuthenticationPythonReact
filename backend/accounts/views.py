@@ -155,7 +155,26 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
 
     def get_queryset(self):
-        return CustomUser.objects.all().order_by('-created_at')
+        return CustomUser.objects.select_related(
+            'mahasiswa_profile__program_studi',
+            'dosen_profile__program_studi',
+            'staff_prodi_profile__program_studi',
+            'ketua_prodi_profile__program_studi'
+        ).prefetch_related(
+            'mahasiswa_profile__dosen_wali',
+        ).all().order_by('-created_at')
+
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+    queryset = CustomUser.objects.select_related(
+        'mahasiswa_profile__program_studi',
+        'dosen_profile__program_studi',
+        'staff_prodi_profile__program_studi',
+        'ketua_prodi_profile__program_studi'
+    ).prefetch_related(
+        'mahasiswa_profile__dosen_wali'
+    )
 
 class JurusanViewSet(viewsets.ModelViewSet):
     queryset = Jurusan.objects.all()

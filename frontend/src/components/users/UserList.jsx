@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, MoreVertical, Edit2, UserX, UserCheck, GraduationCap, X, Save, ArrowLeft, Building, Award, BookOpen } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const UserList = () => {
+  const navigate = useNavigate();
   const [userList, setUserList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +14,9 @@ const UserList = () => {
   const [sortBy, setSortBy] = useState('full_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // User type mapping for display
   const userTypeDisplay = {
@@ -41,6 +46,8 @@ const UserList = () => {
     fetchUsers();
   }, []);
 
+  console.log(userList)
+
   // Get unique values for filters
   const uniqueUserTypes = useMemo(() => {
     return [...new Set(userList.map(user => user.user_type))];
@@ -54,8 +61,7 @@ const UserList = () => {
   const filteredAndSortedUsers = useMemo(() => {
     let filtered = userList.filter(user => {
       const matchesSearch = (user.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+                          (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       const matchesUserType = !filterUserType || user.user_type === filterUserType;
       const matchesGender = !filterGender || user.gender === filterGender;
       
@@ -113,6 +119,95 @@ const UserList = () => {
     return colors[userType] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
+  const handleToggleActive = async (user) => {
+    try {
+      const response = await api.patch(`/api/users/${user.id}/`, {
+        is_active: !user.is_active
+      });
+      
+      // Update the user list
+      setUserList(userList.map(u => 
+        u.id === user.id ? { ...u, is_active: !u.is_active } : u
+      ));
+      
+      toast.success(`Akun ${user.is_active ? 'dinonaktifkan' : 'diaktifkan'} berhasil`);
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast.error('Gagal mengubah status user');
+    }
+  };
+
+  // Get program studi info based on user type
+  const getProgramStudiInfo = (user) => {
+    if (!user) return '-';
+
+    if (user.mahasiswa_profile?.program_studi) {
+      return user.mahasiswa_profile.program_studi.nama;
+    }
+    if (user.dosen_profile?.program_studi) {
+      return user.dosen_profile.program_studi.nama;
+    }
+    if (user.staff_prodi_profile?.program_studi) {
+      return user.staff_prodi_profile.program_studi.nama;
+    }
+    if (user.ketua_prodi_profile?.program_studi) {
+      return user.ketua_prodi_profile.program_studi.nama;
+    }
+    return '-';
+  };
+
+  const handleViewUser = async (userId) => {
+    try {
+      const response = await api.get(`/api/users/${userId}/`);
+      setSelectedUser(response.data);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      toast.error('Gagal memuat detail pengguna');
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedUser(null);
+    setIsEditing(false);
+  };
+
+  const handleInputChange = (field, value) => {
+    setSelectedUser(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await api.patch(`/api/users/${selectedUser.id}/`, {
+        full_name: selectedUser.full_name,
+        email: selectedUser.email,
+        phone_number: selectedUser.phone_number,
+        birth_date: selectedUser.birth_date,
+        gender: selectedUser.gender,
+        tempat_lahir: selectedUser.tempat_lahir,
+        is_active: selectedUser.is_active
+      });
+
+      // Update both selected user and user list
+      setSelectedUser(response.data);
+      setUserList(userList.map(user => 
+        user.id === response.data.id ? response.data : user
+      ));
+      
+      setIsEditing(false);
+      toast.success('Data pengguna berhasil diperbarui');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast.error('Gagal memperbarui data pengguna');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -121,8 +216,284 @@ const UserList = () => {
     );
   }
 
+  // If a user is selected, show the detail/edit view
+  if (selectedUser) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={handleCloseDetail}
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Kembali ke Daftar Pengguna
+          </button>
+          <div className="flex space-x-2">
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <Edit2 className="h-4 w-4" />
+                <span>Edit Data</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Batal</span>
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  {isSaving ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* User Details */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6">
+            <div className="space-y-8">
+              {/* Personal Information */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Personal</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Nama Lengkap
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={selectedUser.full_name || ''}
+                        onChange={(e) => handleInputChange('full_name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.full_name || '-'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="email"
+                        value={selectedUser.email || ''}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.email || '-'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Phone className="h-4 w-4 mr-2" />
+                      Nomor Telepon
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={selectedUser.phone_number || ''}
+                        onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.phone_number || '-'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Tanggal Lahir
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={selectedUser.birth_date || ''}
+                        onChange={(e) => handleInputChange('birth_date', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.birth_date || '-'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Jenis Kelamin
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={selectedUser.gender || ''}
+                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Pilih Jenis Kelamin</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.gender || '-'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Status
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={selectedUser.is_active.toString()}
+                        onChange={(e) => handleInputChange('is_active', e.target.value === 'true')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="true">Aktif</option>
+                        <option value="false">Nonaktif</option>
+                      </select>
+                    ) : (
+                      <p className={`inline-flex px-2 py-1 rounded-full text-sm font-medium ${
+                        selectedUser.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedUser.is_active ? 'Aktif' : 'Nonaktif'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Information */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Akademik</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedUser.mahasiswa_profile && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          NIM
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.mahasiswa_profile.nim || '-'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <Building className="h-4 w-4 mr-2" />
+                          Program Studi
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.mahasiswa_profile.program_studi?.nama || '-'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Angkatan
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.mahasiswa_profile.angkatan || '-'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <GraduationCap className="h-4 w-4 mr-2" />
+                          Semester
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.mahasiswa_profile.semester || '-'}
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {(selectedUser.dosen_profile || selectedUser.staff_prodi_profile) && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          NIP
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.dosen_profile?.nip || selectedUser.staff_prodi_profile?.nip || '-'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center">
+                          <Building className="h-4 w-4 mr-2" />
+                          Program Studi
+                        </label>
+                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                          {selectedUser.dosen_profile?.program_studi?.nama || selectedUser.staff_prodi_profile?.program_studi?.nama || '-'}
+                        </p>
+                      </div>
+
+                      {selectedUser.dosen_profile && (
+                        <>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                              <Award className="h-4 w-4 mr-2" />
+                              Jabatan Akademik
+                            </label>
+                            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                              {selectedUser.dosen_profile.jabatan_akademik || '-'}
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                              <GraduationCap className="h-4 w-4 mr-2" />
+                              Pendidikan Terakhir
+                            </label>
+                            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                              {selectedUser.dosen_profile.pendidikan_terakhir || '-'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original user list view
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-full mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Daftar Pengguna</h1>
@@ -226,63 +597,119 @@ const UserList = () => {
         </p>
       </div>
 
-      {/* User Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredAndSortedUsers.map((user) => (
-          <div key={user.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{user.full_name || user.username}</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Hash className="h-4 w-4" />
-                    <span>{user.username}</span>
-                  </div>
+      {/* Table */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('full_name')}>
+                <div className="flex items-center gap-2">
+                  Nama
+                  {sortBy === 'full_name' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getUserTypeColor(user.user_type)}`}>
-                  {userTypeDisplay[user.user_type]}
+              </th>
+              {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('username')}>
+                <div className="flex items-center gap-2">
+                  Username
+                  {sortBy === 'username' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
                 </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-3">
-                {user.email && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4 text-blue-500" />
-                    <span>{user.email}</span>
+              </th> */}
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('email')}>
+                <div className="flex items-center gap-2">
+                  Email
+                  {sortBy === 'email' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
+                </div>
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tipe User
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Program Studi
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                No. Telepon
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Aksi
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredAndSortedUsers.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{user.full_name || '-'}</div>
+                </td>
+                {/* <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{user.username}</div>
+                </td> */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{user.email || '-'}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getUserTypeColor(user.user_type)}`}>
+                    {userTypeDisplay[user.user_type]}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <GraduationCap className="h-4 w-4 text-indigo-500" />
+                    {getProgramStudiInfo(user)}
                   </div>
-                )}
-                
-                {user.phone_number && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 text-green-500" />
-                    <span>{user.phone_number}</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{user.phone_number || '-'}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    user.is_active 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.is_active ? 'Aktif' : 'Nonaktif'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleViewUser(user.id)}
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                      title="Edit User"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleToggleActive(user)}
+                      className={`p-1 rounded-full ${
+                        user.is_active 
+                          ? 'text-red-600 hover:text-red-900 hover:bg-red-50' 
+                          : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                      }`}
+                      title={user.is_active ? 'Nonaktifkan User' : 'Aktifkan User'}
+                    >
+                      {user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleViewUser(user.id)}
+                      className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
+                      title="Lihat Detail"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
                   </div>
-                )}
-
-                {user.birth_date && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 text-purple-500" />
-                    <span>{new Date(user.birth_date).toLocaleDateString()}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Button */}
-              <div className="mt-6 pt-4 border-t border-gray-100">
-                <button className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                  Lihat Detail
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Empty State */}
       {filteredAndSortedUsers.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12 bg-white rounded-lg shadow">
           <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
             <Search className="h-8 w-8 text-gray-400" />
           </div>
