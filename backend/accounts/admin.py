@@ -11,11 +11,33 @@ from .models import (
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from unfold.admin import ModelAdmin
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+from unfold.contrib.import_export.forms import ImportForm, ExportForm
+
+# Create Resource for CustomUser
+class CustomUserResource(resources.ModelResource):
+    class Meta:
+        model = CustomUser
+        import_id_fields = ['username']
+        fields = ('username', 'password', 'email', 'full_name', 'user_type', 'phone_number', 'gender', 'is_active')
+        exclude = ('id',)
+
+    def before_import_row(self, row, **kwargs):
+        # Hash the password if it exists in the row
+        if 'password' in row:
+            user = CustomUser()
+            user.set_password(row['password'])
+            row['password'] = user.password
 
 admin.site.unregister(Group)
 
 @admin.register(CustomUser)
-class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
+class CustomUserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
+    resource_class = CustomUserResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    
     # Forms loaded from `unfold.forms`
     form = UserChangeForm
     add_form = UserCreationForm
