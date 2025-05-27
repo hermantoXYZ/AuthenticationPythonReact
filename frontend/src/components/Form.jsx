@@ -3,7 +3,8 @@ import api from "../api";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import LoadingIndicator from "./LoadingIndicator";
-
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,23 +16,53 @@ function Form({ route, method }) {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const name = method === "login" ? "Login" : "Register";
-
+    // const name = method === "login" ? "Login" : "Register";
+    const name = "Login";
     const handleSubmit = async (e) => {
         setLoading(true);
         e.preventDefault();
+
+        if (!username || !password) {
+            toast.error("Username dan password harus diisi");
+            setLoading(false);
+            return;
+        }
 
         try {
             const res = await api.post(route, { username, password })
             if (method === "login") {
                 localStorage.setItem(ACCESS_TOKEN, res.data.access);
                 localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+                toast.success("Login berhasil");
                 navigate("/dashboard")
             } else {
                 navigate("/login")
             }
         } catch (error) {
-            alert(error)
+            console.error('Login error:', error);
+            if (error.response) {
+                // Handle specific error responses
+                switch (error.response.status) {
+                    case 401:
+                        toast.error("Username atau password salah");
+                        break;
+                    case 400:
+                        toast.error("Data yang dimasukkan tidak valid");
+                        break;
+                    case 404:
+                        toast.error("Server tidak ditemukan");
+                        break;
+                    case 500:
+                        toast.error("Terjadi kesalahan pada server");
+                        break;
+                    default:
+                        toast.error("Gagal login. Silakan coba lagi");
+                }
+            } else if (error.request) {
+                toast.error("Tidak dapat terhubung ke server");
+            } else {
+                toast.error("Terjadi kesalahan. Silakan coba lagi");
+            }
         } finally {
             setLoading(false)
         }
@@ -51,6 +82,7 @@ function Form({ route, method }) {
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="Username"
+                            required
                         />
                     </div>
                     <div className="space-y-2">
@@ -59,24 +91,26 @@ function Form({ route, method }) {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Password"
+                            required
                         />
                     </div>
                     {loading && <LoadingIndicator />}
-                    <Button type="submit" className="w-full">
-                        {name}
+                    <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? "Loading..." : name}
                     </Button>
                 </form>
                 {method === "login" && (
-                    <p className="text-sm text-gray-600 text-center mt-4">Belum punya akun? <a href="/register" className="text-blue-600 hover:underline">Daftar disini</a></p>
+                    <p className="text-sm text-gray-600 text-center mt-4">Belum punya akun? <a href="/helps" className="text-blue-600 hover:underline">Hubungi Admin</a></p>
                 )}
-                {method === "register" && (
+                {/* {method === "register" && (
                      <p className="text-sm text-gray-600 text-center mt-4">
                      Sudah punya akun? <a href="/login" className="text-blue-600 hover:underline">Login disini</a>
                  </p>
-                )}
+                )} */}
 
             </CardContent>
         </Card>
+        <Toaster />
         </div>
     );
 }
