@@ -24,7 +24,11 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) for production
 
+# STATIC_URL = '/static/' for production
+# STATIC_ROOT = '/home/zonafil1/lms/static/' for production
+# ln -s /home/zonafil1/padinusantara/static /home/zonafil1/padinusantara.com/static
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -36,6 +40,7 @@ SECRET_KEY = 'django-insecure-u+$iu-_ich&xkk4$8**p&d*aj7@1^6leo=t!ep5o*^@ojw=@nm
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ['*','127.0.0.1','localhost','success.padinusantara.co.id','www.success.padinusantara.co.id'] for production
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -120,6 +125,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# } for production
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

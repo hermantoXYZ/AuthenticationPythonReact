@@ -22,8 +22,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Login/>} />
         <Route
-          path="/"
+          path="/dashboard/note"
           element={
             <ProtectedRoute>
               <Home />
