@@ -48,6 +48,7 @@ import Pengumuman from './informasi/Pengumuman';
 import KalenderAkademik from './informasi/KalenderAkademik';
 import PanduanAkademik from './informasi/PanduanAkademik';
 import UserDetailEdit from './users/UserDetailEdit';
+import FakultasList from './fakultas/FakultasList';
 
 
 
@@ -103,12 +104,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             icon: Building2, 
             label: "Fakultas",
             key: "fakultas",
-            type: "dropdown",
-            submenu: [
-              { icon: List, label: "List Fakultas", path: "/dashboard/fakultas" },
-              { icon: Plus, label: "Tambah Fakultas", path: "/dashboard/fakultas/add" },
-              { icon: Settings, label: "Kelola Fakultas", path: "/dashboard/fakultas/manage" }
-            ]
+            type: "single",
+            path: "/dashboard/fakultas"
           },
           {
             icon: School,
@@ -587,6 +584,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/users": UserList,
     "/dashboard/jurusan": JurusanList,
     "/dashboard/jurusan/add": AddJurusan,
+    // Fakultas Routes - only keep the main route
+    "/dashboard/fakultas": FakultasList,
     // Skripsi Routes for Mahasiswa
     "/dashboard/skripsi/roadmap": SkripsiRoadmap,
     "/dashboard/skripsi/pengajuan": PengajuanJudul,
@@ -610,7 +609,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     // Handle dynamic routes
     const editJurusanMatch = currentPage.match(/^\/dashboard\/jurusan\/edit\/(\d+)$/);
     if (editJurusanMatch) {
-      return <EditJurusan />;
+      return <EditJurusan id={editJurusanMatch[1]} />;
     }
 
     // Handle static routes

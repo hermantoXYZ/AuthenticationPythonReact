@@ -20,11 +20,15 @@ class ProgramStudiSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+# class FakultasSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Fakultas
+#         fields = '__all__'
+        
 class FakultasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fakultas
-        fields = '__all__'
-        
+        fields = ['id', 'nama', 'kode', 'dekan']
 
 class KetuaProdiSerializer(serializers.ModelSerializer):
     program_studi = ProgramStudiSerializer(read_only=True)
