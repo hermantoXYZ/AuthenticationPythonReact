@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from rest_framework import generics, viewsets
+from rest_framework import generics, viewsets, permissions
 from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, SkripsiJudulSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -356,3 +356,36 @@ class FakultasViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class DosenListView(generics.ListAPIView):
+    serializer_class = DosenProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get users that are ketua_prodi
+        ketua_prodi_users = CustomUser.objects.filter(
+            user_type=UserType.KETUA_PRODI,
+            is_active=True
+        )
+        
+        # Get dosen profiles for these users
+        queryset = UserDosen.objects.filter(
+            user__in=ketua_prodi_users
+        ).select_related(
+            'user',
+            'program_studi'
+        )
+        
+        print("\n=== DEBUG KETUA PRODI ===")
+        print(f"Total Ketua Prodi users found: {ketua_prodi_users.count()}")
+        print(f"Total Dosen profiles found: {queryset.count()}")
+        
+        for dosen in queryset:
+            print(f"\nKetua Prodi Detail:")
+            print(f"- Nama: {dosen.user.full_name}")
+            print(f"- NIP: {dosen.nip}")
+            print(f"- User Type: {dosen.user.user_type}")
+            print(f"- Program Studi: {dosen.program_studi.nama if dosen.program_studi else 'No Prodi'}")
+        
+        print("\n=== END DEBUG ===\n")
+        return queryset

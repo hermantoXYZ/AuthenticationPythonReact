@@ -24,7 +24,8 @@ import {
   Award,
   School,
   Bell,
-  ChevronRight
+  ChevronRight,
+  User2Icon
 } from "lucide-react";
 import ProfilePage from './ProfilePage';
 import api from "../api";
@@ -33,7 +34,6 @@ import { useNavigate } from "react-router-dom";
 import ProdiList from "./prodi/ProdiList";
 import UserList from "./users/UserList";
 import JurusanList from "./jurusan/JurusanList";
-import AddJurusan from "./jurusan/AddJurusan";
 import PengajuanJudul from "./skripsi/PengajuanJudul";
 import DaftarPengajuan from "./skripsi/DaftarPengajuan";
 import ReviewPengajuan from "./skripsi/ReviewPengajuan";
@@ -48,7 +48,8 @@ import Pengumuman from './informasi/Pengumuman';
 import KalenderAkademik from './informasi/KalenderAkademik';
 import PanduanAkademik from './informasi/PanduanAkademik';
 import UserDetailEdit from './users/UserDetailEdit';
-import FakultasList from './fakultas/FakultasList';
+import DosenList from "./users/DosenList";
+
 
 
 
@@ -101,41 +102,67 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
         return [
           ...baseMenu.slice(0, 1),
           {
-            icon: Building2, 
-            label: "Fakultas",
-            key: "fakultas",
-            type: "single",
-            path: "/dashboard/fakultas"
-          },
-          {
             icon: School,
             label: "Jurusan",
             key: "jurusan",
-            type: "dropdown",
-            submenu: [
-              { icon: List, label: "List Jurusan", path: "/dashboard/jurusan" },
-              { icon: Plus, label: "Tambah Jurusan", path: "/dashboard/jurusan/add" },
-            ]
+            type: "single",
+            path: "/dashboard/jurusan"
           },
           {
             icon: GraduationCap,
             label: "Program Studi",
             key: "prodi",
-            type: "dropdown",
-            submenu: [
-              { icon: List, label: "List Program Studi", path: "/dashboard/prodi" },
-              { icon: Plus, label: "Tambah Program Studi", path: "/dashboard/prodi/add" },
-              { icon: Settings, label: "Kelola Program Studi", path: "/dashboard/prodi/manage" }
-            ]
+            type: "single",
+            path: "/dashboard/prodi"
           },
           {
             icon: Users,
             label: "Manajemen User",
             key: "users",
-            path: "/dashboard/users",
-            type: "single",
+            type: "dropdown",
+            submenu: [
+              { 
+                icon: User2Icon, 
+                label: "All Users", 
+                path: "/dashboard/users" 
+              },
+              { 
+                icon: GraduationCap, 
+                label: "Dosen", 
+                path: "/dashboard/users/dosen" 
+              },
+              { 
+                icon: BookOpen, 
+                label: "Mahasiswa", 
+                path: "/dashboard/users/mahasiswa" 
+              },
+              { 
+                icon: Award, 
+                label: "Ketua Program Studi", 
+                path: "/dashboard/users/ketua-prodi" 
+              },
+              { 
+                icon: School, 
+                label: "Pejabat Jurusan", 
+                path: "/dashboard/users/pejabat-jurusan" 
+              },
+              { 
+                icon: Award, 
+                label: "Dekan Fakultas", 
+                path: "/dashboard/users/dekan" 
+              },
+              { 
+                icon: Users, 
+                label: "Staff Fakultas", 
+                path: "/dashboard/users/staff-fakultas" 
+              },
+              { 
+                icon: Users, 
+                label: "Staff Prodi", 
+                path: "/dashboard/users/staff-prodi" 
+              }
+            ]
           },
-
           {
             icon: FileText,
             label: "Skripsi",
@@ -582,10 +609,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/profile": ProfilePage,
     "/dashboard/prodi": ProdiList,
     "/dashboard/users": UserList,
+    "/dashboard/users/dosen": DosenList,
     "/dashboard/jurusan": JurusanList,
-    "/dashboard/jurusan/add": AddJurusan,
-    // Fakultas Routes - only keep the main route
-    "/dashboard/fakultas": FakultasList,
     // Skripsi Routes for Mahasiswa
     "/dashboard/skripsi/roadmap": SkripsiRoadmap,
     "/dashboard/skripsi/pengajuan": PengajuanJudul,
