@@ -1,13 +1,18 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import UserListView, JurusanViewSet, SkripsiJudulViewSet, UserDetailView, FakultasViewSet, DosenListView
+from .views import (
+    UserListView, JurusanViewSet, SkripsiJudulViewSet, UserDetailView, 
+    FakultasViewSet, DosenListView, KetuaProdiViewSet, StaffProdiListView,
+    StaffProdiDetailView, StaffFakultasListView, StaffFakultasDetailView
+)
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
 router.register(r'jurusan', JurusanViewSet)
 router.register(r'skripsi/pengajuan', SkripsiJudulViewSet, basename='skripsi-pengajuan')
 router.register(r'fakultas', FakultasViewSet)
+router.register(r'ketua-prodi', KetuaProdiViewSet)
 
 
 urlpatterns = [
@@ -26,4 +31,8 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
     path('users/dosen/', DosenListView.as_view(), name='dosen-list'),
+    path('users/staff-prodi/', StaffProdiListView.as_view(), name='staff-prodi-list'),
+    path('users/staff-prodi/<int:pk>/', StaffProdiDetailView.as_view(), name='staff-prodi-detail'),
+    path('users/staff-fakultas/', StaffFakultasListView.as_view(), name='staff-fakultas-list'),
+    path('users/staff-fakultas/<int:pk>/', StaffFakultasDetailView.as_view(), name='staff-fakultas-detail'),
 ]

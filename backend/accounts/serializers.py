@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType
 
 class JurusanSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,22 +30,10 @@ class FakultasSerializer(serializers.ModelSerializer):
         model = Fakultas
         fields = ['id', 'nama', 'kode', 'dekan']
 
-class KetuaProdiSerializer(serializers.ModelSerializer):
-    program_studi = ProgramStudiSerializer(read_only=True)
-
-    class Meta:
-        model = UserKetuaProdi
-        fields = ['program_studi', 'periode_mulai', 'periode_selesai', 'plt']
-
 class UserBasicSerializer(serializers.ModelSerializer):
-    """Basic user serializer without profiles to avoid circular dependencies"""
     class Meta:
         model = CustomUser
-        fields = [
-            'id', 'email', 'full_name', 'phone_number', 'tempat_lahir', 
-            'birth_date', 'gender', 'profile_picture', 'user_type', 'is_active'
-        ]
-        read_only_fields = ['id', 'username', 'user_type']
+        fields = ['id', 'full_name', 'email', 'phone_number', 'user_type']
 
 class DosenBasicSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
@@ -54,6 +42,50 @@ class DosenBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDosen
         fields = ['user', 'nip', 'program_studi', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
+
+class KetuaProdiSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    program_studi = ProgramStudiSerializer(read_only=True)
+    dosen_profile = DosenBasicSerializer(source='user.dosen_profile', read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    program_studi_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = UserKetuaProdi
+        fields = ['id', 'user', 'program_studi', 'dosen_profile', 'periode_mulai', 'periode_selesai', 'plt', 'label', 'user_id', 'program_studi_id']
+        read_only_fields = ['id', 'user', 'program_studi', 'dosen_profile']
+
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id')
+        program_studi_id = validated_data.pop('program_studi_id')
+        
+        user = CustomUser.objects.get(id=user_id)
+        program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        
+        # Update user type to ketua_prodi if not already
+        if user.user_type != UserType.KETUA_PRODI:
+            user.user_type = UserType.KETUA_PRODI
+            user.save()
+        
+        return UserKetuaProdi.objects.create(
+            user=user,
+            program_studi=program_studi,
+            **validated_data
+        )
+
+class DosenProfileSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    program_studi = ProgramStudiSerializer(read_only=True)
+    pejabat_jurusan = PejabatJurusanSerializer(read_only=True)
+    id = serializers.IntegerField(source='user.id')  # Add user ID
+
+    class Meta:
+        model = UserDosen
+        fields = [
+            'id', 'user', 'nip', 'jabatan_akademik', 'program_studi',
+            'pendidikan_terakhir', 'bidang_keahlian', 'pejabat_jurusan',
+            'status_kepegawaian'
+        ]
 
 class MahasiswaProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
@@ -67,30 +99,63 @@ class MahasiswaProfileSerializer(serializers.ModelSerializer):
 class StaffProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
     program_studi = ProgramStudiSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    program_studi_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = UserStaffProdi
-        fields = ['user', 'nip', 'program_studi', 'jabatan']
+        fields = ['id', 'user', 'nip', 'program_studi', 'jabatan', 'user_id', 'program_studi_id']
+        read_only_fields = ['id', 'user', 'program_studi']
+
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id')
+        program_studi_id = validated_data.pop('program_studi_id')
+        
+        user = CustomUser.objects.get(id=user_id)
+        program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        
+        return UserStaffProdi.objects.create(
+            user=user,
+            program_studi=program_studi,
+            **validated_data
+        )
 
 class StaffFakultasProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
     fakultas = FakultasSerializer(read_only=True)
-    class Meta:
-        model = UserStaffProdi
-        fields = ['user', 'nip', 'jabatan', 'fakultas']
-
-class DosenProfileSerializer(serializers.ModelSerializer):
-    user = UserBasicSerializer(read_only=True)
-    program_studi = ProgramStudiSerializer(read_only=True)
-    pejabat_jurusan = PejabatJurusanSerializer(read_only=True)
-    ketua_prodi = KetuaProdiSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    fakultas_id = serializers.IntegerField(write_only=True)
 
     class Meta:
-        model = UserDosen
-        fields = [
-            'user', 'nip', 'jabatan_akademik', 'program_studi',
-            'pendidikan_terakhir', 'bidang_keahlian', 'pejabat_jurusan',
-            'status_kepegawaian', 'ketua_prodi'
-        ]
+        model = UserStaffFakultas
+        fields = ['id', 'user', 'fakultas', 'user_id', 'fakultas_id', 'jabatan', 'nip']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        user = CustomUser.objects.get(id=validated_data['user_id'])
+        fakultas = Fakultas.objects.get(id=validated_data['fakultas_id'])
+        
+        # Update user type
+        user.user_type = UserType.STAFF_FAKULTAS
+        user.save()
+        
+        staff_fakultas = UserStaffFakultas.objects.create(
+            user=user,
+            fakultas=fakultas,
+            jabatan=validated_data['jabatan'],
+            nip=validated_data.get('nip')
+        )
+        return staff_fakultas
+
+    def update(self, instance, validated_data):
+        if 'fakultas_id' in validated_data:
+            fakultas = Fakultas.objects.get(id=validated_data['fakultas_id'])
+            instance.fakultas = fakultas
+        
+        instance.jabatan = validated_data.get('jabatan', instance.jabatan)
+        instance.nip = validated_data.get('nip', instance.nip)
+        instance.save()
+        return instance
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -172,3 +237,40 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Judul skripsi tidak boleh sama")
         
         return data
+
+class StaffFakultasSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    fakultas = FakultasSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    fakultas_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = UserStaffFakultas
+        fields = ['id', 'user', 'fakultas', 'user_id', 'fakultas_id', 'jabatan', 'nip', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        user = User.objects.get(id=validated_data['user_id'])
+        fakultas = Fakultas.objects.get(id=validated_data['fakultas_id'])
+        
+        # Update user type
+        user.user_type = 'staff_fakultas'
+        user.save()
+        
+        staff_fakultas = UserStaffFakultas.objects.create(
+            user=user,
+            fakultas=fakultas,
+            jabatan=validated_data['jabatan'],
+            nip=validated_data.get('nip')
+        )
+        return staff_fakultas
+
+    def update(self, instance, validated_data):
+        if 'fakultas_id' in validated_data:
+            fakultas = Fakultas.objects.get(id=validated_data['fakultas_id'])
+            instance.fakultas = fakultas
+        
+        instance.jabatan = validated_data.get('jabatan', instance.jabatan)
+        instance.nip = validated_data.get('nip', instance.nip)
+        instance.save()
+        return instance

@@ -1,8 +1,17 @@
 from django.shortcuts import render
 from rest_framework import generics, viewsets, permissions
-from .serializers import UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, SkripsiJudulSerializer
+from .serializers import (
+    UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, 
+    UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, 
+    StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, 
+    SkripsiJudulSerializer, PejabatJurusanSerializer, KetuaProdiSerializer
+)
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType
+from .models import (
+    Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, 
+    UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType, 
+    PejabatJurusan, UserKetuaProdi
+)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -155,14 +164,20 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
 
     def get_queryset(self):
-        return CustomUser.objects.select_related(
+        user_type = self.request.query_params.get('user_type', None)
+        queryset = CustomUser.objects.select_related(
             'mahasiswa_profile__program_studi',
             'dosen_profile__program_studi',
             'staff_prodi_profile__program_studi',
             'ketua_prodi_profile__program_studi'
         ).prefetch_related(
             'mahasiswa_profile__dosen_wali',
-        ).all().order_by('-created_at')
+        )
+        
+        if user_type:
+            queryset = queryset.filter(user_type=user_type)
+            
+        return queryset.order_by('-created_at')
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
@@ -362,30 +377,272 @@ class DosenListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Get users that are ketua_prodi
-        ketua_prodi_users = CustomUser.objects.filter(
-            user_type=UserType.KETUA_PRODI,
-            is_active=True
-        )
-        
-        # Get dosen profiles for these users
+        # Get all active dosen profiles
         queryset = UserDosen.objects.filter(
-            user__in=ketua_prodi_users
+            user__is_active=True,
+            user__user_type__in=[
+                UserType.DOSEN,
+                UserType.DEKAN_FAKULTAS,
+                UserType.KETUA_PRODI,
+                UserType.PEJABAT_JURUSAN
+            ]
         ).select_related(
             'user',
             'program_studi'
-        )
+        ).order_by('user__full_name')
         
-        print("\n=== DEBUG KETUA PRODI ===")
-        print(f"Total Ketua Prodi users found: {ketua_prodi_users.count()}")
-        print(f"Total Dosen profiles found: {queryset.count()}")
-        
-        for dosen in queryset:
-            print(f"\nKetua Prodi Detail:")
-            print(f"- Nama: {dosen.user.full_name}")
-            print(f"- NIP: {dosen.nip}")
-            print(f"- User Type: {dosen.user.user_type}")
-            print(f"- Program Studi: {dosen.program_studi.nama if dosen.program_studi else 'No Prodi'}")
-        
-        print("\n=== END DEBUG ===\n")
         return queryset
+
+class KetuaProdiViewSet(viewsets.ModelViewSet):
+    serializer_class = KetuaProdiSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = UserKetuaProdi.objects.select_related(
+        'user',
+        'program_studi',
+        'user__dosen_profile'
+    ).all()
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return KetuaProdiSerializer
+        return super().get_serializer_class()
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+class StaffProdiListView(generics.ListCreateAPIView):
+    serializer_class = StaffProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get all active staff prodi
+        queryset = UserStaffProdi.objects.filter(
+            user__is_active=True,
+            user__user_type=UserType.STAFF_PRODI
+        ).select_related(
+            'user',
+            'program_studi'
+        ).order_by('user__full_name')
+        
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        try:
+            print("Received data:", request.data)
+            
+            # Validate required fields
+            required_fields = ['user_id', 'program_studi_id', 'jabatan']
+            for field in required_fields:
+                if field not in request.data:
+                    return Response(
+                        {"detail": f"Field {field} is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Validate user exists and is not already staff prodi
+            try:
+                user = CustomUser.objects.get(id=request.data['user_id'])
+                if UserStaffProdi.objects.filter(user=user).exists():
+                    return Response(
+                        {"detail": "User sudah menjadi staff prodi"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"detail": "User tidak ditemukan"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Validate program studi exists
+            try:
+                program_studi = ProgramStudi.objects.get(id=request.data['program_studi_id'])
+            except ProgramStudi.DoesNotExist:
+                return Response(
+                    {"detail": "Program Studi tidak ditemukan"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Create serializer and validate
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Update user type
+            user.user_type = UserType.STAFF_PRODI
+            user.save()
+            
+            # Save staff prodi
+            self.perform_create(serializer)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+            
+        except Exception as e:
+            print(f"Error in create: {str(e)}")
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class StaffProdiDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = StaffProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserStaffProdi.objects.select_related('user', 'program_studi')
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            # Get the data to update
+            data = {}
+            if 'nip' in request.data:
+                data['nip'] = request.data['nip']
+            if 'jabatan' in request.data:
+                data['jabatan'] = request.data['jabatan']
+            if 'program_studi' in request.data:
+                try:
+                    program_studi = ProgramStudi.objects.get(id=request.data['program_studi'])
+                    data['program_studi'] = program_studi
+                except ProgramStudi.DoesNotExist:
+                    return Response(
+                        {"detail": "Program Studi tidak ditemukan"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            # Update the instance
+            for key, value in data.items():
+                setattr(instance, key, value)
+            instance.save()
+            
+            # Return the updated data
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class StaffFakultasListView(generics.ListCreateAPIView):
+    serializer_class = StaffFakultasProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get all active staff fakultas
+        queryset = UserStaffFakultas.objects.filter(
+            user__is_active=True,
+            user__user_type=UserType.STAFF_FAKULTAS
+        ).select_related(
+            'user',
+            'fakultas'
+        ).order_by('user__full_name')
+        
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        try:
+            print("Received data:", request.data)
+            
+            # Validate required fields
+            required_fields = ['user_id', 'fakultas_id', 'jabatan']
+            for field in required_fields:
+                if field not in request.data:
+                    return Response(
+                        {"detail": f"Field {field} is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Validate user exists and is not already staff fakultas
+            try:
+                user = CustomUser.objects.get(id=request.data['user_id'])
+                if UserStaffFakultas.objects.filter(user=user).exists():
+                    return Response(
+                        {"detail": "User sudah menjadi staff fakultas"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {"detail": "User tidak ditemukan"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Validate fakultas exists
+            try:
+                fakultas = Fakultas.objects.get(id=request.data['fakultas_id'])
+            except Fakultas.DoesNotExist:
+                return Response(
+                    {"detail": "Fakultas tidak ditemukan"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Create serializer and validate
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Update user type
+            user.user_type = UserType.STAFF_FAKULTAS
+            user.save()
+            
+            # Save staff fakultas
+            self.perform_create(serializer)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+            
+        except Exception as e:
+            print(f"Error in create: {str(e)}")
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class StaffFakultasDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = StaffFakultasProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserStaffFakultas.objects.select_related('user', 'fakultas')
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            # Get the data to update
+            data = {}
+            if 'nip' in request.data:
+                data['nip'] = request.data['nip']
+            if 'jabatan' in request.data:
+                data['jabatan'] = request.data['jabatan']
+            if 'fakultas_id' in request.data:
+                try:
+                    fakultas = Fakultas.objects.get(id=request.data['fakultas_id'])
+                    data['fakultas'] = fakultas
+                except Fakultas.DoesNotExist:
+                    return Response(
+                        {"detail": "Fakultas tidak ditemukan"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            # Update the instance
+            for key, value in data.items():
+                setattr(instance, key, value)
+            instance.save()
+            
+            # Return the updated data
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

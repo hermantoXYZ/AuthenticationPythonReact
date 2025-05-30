@@ -49,6 +49,9 @@ import KalenderAkademik from './informasi/KalenderAkademik';
 import PanduanAkademik from './informasi/PanduanAkademik';
 import UserDetailEdit from './users/UserDetailEdit';
 import DosenList from "./users/DosenList";
+import KetuaProdiList from "./users/KetuaProdiList";
+import StaffProdiList from "./users/StaffProdiList";
+import StaffFakultasList from "./users/StaffFakultasList";
 
 
 
@@ -610,6 +613,9 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/prodi": ProdiList,
     "/dashboard/users": UserList,
     "/dashboard/users/dosen": DosenList,
+    "/dashboard/users/ketua-prodi": KetuaProdiList,
+    "/dashboard/users/staff-prodi": StaffProdiList,
+    "/dashboard/users/staff-fakultas": StaffFakultasList,
     "/dashboard/jurusan": JurusanList,
     // Skripsi Routes for Mahasiswa
     "/dashboard/skripsi/roadmap": SkripsiRoadmap,
