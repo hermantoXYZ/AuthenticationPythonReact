@@ -6,6 +6,7 @@ import Home from "./pages/Home"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
 import DashboardHome from "./pages/Dashboard/DashboardHome"
+import ListDekanFakultas from './components/users/ListDekanFakultas'
 
 
 function Logout() {
@@ -42,6 +43,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         {/* <Route path="/register" element={<RegisterAndLogout />} /> */}
+        <Route path="/users/dekan" element={<ListDekanFakultas />} />
         <Route path="*" element={<NotFound />}></Route>
       </Routes>
     </BrowserRouter>

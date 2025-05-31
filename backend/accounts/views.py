@@ -391,7 +391,17 @@ class DosenListView(generics.ListAPIView):
             'program_studi'
         ).order_by('user__full_name')
         
+        # Log the available dosen
+        print("Available dosen in DosenListView:")
+        for dosen in queryset:
+            print(f"ID: {dosen.id}, Name: {dosen.user.full_name}, NIP: {dosen.nip}")
+        
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        print("Response data from DosenListView:", response.data)
+        return response
 
 class KetuaProdiViewSet(viewsets.ModelViewSet):
     serializer_class = KetuaProdiSerializer
@@ -644,5 +654,246 @@ class StaffFakultasDetailView(generics.RetrieveUpdateDestroyAPIView):
         except Exception as e:
             return Response(
                 {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class MahasiswaListView(generics.ListCreateAPIView):
+    serializer_class = MahasiswaProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get all active mahasiswa profiles
+        return UserMahasiswa.objects.select_related(
+            'user',
+            'program_studi',
+            'dosen_wali',
+            'dosen_wali__user'
+        ).filter(user__is_active=True)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Extract user_id from request data
+            user_id = request.data.get('user_id')
+            if not user_id:
+                return Response(
+                    {'error': 'user_id is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check if user exists and is not already a mahasiswa
+            try:
+                user = CustomUser.objects.get(id=user_id)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {'error': 'User not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if UserMahasiswa.objects.filter(user_id=user_id).exists():
+                return Response(
+                    {'error': 'User is already a mahasiswa'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create mahasiswa profile
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            # Update user type
+            user.user_type = 'mahasiswa'
+            user.save()
+
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class MahasiswaDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MahasiswaProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserMahasiswa.objects.select_related(
+        'user',
+        'program_studi',
+        'dosen_wali',
+        'dosen_wali__user'
+    )
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            user = instance.user
+            
+            # Delete the mahasiswa profile
+            self.perform_destroy(instance)
+            
+            # Update user type
+            user.user_type = None
+            user.save()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class DekanFakultasListView(generics.ListAPIView):
+    serializer_class = DosenProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get all active dekan fakultas profiles
+        queryset = UserDosen.objects.filter(
+            user__is_active=True,
+            user__user_type=UserType.DEKAN_FAKULTAS
+        ).select_related(
+            'user',
+            'fakultas'
+        ).order_by('user__full_name')
+        
+        # Log the available dekan
+        print("Available dekan in DekanFakultasListView:")
+        for dekan in queryset:
+            print(f"ID: {dekan.id}, Name: {dekan.user.full_name}, NIP: {dekan.nip}")
+        
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        print("Response data from DekanFakultasListView:", response.data)
+        return response
+
+class DekanFakultasDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = DosenProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserDosen.objects.select_related(
+        'user',
+        'fakultas'
+    ).filter(user__user_type=UserType.DEKAN_FAKULTAS)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            user = instance.user
+            
+            # Delete the dekan profile
+            self.perform_destroy(instance)
+            
+            # Update user type back to dosen
+            user.user_type = UserType.DOSEN
+            user.save()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class PejabatJurusanViewSet(viewsets.ModelViewSet):
+    serializer_class = PejabatJurusanSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = PejabatJurusan.objects.select_related('jurusan', 'pejabat').all()
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Log incoming data for debugging
+            print("Received data:", request.data)
+            
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            print("Validation error:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            print("Unexpected error:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def update(self, request, *args, **kwargs):
+        try:
+            # Log incoming data for debugging
+            print("Update data:", request.data)
+            
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except ValidationError as e:
+            print("Validation error:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            print("Unexpected error:", str(e))
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response(
+                {'message': 'Pejabat Jurusan berhasil dihapus'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print("Delete error:", str(e))
+            return Response(
+                {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )

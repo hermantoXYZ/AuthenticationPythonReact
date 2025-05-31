@@ -52,6 +52,8 @@ import DosenList from "./users/DosenList";
 import KetuaProdiList from "./users/KetuaProdiList";
 import StaffProdiList from "./users/StaffProdiList";
 import StaffFakultasList from "./users/StaffFakultasList";
+import ListMahasiswa from "./users/ListMahasiswa";
+import ListDekanFakultas from "./users/ListDekanFakultas";
 
 
 
@@ -611,17 +613,19 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
   const componentMap = {
     "/dashboard/profile": ProfilePage,
     "/dashboard/prodi": ProdiList,
+    "/dashboard/jurusan": JurusanList,
     "/dashboard/users": UserList,
     "/dashboard/users/dosen": DosenList,
+    "/dashboard/users/mahasiswa": ListMahasiswa,
     "/dashboard/users/ketua-prodi": KetuaProdiList,
     "/dashboard/users/staff-prodi": StaffProdiList,
     "/dashboard/users/staff-fakultas": StaffFakultasList,
-    "/dashboard/jurusan": JurusanList,
+    "/dashboard/users/dekan": ListDekanFakultas,
     // Skripsi Routes for Mahasiswa
-    "/dashboard/skripsi/roadmap": SkripsiRoadmap,
     "/dashboard/skripsi/pengajuan": PengajuanJudul,
     "/dashboard/skripsi/status": StatusPengajuan,
     "/dashboard/skripsi/bimbingan": BimbinganSkripsi,
+    "/dashboard/skripsi/roadmap": SkripsiRoadmap,
     "/dashboard/skripsi/nilai": NilaiSeminar,
     // Skripsi Routes for Staff/Dosen
     "/dashboard/skripsi/list": DaftarPengajuan,

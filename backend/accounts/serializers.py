@@ -91,10 +91,46 @@ class MahasiswaProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
     program_studi = ProgramStudiSerializer(read_only=True)
     dosen_wali = DosenBasicSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    program_studi_id = serializers.IntegerField(write_only=True)
+    dosen_wali_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = UserMahasiswa
-        fields = ['user', 'nim', 'program_studi', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali']
+        fields = ['id', 'user', 'user_id', 'nim', 'program_studi', 'program_studi_id', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali', 'dosen_wali_id']
+        read_only_fields = ['id', 'user', 'program_studi', 'dosen_wali']
+
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id')
+        program_studi_id = validated_data.pop('program_studi_id')
+        dosen_wali_id = validated_data.pop('dosen_wali_id', None)
+
+        user = CustomUser.objects.get(id=user_id)
+        program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        dosen_wali = None if dosen_wali_id is None else UserDosen.objects.get(id=dosen_wali_id)
+
+        mahasiswa = UserMahasiswa.objects.create(
+            user=user,
+            program_studi=program_studi,
+            dosen_wali=dosen_wali,
+            **validated_data
+        )
+        return mahasiswa
+
+    def update(self, instance, validated_data):
+        if 'program_studi_id' in validated_data:
+            program_studi_id = validated_data.pop('program_studi_id')
+            instance.program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        
+        if 'dosen_wali_id' in validated_data:
+            dosen_wali_id = validated_data.pop('dosen_wali_id')
+            instance.dosen_wali = None if dosen_wali_id is None else UserDosen.objects.get(id=dosen_wali_id)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 class StaffProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
