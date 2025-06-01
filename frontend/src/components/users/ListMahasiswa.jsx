@@ -4,7 +4,7 @@ import api from '../../api';
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { useNavigate } from 'react-router-dom';
-
+ 
 const ListMahasiswa = () => {
   const navigate = useNavigate();
   const [mahasiswaList, setMahasiswaList] = useState([]);

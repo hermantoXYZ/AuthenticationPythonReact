@@ -3,7 +3,7 @@ import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, M
 import api from '../../api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-
+ 
 const KetuaProdiList = () => {
   const navigate = useNavigate();
   const [kaprodiList, setKaprodiList] = useState([]);
@@ -29,6 +29,14 @@ const KetuaProdiList = () => {
   });
   const [dosenList, setDosenList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userList, setUserList] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userFilterOptions, setUserFilterOptions] = useState({
+    searchTerm: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    onlyUnassigned: true,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +45,19 @@ const KetuaProdiList = () => {
         const kaprodiResponse = await api.get('/api/ketua-prodi/');
         setKaprodiList(kaprodiResponse.data);
         
+        // Then fetch all users that are of type ketua_prodi
+        const userResponse = await api.get('/api/users/');
+        const availableUsers = userResponse.data.filter(user => 
+          user.is_active && 
+          user.user_type === 'ketua_prodi' &&
+          !kaprodiResponse.data.some(kaprodi => kaprodi.user.id === user.id)
+        );
+        setUserList(availableUsers);
+        
+        // Finally fetch prodi list
+        const prodiResponse = await api.get('/api/prodi/');
+        setProdiList(prodiResponse.data);
+        
         // Then fetch dosen list
         const dosenResponse = await api.get('/api/users/dosen/');
         const dosenData = dosenResponse.data.filter(dosen => 
@@ -44,10 +65,6 @@ const KetuaProdiList = () => {
           !kaprodiResponse.data.some(kaprodi => kaprodi.user.id === dosen.user.id)
         );
         setDosenList(dosenData);
-        
-        // Finally fetch prodi list
-        const prodiResponse = await api.get('/api/prodi/');
-        setProdiList(prodiResponse.data);
         
         setIsLoading(false);
       } catch (error) {
@@ -111,6 +128,35 @@ const KetuaProdiList = () => {
         : bValue.localeCompare(aValue);
     });
   }, [kaprodiList, searchTerm, filterProdi, filterPLT, sortBy, sortOrder]);
+
+  // Filter and sort users
+  const filteredUsers = useMemo(() => {
+    return userList
+      .filter(user => {
+        const matchesSearch = (
+          user.full_name?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase())
+        );
+        
+        // Filter only users not yet assigned as kaprodi
+        const isUnassigned = userFilterOptions.onlyUnassigned ? 
+          !kaprodiList.some(kaprodi => kaprodi.user.id === user.id) : true;
+
+        return matchesSearch && isUnassigned;
+      })
+      .sort((a, b) => {
+        let aValue = userFilterOptions.sortBy === 'name' ? 
+          (a.full_name || '').toLowerCase() : 
+          (a.email || '').toLowerCase();
+        let bValue = userFilterOptions.sortBy === 'name' ? 
+          (b.full_name || '').toLowerCase() : 
+          (b.email || '').toLowerCase();
+        
+        return userFilterOptions.sortOrder === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      });
+  }, [userList, kaprodiList, userFilterOptions]);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -422,7 +468,7 @@ const KetuaProdiList = () => {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
@@ -444,23 +490,136 @@ const KetuaProdiList = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dosen
+                      User Ketua Program Studi
                     </label>
-                    <select
-                      value={addFormData.user}
-                      onChange={(e) => handleAddInputChange('user', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Pilih Dosen</option>
-                      {dosenList.map(dosen => (
-                        <option key={dosen.id} value={dosen.id}>
-                          {dosen.user.full_name} - {dosen.nip || 'NIP: -'} - {dosen.program_studi?.nama || 'Prodi: -'}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="mb-6">
+                      <label className="block text-lg font-medium text-gray-900 mb-4">
+                        Pilih User Ketua Program Studi
+                      </label>
+                      
+                      {/* Filter Controls */}
+                      <div className="space-y-4 mb-4">
+                        {/* Search and Sort Controls */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <input
+                                type="text"
+                                placeholder="Cari berdasarkan nama atau email..."
+                                value={userFilterOptions.searchTerm}
+                                onChange={(e) => setUserFilterOptions(prev => ({
+                                  ...prev,
+                                  searchTerm: e.target.value
+                                }))}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={userFilterOptions.sortBy}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortBy: e.target.value
+                              }))}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="name">Urutkan: Nama</option>
+                              <option value="email">Urutkan: Email</option>
+                            </select>
+                            
+                            <button
+                              onClick={() => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+                              }))}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              {userFilterOptions.sortOrder === 'asc' ? 
+                                <SortAsc className="h-5 w-5" /> : 
+                                <SortDesc className="h-5 w-5" />
+                              }
+                            </button>
+                          </div>
+                        </div>
 
+                        {/* Filter Options */}
+                        <div className="flex items-center gap-4 px-2">
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={userFilterOptions.onlyUnassigned}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                onlyUnassigned: e.target.checked
+                              }))}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Hanya tampilkan user yang belum menjadi Ketua Program Studi
+                          </label>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="text-sm text-gray-600 px-2">
+                          Menampilkan {filteredUsers.length} dari {userList.length} user
+                        </div>
+                      </div>
+
+                      {/* User List */}
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="divide-y divide-gray-200 max-h-[400px] overflow-y-auto">
+                          {filteredUsers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                              Tidak ada user yang sesuai dengan filter
+                            </div>
+                          ) : (
+                            filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setAddFormData(prev => ({
+                                    ...prev,
+                                    user: user.id,
+                                    periode_mulai: new Date().toISOString().split('T')[0],
+                                    periode_selesai: new Date(new Date().setFullYear(new Date().getFullYear() + 4)).toISOString().split('T')[0],
+                                    plt: false
+                                  }));
+                                }}
+                                className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                  selectedUser?.id === user.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <h3 className="font-medium text-gray-900">{user.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                    {user.phone_number && (
+                                      <p className="text-sm text-gray-500">
+                                        <Phone className="inline-block h-4 w-4 mr-1" />
+                                        {user.phone_number}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedUser?.id === user.id && (
+                                    <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                      Terpilih
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Program Studi
@@ -480,22 +639,6 @@ const KetuaProdiList = () => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Label (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      value={addFormData.label}
-                      onChange={(e) => handleAddInputChange('label', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Contoh: Periode 2024-2028"
-                    />
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Periode Mulai
@@ -534,6 +677,19 @@ const KetuaProdiList = () => {
                       <option value="false">Tidak</option>
                       <option value="true">Ya</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Label (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={addFormData.label}
+                      onChange={(e) => handleAddInputChange('label', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Contoh: Periode 2024-2028"
+                    />
                   </div>
                 </div>
               </div>
