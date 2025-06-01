@@ -278,6 +278,20 @@ class UserMahasiswa(models.Model):
     program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='mahasiswa')
     angkatan = models.CharField(max_length=4)
     semester = models.PositiveIntegerField(default=1)
+    kelas = models.CharField(
+        max_length=10,
+        choices=[
+            ('A', 'A'),
+            ('B', 'B'),
+            ('C', 'C'),
+            ('D', 'D'),
+            ('E', 'E'),
+            ('F', 'F'),
+            ('G', 'G'),
+        ],
+        blank=True,
+        null=True,
+    )
     status = models.CharField(
         max_length=20,
         choices=[
@@ -300,7 +314,8 @@ class UserMahasiswa(models.Model):
     tanggal_masuk = models.DateField()
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.nim}"
+        kelas_info = f" - Kelas {self.kelas}" if self.kelas else ""
+        return f"{self.user.get_full_name()} - {self.nim}{kelas_info}"
     
     def clean(self):
         if self.user.user_type != UserType.MAHASISWA:
@@ -308,8 +323,8 @@ class UserMahasiswa(models.Model):
 
     class Meta:
         verbose_name_plural = "User Mahasiswa"
-        verbose_name = "User Mahasiswa"  
-        
+        verbose_name = "User Mahasiswa"
+        ordering = ['angkatan', 'kelas', 'nim']
 
 # Fixed: Model untuk User Staff Prodi 
 class UserStaffProdi(models.Model):

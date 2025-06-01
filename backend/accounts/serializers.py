@@ -97,7 +97,7 @@ class MahasiswaProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserMahasiswa
-        fields = ['id', 'user', 'user_id', 'nim', 'program_studi', 'program_studi_id', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali', 'dosen_wali_id']
+        fields = ['id', 'user', 'user_id', 'nim', 'kelas', 'program_studi', 'program_studi_id', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali', 'dosen_wali_id']
         read_only_fields = ['id', 'user', 'program_studi', 'dosen_wali']
 
     def create(self, validated_data):

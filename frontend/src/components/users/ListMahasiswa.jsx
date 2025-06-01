@@ -26,6 +26,7 @@ const ListMahasiswa = () => {
   const [addFormData, setAddFormData] = useState({
     user: '',
     nim: '',
+    kelas: '',
     program_studi: '',
     angkatan: '',
     semester: 1,
@@ -183,6 +184,7 @@ const ListMahasiswa = () => {
 
       setSelectedMahasiswa(response.data);
       setEditFormData({
+        kelas: response.data.kelas || '',
         program_studi: response.data.program_studi?.id || '',
         angkatan: response.data.angkatan || '',
         semester: response.data.semester || '',
@@ -200,6 +202,7 @@ const ListMahasiswa = () => {
 
   const handleEditClick = () => {
     setEditFormData({
+      kelas: selectedMahasiswa.kelas || '',
       program_studi: selectedMahasiswa.program_studi?.id || '',
       angkatan: selectedMahasiswa.angkatan || '',
       semester: selectedMahasiswa.semester || '',
@@ -230,6 +233,7 @@ const ListMahasiswa = () => {
 
       // Prepare the form data
       const formData = {
+        kelas: editFormData.kelas,
         program_studi_id: parseInt(editFormData.program_studi),
         angkatan: editFormData.angkatan,
         semester: parseInt(editFormData.semester),
@@ -237,12 +241,15 @@ const ListMahasiswa = () => {
         dosen_wali_id: editFormData.dosen_wali ? parseInt(editFormData.dosen_wali) : null,
         tanggal_masuk: editFormData.tanggal_masuk
       };
+      
 
       console.log('Sending update request with data:', formData);
 
       // Make the API call
       const response = await api.patch(`/api/users/mahasiswa/${selectedMahasiswa.id}/`, formData);
       console.log('Update response:', response.data);
+
+      toast.success('Data Mahasiswa berhasil diperbarui');
 
       // Update the local state
       setMahasiswaList(prevList => 
@@ -291,7 +298,7 @@ const ListMahasiswa = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!addFormData.user || !addFormData.nim || !addFormData.program_studi || !addFormData.angkatan || !addFormData.tanggal_masuk) {
+    if (!addFormData.user || !addFormData.nim || !addFormData.kelas || !addFormData.program_studi || !addFormData.angkatan || !addFormData.tanggal_masuk) {
       toast.error('Mohon lengkapi semua field yang diperlukan');
       setIsSubmitting(false);
       return;
@@ -303,6 +310,7 @@ const ListMahasiswa = () => {
       const formData = {
         user_id: parseInt(addFormData.user),
         nim: addFormData.nim,
+        kelas: addFormData.kelas,
         program_studi_id: parseInt(addFormData.program_studi),
         angkatan: addFormData.angkatan,
         semester: parseInt(addFormData.semester),
@@ -325,6 +333,7 @@ const ListMahasiswa = () => {
       setAddFormData({
         user: '',
         nim: '',
+        kelas: '',
         program_studi: '',
         angkatan: '',
         semester: 1,
@@ -478,6 +487,32 @@ const ListMahasiswa = () => {
                     </p>
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Building className="h-4 w-4 mr-2" />
+                      Kelas
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={editFormData.kelas || ''}
+                        onChange={(e) => handleInputChange('kelas', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Pilih Kelas</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedMahasiswa.kelas || '-'}
+                      </p>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <Building className="h-4 w-4 mr-2" />
@@ -786,6 +821,12 @@ const ListMahasiswa = () => {
                     {sortBy === 'nim' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
                   </div>
                 </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('kelas')}>
+                  <div className="flex items-center gap-2">
+                    Kelas
+                    {sortBy === 'kelas' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
+                  </div>
+                </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Program Studi
                 </th>
@@ -818,6 +859,9 @@ const ListMahasiswa = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {mahasiswa.nim || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {mahasiswa.kelas || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {mahasiswa.program_studi?.nama || '-'}
@@ -1027,8 +1071,10 @@ const ListMahasiswa = () => {
                       </div>
                     </div>
                   </div>
-
-                  <div>
+                </div>
+                {/* Right Column */}
+                <div className="space-y-6">
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       NIM
                     </label>
@@ -1041,8 +1087,28 @@ const ListMahasiswa = () => {
                       required
                     />
                   </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Kelas
+                    </label>
+                    <select
+                      value={addFormData.kelas}
+                      onChange={(e) => handleAddInputChange('kelas', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Pilih Kelas</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                      <option value="E">E</option>
+                      <option value="F">F</option>
+                      <option value="G">G</option>
+                    </select>
+                  </div>
 
-                  <div>
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Program Studi
                     </label>
@@ -1055,13 +1121,12 @@ const ListMahasiswa = () => {
                       <option value="">Pilih Program Studi</option>
                       {programStudiList && programStudiList.map(prodi => (
                         <option key={prodi.id} value={prodi.id}>
-                          {prodi.nama} - {prodi.fakultas?.nama}
+                          {prodi.nama}
                         </option>
                       ))}
                     </select>
                   </div>
-
-                  <div>
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Angkatan
                     </label>
@@ -1074,10 +1139,6 @@ const ListMahasiswa = () => {
                       required
                     />
                   </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Semester
