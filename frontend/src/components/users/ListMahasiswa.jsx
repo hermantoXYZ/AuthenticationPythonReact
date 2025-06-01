@@ -35,6 +35,7 @@ const ListMahasiswa = () => {
     tanggal_masuk: '',
   });
   const [editFormData, setEditFormData] = useState({
+    kelas: '',
     program_studi: '',
     angkatan: '',
     semester: '',
@@ -189,7 +190,7 @@ const ListMahasiswa = () => {
         angkatan: response.data.angkatan || '',
         semester: response.data.semester || '',
         status: response.data.status || '',
-        dosen_wali: response.data.dosen_wali?.id || '',
+        dosen_wali: response.data.dosen_wali?.nip || '',
         tanggal_masuk: response.data.tanggal_masuk || '',
       });
       setIsEditing(false);
@@ -207,7 +208,7 @@ const ListMahasiswa = () => {
       angkatan: selectedMahasiswa.angkatan || '',
       semester: selectedMahasiswa.semester || '',
       status: selectedMahasiswa.status || '',
-      dosen_wali: selectedMahasiswa.dosen_wali?.id || '',
+      dosen_wali: selectedMahasiswa.dosen_wali?.nip || '',
       tanggal_masuk: selectedMahasiswa.tanggal_masuk || '',
     });
     setIsEditing(true);
@@ -238,10 +239,9 @@ const ListMahasiswa = () => {
         angkatan: editFormData.angkatan,
         semester: parseInt(editFormData.semester),
         status: editFormData.status,
-        dosen_wali_id: editFormData.dosen_wali ? parseInt(editFormData.dosen_wali) : null,
+        dosen_wali_nip: editFormData.dosen_wali || null,
         tanggal_masuk: editFormData.tanggal_masuk
       };
-      
 
       console.log('Sending update request with data:', formData);
 
@@ -261,7 +261,6 @@ const ListMahasiswa = () => {
       setSelectedMahasiswa(response.data);
       setIsEditing(false);
       setIsSaving(false);
-      toast.success('Data Mahasiswa berhasil diperbarui');
       
       // Refresh the data
       const mahasiswaResponse = await api.get('/api/users/mahasiswa/');
@@ -315,7 +314,7 @@ const ListMahasiswa = () => {
         angkatan: addFormData.angkatan,
         semester: parseInt(addFormData.semester),
         status: addFormData.status,
-        dosen_wali: addFormData.dosen_wali ? parseInt(addFormData.dosen_wali) : null,
+        dosen_wali_nip: addFormData.dosen_wali,
         tanggal_masuk: addFormData.tanggal_masuk
       };
 
@@ -610,26 +609,16 @@ const ListMahasiswa = () => {
                     </label>
                     {isEditing ? (
                       <select
-                        value={editFormData.dosen_wali || ''}
-                        onChange={(e) => {
-                          console.log('Selected dosen value:', e.target.value);
-                          handleInputChange('dosen_wali', e.target.value);
-                        }}
+                        value={editFormData.dosen_wali}
+                        onChange={(e) => handleInputChange('dosen_wali', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Pilih Dosen Wali</option>
-                        {dosenList.map(dosen => {
-                          console.log('Rendering dosen option:', {
-                            id: dosen.id,
-                            name: dosen.user?.full_name,
-                            nip: dosen.nip
-                          });
-                          return (
-                            <option key={dosen.id} value={dosen.id}>
-                              {dosen.user?.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
-                            </option>
-                          );
-                        })}
+                        {dosenList.map(dosen => (
+                          <option key={dosen.id} value={dosen.nip}>
+                            {dosen.user?.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
+                          </option>
+                        ))}
                       </select>
                     ) : (
                       <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
@@ -1183,8 +1172,8 @@ const ListMahasiswa = () => {
                     >
                       <option value="">Pilih Dosen Wali</option>
                       {dosenList.map(dosen => (
-                        <option key={dosen.id} value={dosen.id}>
-                          {dosen.user.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
+                        <option key={dosen.id} value={dosen.nip}>
+                          {dosen.user?.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
                         </option>
                       ))}
                     </select>

@@ -93,21 +93,21 @@ class MahasiswaProfileSerializer(serializers.ModelSerializer):
     dosen_wali = DosenBasicSerializer(read_only=True)
     user_id = serializers.IntegerField(write_only=True)
     program_studi_id = serializers.IntegerField(write_only=True)
-    dosen_wali_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    dosen_wali_nip = serializers.CharField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = UserMahasiswa
-        fields = ['id', 'user', 'user_id', 'nim', 'kelas', 'program_studi', 'program_studi_id', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali', 'dosen_wali_id']
+        fields = ['id', 'user', 'user_id', 'nim', 'kelas', 'program_studi', 'program_studi_id', 'angkatan', 'semester', 'status', 'ipk', 'tanggal_masuk', 'dosen_wali', 'dosen_wali_nip']
         read_only_fields = ['id', 'user', 'program_studi', 'dosen_wali']
 
     def create(self, validated_data):
         user_id = validated_data.pop('user_id')
         program_studi_id = validated_data.pop('program_studi_id')
-        dosen_wali_id = validated_data.pop('dosen_wali_id', None)
+        dosen_wali_nip = validated_data.pop('dosen_wali_nip', None)
 
         user = CustomUser.objects.get(id=user_id)
         program_studi = ProgramStudi.objects.get(id=program_studi_id)
-        dosen_wali = None if dosen_wali_id is None else UserDosen.objects.get(id=dosen_wali_id)
+        dosen_wali = None if dosen_wali_nip is None else UserDosen.objects.filter(nip=dosen_wali_nip).first()
 
         mahasiswa = UserMahasiswa.objects.create(
             user=user,
@@ -122,9 +122,9 @@ class MahasiswaProfileSerializer(serializers.ModelSerializer):
             program_studi_id = validated_data.pop('program_studi_id')
             instance.program_studi = ProgramStudi.objects.get(id=program_studi_id)
         
-        if 'dosen_wali_id' in validated_data:
-            dosen_wali_id = validated_data.pop('dosen_wali_id')
-            instance.dosen_wali = None if dosen_wali_id is None else UserDosen.objects.get(id=dosen_wali_id)
+        if 'dosen_wali_nip' in validated_data:
+            dosen_wali_nip = validated_data.pop('dosen_wali_nip')
+            instance.dosen_wali = None if dosen_wali_nip is None else UserDosen.objects.filter(nip=dosen_wali_nip).first()
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
