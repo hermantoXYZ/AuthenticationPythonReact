@@ -8,65 +8,70 @@ import { useNavigate } from 'react-router-dom';
 const PejabatJurusanList = () => {
   const navigate = useNavigate();
   const [pejabatList, setPejabatList] = useState([]);
+  const [jurusanList, setJurusanList] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterJurusan, setFilterJurusan] = useState('');
-  const [filterJabatan, setFilterJabatan] = useState('');
+  const [filterPLT, setFilterPLT] = useState('');
   const [sortBy, setSortBy] = useState('user.full_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showFilters, setShowFilters] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPejabat, setSelectedPejabat] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [jurusanList, setJurusanList] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // Form data states
   const [addFormData, setAddFormData] = useState({
     user: '',
     jurusan: '',
     jabatan: '',
     tgl_mulai: '',
     tgl_selesai: '',
-    plt: false
+    plt: false,
+    label: ''
   });
-  const [editFormData, setEditFormData] = useState({
-    jurusan: '',
-    jabatan: '',
-    tgl_mulai: '',
-    tgl_selesai: '',
-    plt: false
-  });
-  const [userList, setUserList] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [userFilterOptions, setUserFilterOptions] = useState({
+    searchTerm: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    onlyUnassigned: true,
+  });
+
+  // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
+        
         // Fetch pejabat jurusan list
         const pejabatResponse = await api.get('/api/users/pejabat-jurusan/');
         console.log('Pejabat list:', pejabatResponse.data);
         setPejabatList(pejabatResponse.data);
         
-        // Fetch all active users that are not yet pejabat jurusan
+        // Fetch all users that are of type pejabat_jurusan
         const userResponse = await api.get('/api/users/');
         console.log('All users:', userResponse.data);
         const availableUsers = userResponse.data.filter(user => 
           user.is_active && 
-          !pejabatResponse.data.some(pejabat => pejabat.pejabat?.id === user.id) &&
-          user.user_type !== 'pejabat_jurusan' && 
-          !['super_admin', 'dekan_fakultas', 'ketua_prodi', 'mahasiswa', 'staff_prodi', 'staff_fakultas'].includes(user.user_type)
+          user.user_type === 'pejabat_jurusan' &&
+          !pejabatResponse.data.some(pejabat => pejabat.user?.id === user.id)
         );
         console.log('Available users:', availableUsers);
         setUserList(availableUsers);
-        
+
         // Fetch jurusan list
         const jurusanResponse = await api.get('/api/jurusan/');
+        console.log('Jurusan list:', jurusanResponse.data);
         setJurusanList(jurusanResponse.data);
-        
-        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Gagal memuat data');
+      } finally {
         setIsLoading(false);
       }
     };
@@ -74,43 +79,73 @@ const PejabatJurusanList = () => {
     fetchData();
   }, []);
 
-  // Get unique values for filters
-  const uniqueJurusan = useMemo(() => {
-    return [...new Set(pejabatList
-      .map(pejabat => pejabat.jurusan?.nama_jurusan)
-      .filter(Boolean))];
-  }, [pejabatList]);
+  // Filter and sort users for add modal
+  const filteredUsers = useMemo(() => {
+    return userList
+      .filter(user => {
+        const matchesSearch = user.full_name?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase()) ||
+                            user.email?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase());
+        
+        const isUnassigned = userFilterOptions.onlyUnassigned ? 
+          !pejabatList.some(pejabat => pejabat.user?.id === user.id) : true;
+        
+        return matchesSearch && isUnassigned;
+      })
+      .sort((a, b) => {
+        const aValue = userFilterOptions.sortBy === 'name' ? a.full_name : a.email;
+        const bValue = userFilterOptions.sortBy === 'name' ? b.full_name : b.email;
+        return userFilterOptions.sortOrder === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      });
+  }, [userList, userFilterOptions, pejabatList]);
 
-  const uniqueJabatan = useMemo(() => {
-    return [...new Set(pejabatList
-      .map(pejabat => pejabat.jabatan)
-      .filter(Boolean))];
-  }, [pejabatList]);
-
-  // Filter and sort data
+  // Filter and sort pejabat list
   const filteredAndSortedPejabat = useMemo(() => {
-    return pejabatList.filter(pejabat => {
-      const matchesSearch = (pejabat.pejabat?.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (pejabat.pejabat?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-      const matchesJurusan = !filterJurusan || pejabat.jurusan?.nama_jurusan === filterJurusan;
-      const matchesJabatan = !filterJabatan || pejabat.jabatan === filterJabatan;
-      
-      return matchesSearch && matchesJurusan && matchesJabatan;
-    }).sort((a, b) => {
-      let aValue = a.pejabat?.full_name || '';
-      let bValue = b.pejabat?.full_name || '';
-      
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-      
-      return sortOrder === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    });
-  }, [pejabatList, searchTerm, filterJurusan, filterJabatan, sortBy, sortOrder]);
+    return pejabatList
+      .filter(pejabat => {
+        const matchesSearch = 
+          pejabat.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pejabat.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pejabat.user?.dosen_profile?.nip?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesJurusan = !filterJurusan || pejabat.jurusan?.nama_jurusan === filterJurusan;
+        const matchesPLT = filterPLT === '' || pejabat.plt === (filterPLT === 'true');
+        
+        return matchesSearch && matchesJurusan && matchesPLT;
+      })
+      .sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortBy) {
+          case 'user.full_name':
+            aValue = a.user?.full_name || '';
+            bValue = b.user?.full_name || '';
+            break;
+          case 'jurusan.nama_jurusan':
+            aValue = a.jurusan?.nama_jurusan || '';
+            bValue = b.jurusan?.nama_jurusan || '';
+            break;
+          case 'jabatan':
+            aValue = a.jabatan || '';
+            bValue = b.jabatan || '';
+            break;
+          case 'periode_mulai':
+            aValue = a.periode_mulai || '';
+            bValue = b.periode_mulai || '';
+            break;
+          default:
+            aValue = a.user?.full_name || '';
+            bValue = b.user?.full_name || '';
+        }
+        
+        return sortOrder === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      });
+  }, [pejabatList, searchTerm, filterJurusan, filterPLT, sortBy, sortOrder]);
 
+  // Handlers
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -123,7 +158,7 @@ const PejabatJurusanList = () => {
   const clearFilters = () => {
     setSearchTerm('');
     setFilterJurusan('');
-    setFilterJabatan('');
+    setFilterPLT('');
     setSortBy('user.full_name');
     setSortOrder('asc');
   };
@@ -132,13 +167,6 @@ const PejabatJurusanList = () => {
     try {
       const response = await api.get(`/api/users/pejabat-jurusan/${pejabatId}/`);
       setSelectedPejabat(response.data);
-      setEditFormData({
-        jurusan: response.data.jurusan?.id || '',
-        jabatan: response.data.jabatan || '',
-        tgl_mulai: response.data.tgl_mulai || '',
-        tgl_selesai: response.data.tgl_selesai || '',
-        plt: response.data.plt || false
-      });
       setIsEditing(false);
     } catch (error) {
       console.error('Error fetching pejabat details:', error);
@@ -146,19 +174,8 @@ const PejabatJurusanList = () => {
     }
   };
 
-  const handleEditClick = () => {
-    setEditFormData({
-      jurusan: selectedPejabat.jurusan?.id || '',
-      jabatan: selectedPejabat.jabatan || '',
-      tgl_mulai: selectedPejabat.tgl_mulai || '',
-      tgl_selesai: selectedPejabat.tgl_selesai || '',
-      plt: selectedPejabat.plt || false
-    });
-    setIsEditing(true);
-  };
-
   const handleInputChange = (field, value) => {
-    setEditFormData(prev => ({
+    setSelectedPejabat(prev => ({
       ...prev,
       [field]: value
     }));
@@ -167,35 +184,24 @@ const PejabatJurusanList = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Validate required fields
-      if (!editFormData.jurusan || !editFormData.jabatan || !editFormData.tgl_mulai || !editFormData.tgl_selesai) {
-        toast.error('Mohon lengkapi semua field yang diperlukan');
-        return;
-      }
-
       const response = await api.patch(`/api/users/pejabat-jurusan/${selectedPejabat.id}/`, {
-        jurusan_id: parseInt(editFormData.jurusan),
-        jabatan: editFormData.jabatan,
-        tgl_mulai: editFormData.tgl_mulai,
-        tgl_selesai: editFormData.tgl_selesai,
-        plt: editFormData.plt
+        jabatan: selectedPejabat.jabatan,
+        tgl_mulai: selectedPejabat.tgl_mulai,
+        tgl_selesai: selectedPejabat.tgl_selesai,
+        plt: selectedPejabat.plt,
+        label: selectedPejabat.label
       });
 
-      setSelectedPejabat(response.data);
-      setPejabatList(prevList => 
-        prevList.map(pejabat => 
-          pejabat.id === response.data.id ? response.data : pejabat
-        )
-      );
-      
+      // Update the pejabat in the list
+      setPejabatList(prev => prev.map(p => 
+        p.id === selectedPejabat.id ? response.data : p
+      ));
+
       setIsEditing(false);
       toast.success('Data Pejabat Jurusan berhasil diperbarui');
     } catch (error) {
       console.error('Error updating pejabat:', error);
-      const errorMessage = error.response?.data?.detail || 
-                         error.response?.data?.error || 
-                         'Gagal memperbarui data Pejabat Jurusan';
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.detail || 'Gagal memperbarui data Pejabat Jurusan');
     } finally {
       setIsSaving(false);
     }
@@ -212,28 +218,19 @@ const PejabatJurusanList = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!addFormData.user || !addFormData.jurusan || !addFormData.jabatan || !addFormData.tgl_mulai || !addFormData.tgl_selesai) {
-      toast.error('Mohon lengkapi semua field yang diperlukan');
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const formData = {
+      // Convert the form data to match the serializer requirements
+      const submitData = {
         user_id: parseInt(addFormData.user),
         jurusan_id: parseInt(addFormData.jurusan),
         jabatan: addFormData.jabatan,
         tgl_mulai: addFormData.tgl_mulai,
         tgl_selesai: addFormData.tgl_selesai,
-        plt: addFormData.plt
+        plt: addFormData.plt,
+        label: addFormData.label || null
       };
 
-      console.log('Submitting data:', formData);
-
-      const response = await api.post('/api/users/pejabat-jurusan/', formData);
-      
-      console.log('Response:', response.data);
-      
+      const response = await api.post('/api/users/pejabat-jurusan/', submitData);
       setPejabatList(prev => [...prev, response.data]);
       setShowAddModal(false);
       setAddFormData({
@@ -242,29 +239,30 @@ const PejabatJurusanList = () => {
         jabatan: '',
         tgl_mulai: '',
         tgl_selesai: '',
-        plt: false
+        plt: false,
+        label: ''
       });
       toast.success('Pejabat Jurusan berhasil ditambahkan');
-      
-      // Refresh the user list
-      const userResponse = await api.get('/api/users/');
-      const availableUsers = userResponse.data.filter(user => 
-        user.is_active && 
-        !pejabatList.some(pejabat => pejabat.pejabat?.id === user.id) &&
-        user.user_type !== 'pejabat_jurusan' &&
-        !['super_admin', 'dekan_fakultas', 'ketua_prodi', 'mahasiswa', 'staff_prodi', 'staff_fakultas'].includes(user.user_type)
-      );
-      setUserList(availableUsers);
     } catch (error) {
-      console.error('Error adding pejabat:', error);
-      const errorMessage = error.response?.data?.detail || 
-                         error.response?.data?.error || 
-                         'Gagal menambahkan Pejabat Jurusan';
-      toast.error(errorMessage);
+      console.error('Error adding pejabat jurusan:', error);
+      toast.error(error.response?.data?.detail || 'Gagal menambahkan Pejabat Jurusan');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Get unique values for filters
+  const uniqueJurusan = useMemo(() => {
+    return [...new Set(pejabatList
+      .map(pejabat => pejabat.jurusan?.nama_jurusan)
+      .filter(Boolean))];
+  }, [pejabatList]);
+
+  const uniqueJabatan = useMemo(() => {
+    return [...new Set(pejabatList
+      .map(pejabat => pejabat.jabatan)
+      .filter(Boolean))];
+  }, [pejabatList]);
 
   if (isLoading) {
     return (
@@ -274,6 +272,227 @@ const PejabatJurusanList = () => {
     );
   }
 
+  // If a pejabat is selected, show the detail/edit view
+  if (selectedPejabat) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => setSelectedPejabat(null)}
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Kembali ke Daftar Pejabat Jurusan
+          </button>
+          <div className="flex space-x-2">
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <Edit2 className="h-4 w-4" />
+                <span>Edit Data</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Batal</span>
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  {isSaving ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Pejabat Details */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6">
+            <div className="space-y-8">
+              {/* Personal Information */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Personal</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Nama Lengkap
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPejabat.user?.full_name || '-'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Hash className="h-4 w-4 mr-2" />
+                      NIP
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPejabat.user?.dosen_profile?.nip || '-'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPejabat.user?.email || '-'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Phone className="h-4 w-4 mr-2" />
+                      Nomor Telepon
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPejabat.user?.phone_number || '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Jabatan Information */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Jabatan</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Building className="h-4 w-4 mr-2" />
+                      Jurusan
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPejabat.jurusan?.nama_jurusan || '-'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Award className="h-4 w-4 mr-2" />
+                      Jabatan
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={selectedPejabat.jabatan || ''}
+                        onChange={(e) => handleInputChange('jabatan', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="Ketua">Ketua</option>
+                        <option value="Sekretaris">Sekretaris</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedPejabat.jabatan || '-'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Periode Mulai
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={selectedPejabat.tgl_mulai || ''}
+                        onChange={(e) => handleInputChange('tgl_mulai', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedPejabat.tgl_mulai || '-'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Periode Selesai
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={selectedPejabat.tgl_selesai || ''}
+                        onChange={(e) => handleInputChange('tgl_selesai', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedPejabat.tgl_selesai || '-'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Award className="h-4 w-4 mr-2" />
+                      Status PLT
+                    </label>
+                    {isEditing ? (
+                      <select
+                        value={selectedPejabat.plt ? 'true' : 'false'}
+                        onChange={(e) => handleInputChange('plt', e.target.value === 'true')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="false">Tidak</option>
+                        <option value="true">Ya</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedPejabat.plt ? 'Ya' : 'Tidak'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Label
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={selectedPejabat.label || ''}
+                        onChange={(e) => handleInputChange('label', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Contoh: Periode 2024-2028"
+                      />
+                    ) : (
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {selectedPejabat.label || '-'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main list view
   return (
     <div className="p-6 max-w-full mx-auto">
       {/* Header with Add Button */}
@@ -298,7 +517,7 @@ const PejabatJurusanList = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
             type="text"
-            placeholder="Cari berdasarkan nama..."
+            placeholder="Cari nama, NIP, atau email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -315,7 +534,7 @@ const PejabatJurusanList = () => {
             Filter & Urutkan
           </button>
           
-          {(searchTerm || filterJurusan || filterJabatan || sortBy !== 'user.full_name') && (
+          {(searchTerm || filterJurusan || filterPLT || sortBy !== 'user.full_name') && (
             <button
               onClick={clearFilters}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -336,22 +555,24 @@ const PejabatJurusanList = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Semua Jurusan</option>
-                {uniqueJurusan.map(jurusan => (
-                  <option key={jurusan} value={jurusan}>{jurusan}</option>
+                {jurusanList.map(jurusan => (
+                  <option key={jurusan.id} value={jurusan.nama_jurusan}>
+                    {jurusan.nama_jurusan}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Jabatan</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status PLT</label>
               <select
-                value={filterJabatan}
-                onChange={(e) => setFilterJabatan(e.target.value)}
+                value={filterPLT}
+                onChange={(e) => setFilterPLT(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Semua Jabatan</option>
-                <option value="Ketua">Ketua</option>
-                <option value="Sekretaris">Sekretaris</option>
+                <option value="">Semua Status</option>
+                <option value="true">PLT</option>
+                <option value="false">Definitif</option>
               </select>
             </div>
 
@@ -366,6 +587,7 @@ const PejabatJurusanList = () => {
                   <option value="user.full_name">Nama</option>
                   <option value="jurusan.nama_jurusan">Jurusan</option>
                   <option value="jabatan">Jabatan</option>
+                  <option value="periode_mulai">Periode Mulai</option>
                 </select>
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -386,103 +608,110 @@ const PejabatJurusanList = () => {
         </p>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('user.full_name')}>
-                <div className="flex items-center gap-2">
-                  Nama
-                  {sortBy === 'user.full_name' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
-                </div>
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('jurusan.nama_jurusan')}>
-                <div className="flex items-center gap-2">
-                  Jurusan
-                  {sortBy === 'jurusan.nama_jurusan' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
-                </div>
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('jabatan')}>
-                <div className="flex items-center gap-2">
-                  Jabatan
-                  {sortBy === 'jabatan' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
-                </div>
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Periode Jabatan
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Aksi
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAndSortedPejabat.map((pejabat) => (
-              <tr key={pejabat.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{pejabat.pejabat?.full_name || '-'}</div>
-                  <div className="text-sm text-gray-500">{pejabat.pejabat?.email || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{pejabat.jurusan?.nama_jurusan || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {pejabat.jabatan}
-                    {pejabat.plt && (
-                      <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        PLT
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {new Date(pejabat.tgl_mulai).toLocaleDateString('id-ID')} - 
-                    {new Date(pejabat.tgl_selesai).toLocaleDateString('id-ID')}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {new Date(pejabat.tgl_selesai) > new Date() ? (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Aktif
-                    </span>
-                  ) : (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                      Tidak Aktif
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        /* Table */
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('user.full_name')}>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleViewPejabat(pejabat.id)}
-                      className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
-                      title="Edit Pejabat"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleViewPejabat(pejabat.id)}
-                      className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                      title="Lihat Detail"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
+                    Nama
+                    {sortBy === 'user.full_name' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
                   </div>
-                </td>
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  NIP
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('jurusan.nama_jurusan')}>
+                  <div className="flex items-center gap-2">
+                    Jurusan
+                    {sortBy === 'jurusan.nama_jurusan' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('jabatan')}>
+                  <div className="flex items-center gap-2">
+                    Jabatan
+                    {sortBy === 'jabatan' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('periode_mulai')}>
+                  <div className="flex items-center gap-2">
+                    Periode
+                    {sortBy === 'periode_mulai' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Aksi
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredAndSortedPejabat.map((pejabat) => (
+                <tr
+                  key={pejabat.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleViewPejabat(pejabat.id)}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pejabat.user?.full_name || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pejabat.user?.dosen_profile?.nip || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pejabat.jurusan?.nama_jurusan || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pejabat.jabatan || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pejabat.tgl_mulai } - {pejabat.tgl_selesai}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      pejabat.plt 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {pejabat.plt ? 'PLT' : 'Definitif'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleViewPejabat(pejabat.id)}
+                        className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                        title="Edit Pejabat Jurusan"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleViewPejabat(pejabat.id)}
+                        className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
+                        title="Lihat Detail"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Empty State */}
-      {filteredAndSortedPejabat.length === 0 && (
+      {!isLoading && filteredAndSortedPejabat.length === 0 && (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
             <Search className="h-8 w-8 text-gray-400" />
@@ -518,27 +747,141 @@ const PejabatJurusanList = () => {
             {/* Modal Body */}
             <form onSubmit={handleAddSubmit} className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column */}
+                {/* Left Column - User Selection */}
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      User
+                      User Pejabat Jurusan
                     </label>
-                    <select
-                      value={addFormData.user}
-                      onChange={(e) => handleAddInputChange('user', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Pilih User</option>
-                      {userList.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.full_name} - {user.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="mb-6">
+                      <label className="block text-lg font-medium text-gray-900 mb-4">
+                        Pilih User Pejabat Jurusan
+                      </label>
+                      
+                      {/* Filter Controls */}
+                      <div className="space-y-4 mb-4">
+                        {/* Search and Sort Controls */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <input
+                                type="text"
+                                placeholder="Cari berdasarkan nama atau email..."
+                                value={userFilterOptions.searchTerm}
+                                onChange={(e) => setUserFilterOptions(prev => ({
+                                  ...prev,
+                                  searchTerm: e.target.value
+                                }))}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={userFilterOptions.sortBy}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortBy: e.target.value
+                              }))}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="name">Urutkan: Nama</option>
+                              <option value="email">Urutkan: Email</option>
+                            </select>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+                              }))}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              {userFilterOptions.sortOrder === 'asc' ? 
+                                <SortAsc className="h-5 w-5" /> : 
+                                <SortDesc className="h-5 w-5" />
+                              }
+                            </button>
+                          </div>
+                        </div>
 
+                        {/* Filter Options */}
+                        <div className="flex items-center gap-4 px-2">
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={userFilterOptions.onlyUnassigned}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                onlyUnassigned: e.target.checked
+                              }))}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Hanya tampilkan user yang belum menjadi Pejabat Jurusan
+                          </label>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="text-sm text-gray-600 px-2">
+                          Menampilkan {filteredUsers.length} dari {userList.length} user
+                        </div>
+                      </div>
+
+                      {/* User List */}
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="divide-y divide-gray-200 max-h-[400px] overflow-y-auto">
+                          {filteredUsers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                              Tidak ada user yang sesuai dengan filter
+                            </div>
+                          ) : (
+                            filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setAddFormData(prev => ({
+                                    ...prev,
+                                    user: user.id,
+                                    tgl_mulai: new Date().toISOString().split('T')[0],
+                                    tgl_selesai: new Date(new Date().setFullYear(new Date().getFullYear() + 4)).toISOString().split('T')[0],
+                                    plt: false
+                                  }));
+                                }}
+                                className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                  selectedUser?.id === user.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <h3 className="font-medium text-gray-900">{user.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                    {user.phone_number && (
+                                      <p className="text-sm text-gray-500">
+                                        <Phone className="inline-block h-4 w-4 mr-1" />
+                                        {user.phone_number}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedUser?.id === user.id && (
+                                    <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                      Terpilih
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Form Fields */}
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Jurusan
@@ -573,13 +916,10 @@ const PejabatJurusanList = () => {
                       <option value="Sekretaris">Sekretaris</option>
                     </select>
                   </div>
-                </div>
 
-                {/* Right Column */}
-                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Mulai
+                      Periode Mulai
                     </label>
                     <input
                       type="date"
@@ -592,7 +932,7 @@ const PejabatJurusanList = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Selesai
+                      Periode Selesai
                     </label>
                     <input
                       type="date"
@@ -604,15 +944,30 @@ const PejabatJurusanList = () => {
                   </div>
 
                   <div>
-                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={addFormData.plt}
-                        onChange={(e) => handleAddInputChange('plt', e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span>Pelaksana Tugas (PLT)</span>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status PLT
                     </label>
+                    <select
+                      value={addFormData.plt.toString()}
+                      onChange={(e) => handleAddInputChange('plt', e.target.value === 'true')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="false">Tidak</option>
+                      <option value="true">Ya</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Label (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={addFormData.label}
+                      onChange={(e) => handleAddInputChange('label', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Contoh: Periode 2024-2028"
+                    />
                   </div>
                 </div>
               </div>
@@ -645,195 +1000,6 @@ const PejabatJurusanList = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Detail/Edit View */}
-      {selectedPejabat && (
-        <div className="p-6 max-w-full mx-auto space-y-6">
-          {/* Header with Back Button */}
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => {
-                setSelectedPejabat(null);
-                setIsEditing(false);
-              }}
-              className="flex items-center text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Kembali ke Daftar Pejabat Jurusan
-            </button>
-            <div className="flex space-x-2">
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                >
-                  <Edit2 className="h-4 w-4" />
-                  <span>Edit Data</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                  >
-                    <X className="h-4 w-4" />
-                    <span>Batal</span>
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                  >
-                    {isSaving ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Pejabat Details */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6">
-              <div className="space-y-8">
-                {/* Personal Information */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Pejabat Jurusan</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <User className="h-4 w-4 mr-2" />
-                        Nama Lengkap
-                      </label>
-                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                        {selectedPejabat.pejabat?.full_name || '-'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <Mail className="h-4 w-4 mr-2" />
-                        Email
-                      </label>
-                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                        {selectedPejabat.pejabat?.email || '-'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <Building className="h-4 w-4 mr-2" />
-                        Jurusan
-                      </label>
-                      {isEditing ? (
-                        <select
-                          value={editFormData.jurusan || ''}
-                          onChange={(e) => handleInputChange('jurusan', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">Pilih Jurusan</option>
-                          {jurusanList.map(jurusan => (
-                            <option key={jurusan.id} value={jurusan.id}>
-                              {jurusan.nama_jurusan}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                          {selectedPejabat.jurusan?.nama_jurusan || '-'}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <Award className="h-4 w-4 mr-2" />
-                        Jabatan
-                      </label>
-                      {isEditing ? (
-                        <select
-                          value={editFormData.jabatan || ''}
-                          onChange={(e) => handleInputChange('jabatan', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">Pilih Jabatan</option>
-                          <option value="Ketua">Ketua</option>
-                          <option value="Sekretaris">Sekretaris</option>
-                        </select>
-                      ) : (
-                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                          {selectedPejabat.jabatan || '-'}
-                          {selectedPejabat.plt && (
-                            <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                              PLT
-                            </span>
-                          )}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Tanggal Mulai
-                      </label>
-                      {isEditing ? (
-                        <input
-                          type="date"
-                          value={editFormData.tgl_mulai || ''}
-                          onChange={(e) => handleInputChange('tgl_mulai', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      ) : (
-                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                          {new Date(selectedPejabat.tgl_mulai).toLocaleDateString('id-ID')}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Tanggal Selesai
-                      </label>
-                      {isEditing ? (
-                        <input
-                          type="date"
-                          value={editFormData.tgl_selesai || ''}
-                          onChange={(e) => handleInputChange('tgl_selesai', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      ) : (
-                        <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                          {new Date(selectedPejabat.tgl_selesai).toLocaleDateString('id-ID')}
-                        </p>
-                      )}
-                    </div>
-
-                    {isEditing && (
-                      <div className="space-y-2">
-                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={editFormData.plt}
-                            onChange={(e) => handleInputChange('plt', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span>Pelaksana Tugas (PLT)</span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

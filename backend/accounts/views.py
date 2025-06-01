@@ -836,7 +836,7 @@ class DekanFakultasDetailView(generics.RetrieveUpdateDestroyAPIView):
 class PejabatJurusanViewSet(viewsets.ModelViewSet):
     serializer_class = PejabatJurusanSerializer
     permission_classes = [IsAuthenticated]
-    queryset = PejabatJurusan.objects.select_related('jurusan', 'pejabat').all()
+    queryset = PejabatJurusan.objects.select_related('jurusan', 'user', 'user__dosen_profile').all()
 
     def create(self, request, *args, **kwargs):
         try:

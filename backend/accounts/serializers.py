@@ -1,24 +1,69 @@
 from rest_framework import serializers
 from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType
 
+class UserBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'full_name', 'email', 'phone_number', 'user_type']
+
 class JurusanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Jurusan
         fields = ['id', 'nama_jurusan', 'status', 'kode_surat']
-
-
-class PejabatJurusanSerializer(serializers.ModelSerializer):
-    jurusan = JurusanSerializer(read_only=True)
-
-    class Meta:
-        model = PejabatJurusan
-        fields = ['jabatan', 'jurusan', 'tgl_mulai', 'tgl_selesai', 'plt', 'label']
 
 class ProgramStudiSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProgramStudi
         fields = '__all__'
 
+class DosenBasicSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    program_studi = ProgramStudiSerializer(read_only=True)
+    
+    class Meta:
+        model = UserDosen
+        fields = ['user', 'nip', 'program_studi', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
+
+class PejabatJurusanSerializer(serializers.ModelSerializer):
+    user = UserBasicSerializer(read_only=True)
+    jurusan = JurusanSerializer(read_only=True)
+    dosen_profile = DosenBasicSerializer(source='user.dosen_profile', read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    jurusan_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = PejabatJurusan
+        fields = ['id', 'user', 'jurusan', 'dosen_profile', 'jabatan', 'tgl_mulai', 'tgl_selesai', 'plt', 'label', 'user_id', 'jurusan_id']
+        read_only_fields = ['id', 'user', 'jurusan', 'dosen_profile']
+
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id')
+        jurusan_id = validated_data.pop('jurusan_id')
+        
+        user = CustomUser.objects.get(id=user_id)
+        jurusan = Jurusan.objects.get(id=jurusan_id)
+        
+        # Update user type to pejabat_jurusan if not already
+        if user.user_type != UserType.PEJABAT_JURUSAN:
+            user.user_type = UserType.PEJABAT_JURUSAN
+            user.save()
+        
+        return PejabatJurusan.objects.create(
+            user=user,
+            jurusan=jurusan,
+            **validated_data
+        )
+
+    def update(self, instance, validated_data):
+        if 'jurusan_id' in validated_data:
+            jurusan_id = validated_data.pop('jurusan_id')
+            instance.jurusan = Jurusan.objects.get(id=jurusan_id)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 # class FakultasSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -29,19 +74,6 @@ class FakultasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fakultas
         fields = ['id', 'nama', 'kode', 'dekan']
-
-class UserBasicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'full_name', 'email', 'phone_number', 'user_type']
-
-class DosenBasicSerializer(serializers.ModelSerializer):
-    user = UserBasicSerializer(read_only=True)
-    program_studi = ProgramStudiSerializer(read_only=True)
-    
-    class Meta:
-        model = UserDosen
-        fields = ['user', 'nip', 'program_studi', 'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian', 'status_kepegawaian']
 
 class KetuaProdiSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)

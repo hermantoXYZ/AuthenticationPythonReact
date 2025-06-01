@@ -54,6 +54,8 @@ import StaffProdiList from "./users/StaffProdiList";
 import StaffFakultasList from "./users/StaffFakultasList";
 import ListMahasiswa from "./users/ListMahasiswa";
 import ListDekanFakultas from "./users/ListDekanFakultas";
+import PejabatJurusanList from "./users/PejabatJurusanList";
+
 
 
 
@@ -621,6 +623,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/users/staff-prodi": StaffProdiList,
     "/dashboard/users/staff-fakultas": StaffFakultasList,
     "/dashboard/users/dekan": ListDekanFakultas,
+    "/dashboard/users/pejabat-jurusan": PejabatJurusanList,
     // Skripsi Routes for Mahasiswa
     "/dashboard/skripsi/pengajuan": PengajuanJudul,
     "/dashboard/skripsi/status": StatusPengajuan,

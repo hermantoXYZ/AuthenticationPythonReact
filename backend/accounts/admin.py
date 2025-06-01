@@ -240,14 +240,17 @@ class PejabatJurusanAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = PejabatJurusanResource
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ('jurusan', 'jabatan', 'get_pejabat_name', 'tgl_mulai', 'tgl_selesai', 'plt')
-    list_filter = ('jabatan', 'plt', 'jurusan', 'tgl_mulai')
-    search_fields = ('jurusan__nama_jurusan', 'pejabat__full_name', 'label')
-    date_hierarchy = 'tgl_mulai'
+    list_display = ('get_pejabat_name', 'get_jurusan_name', 'jabatan', 'tgl_mulai', 'tgl_selesai', 'plt')
+    list_filter = ('jabatan', 'plt', 'jurusan')
+    search_fields = ('user__full_name', 'jurusan__nama_jurusan')
     
     def get_pejabat_name(self, obj):
-        return obj.pejabat.full_name if obj.pejabat else 'Belum Ditentukan'
+        return obj.user.full_name if obj.user else 'Belum Ditentukan'
     get_pejabat_name.short_description = 'Nama Pejabat'
+    
+    def get_jurusan_name(self, obj):
+        return obj.jurusan.nama_jurusan if obj.jurusan else '-'
+    get_jurusan_name.short_description = 'Jurusan'
 
 @admin.register(SkripsiJudul)
 class SkripsiJudulAdmin(ModelAdmin, ImportExportModelAdmin):
