@@ -43,6 +43,14 @@ const ListMahasiswa = () => {
   });
   const [userList, setUserList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userFilterOptions, setUserFilterOptions] = useState({
+    searchTerm: '',
+    sortBy: 'name', // 'name' or 'email'
+    sortOrder: 'asc',
+    onlyUnassigned: true, // hanya tampilkan yang belum jadi mahasiswa
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -351,6 +359,35 @@ const ListMahasiswa = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Filter and sort users
+  const filteredUsers = useMemo(() => {
+    return userList
+      .filter(user => {
+        const matchesSearch = (
+          user.full_name?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase())
+        );
+        
+        // Filter hanya user yang belum terdaftar sebagai mahasiswa
+        const isUnassigned = userFilterOptions.onlyUnassigned ? 
+          !mahasiswaList.some(mhs => mhs.user.id === user.id) : true;
+
+        return matchesSearch && isUnassigned;
+      })
+      .sort((a, b) => {
+        let aValue = userFilterOptions.sortBy === 'name' ? 
+          (a.full_name || '').toLowerCase() : 
+          (a.email || '').toLowerCase();
+        let bValue = userFilterOptions.sortBy === 'name' ? 
+          (b.full_name || '').toLowerCase() : 
+          (b.email || '').toLowerCase();
+        
+        return userFilterOptions.sortOrder === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      });
+  }, [userList, mahasiswaList, userFilterOptions]);
 
   // If a mahasiswa is selected, show the detail/edit view
   if (selectedMahasiswa) {
@@ -865,24 +902,130 @@ const ListMahasiswa = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       User Mahasiswa
                     </label>
-                    <select
-                      value={addFormData.user}
-                      onChange={(e) => handleAddInputChange('user', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Pilih User Mahasiswa</option>
-                      {userList.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.full_name} - {user.email} (Tipe: Mahasiswa)
-                        </option>
-                      ))}
-                    </select>
-                    {userList.length === 0 && (
-                      <p className="mt-1 text-sm text-gray-500">
-                        Tidak ada user dengan tipe mahasiswa yang tersedia. Silakan buat user baru dengan tipe mahasiswa terlebih dahulu.
-                      </p>
-                    )}
+                    <div className="mb-6">
+                      <label className="block text-lg font-medium text-gray-900 mb-4">
+                        Pilih User Mahasiswa
+                      </label>
+                      
+                      {/* Filter Controls */}
+                      <div className="space-y-4 mb-4">
+                        {/* Search and Sort Controls */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <input
+                                type="text"
+                                placeholder="Cari berdasarkan nama atau email..."
+                                value={userFilterOptions.searchTerm}
+                                onChange={(e) => setUserFilterOptions(prev => ({
+                                  ...prev,
+                                  searchTerm: e.target.value
+                                }))}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={userFilterOptions.sortBy}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortBy: e.target.value
+                              }))}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="name">Urutkan: Nama</option>
+                              <option value="email">Urutkan: Email</option>
+                            </select>
+                            
+                            <button
+                              onClick={() => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+                              }))}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              {userFilterOptions.sortOrder === 'asc' ? 
+                                <SortAsc className="h-5 w-5" /> : 
+                                <SortDesc className="h-5 w-5" />
+                              }
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Filter Options */}
+                        <div className="flex items-center gap-4 px-2">
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={userFilterOptions.onlyUnassigned}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                onlyUnassigned: e.target.checked
+                              }))}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Hanya tampilkan user yang belum terdaftar sebagai mahasiswa
+                          </label>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="text-sm text-gray-600 px-2">
+                          Menampilkan {filteredUsers.length} dari {userList.length} user
+                        </div>
+                      </div>
+
+                      {/* User List */}
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="divide-y divide-gray-200 max-h-[400px] overflow-y-auto">
+                          {filteredUsers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                              Tidak ada user yang sesuai dengan filter
+                            </div>
+                          ) : (
+                            filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setAddFormData(prev => ({
+                                    ...prev,
+                                    user: user.id,
+                                    angkatan: new Date().getFullYear().toString(),
+                                    semester: 1,
+                                    status: 'Aktif',
+                                    tanggal_masuk: new Date().toISOString().split('T')[0]
+                                  }));
+                                }}
+                                className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                  selectedUser?.id === user.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <h3 className="font-medium text-gray-900">{user.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                    {user.phone_number && (
+                                      <p className="text-sm text-gray-500">
+                                        <Phone className="inline-block h-4 w-4 mr-1" />
+                                        {user.phone_number}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedUser?.id === user.id && (
+                                    <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                      Terpilih
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
