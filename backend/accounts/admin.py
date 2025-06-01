@@ -15,7 +15,7 @@ from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from unfold.contrib.import_export.forms import ImportForm, ExportForm
 
-# Create Resource for CustomUser
+# Resource classes for all models
 class CustomUserResource(resources.ModelResource):
     class Meta:
         model = CustomUser
@@ -24,11 +24,72 @@ class CustomUserResource(resources.ModelResource):
         exclude = ('id',)
 
     def before_import_row(self, row, **kwargs):
-        # Hash the password if it exists in the row
         if 'password' in row:
             user = CustomUser()
             user.set_password(row['password'])
             row['password'] = user.password
+
+class FakultasResource(resources.ModelResource):
+    class Meta:
+        model = Fakultas
+        import_id_fields = ['kode']
+        fields = ('nama', 'kode', 'dekan')
+
+class ProgramStudiResource(resources.ModelResource):
+    class Meta:
+        model = ProgramStudi
+        import_id_fields = ['kode']
+        fields = ('nama', 'kode', 'fakultas', 'kaprodi', 'jenjang', 'akreditasi')
+
+class UserDosenResource(resources.ModelResource):
+    class Meta:
+        model = UserDosen
+        import_id_fields = ['nip']
+        exclude = ('id',)
+
+class UserMahasiswaResource(resources.ModelResource):
+    class Meta:
+        model = UserMahasiswa
+        import_id_fields = ['nim']
+        exclude = ('id',)
+
+class UserKetuaProdiResource(resources.ModelResource):
+    class Meta:
+        model = UserKetuaProdi
+        exclude = ('id',)
+
+class UserStaffProdiResource(resources.ModelResource):
+    class Meta:
+        model = UserStaffProdi
+        import_id_fields = ['nip']
+        exclude = ('id',)
+
+class UserStaffFakultasResource(resources.ModelResource):
+    class Meta:
+        model = UserStaffFakultas
+        import_id_fields = ['nip']
+        exclude = ('id',)
+
+class NoteResource(resources.ModelResource):
+    class Meta:
+        model = Note
+        exclude = ('id',)
+
+class JurusanResource(resources.ModelResource):
+    class Meta:
+        model = Jurusan
+        import_id_fields = ['kode_surat']
+        fields = ('nama_jurusan', 'kode_surat', 'status')
+
+class PejabatJurusanResource(resources.ModelResource):
+    class Meta:
+        model = PejabatJurusan
+        exclude = ('id',)
+
+class SkripsiJudulResource(resources.ModelResource):
+    class Meta:
+        model = SkripsiJudul
+        exclude = ('id',)
 
 admin.site.unregister(Group)
 
@@ -71,18 +132,27 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
     ordering = ('username',)
 
 @admin.register(Fakultas)
-class FakultasAdmin(ModelAdmin):
+class FakultasAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = FakultasResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('nama', 'kode', 'dekan')
     search_fields = ('nama', 'kode')
 
 @admin.register(ProgramStudi)
-class ProgramStudiAdmin(ModelAdmin):
+class ProgramStudiAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = ProgramStudiResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('nama', 'kode', 'fakultas', 'kaprodi', 'jenjang', 'akreditasi')
     list_filter = ('jenjang', 'akreditasi', 'fakultas')
     search_fields = ('nama', 'kode')
 
 @admin.register(UserDosen)
-class UserDosenAdmin(ModelAdmin):
+class UserDosenAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = UserDosenResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_full_name', 'nip', 'program_studi', 'jabatan_akademik', 'status_kepegawaian')
     list_filter = ('program_studi', 'jabatan_akademik', 'status_kepegawaian', 'pendidikan_terakhir')
     search_fields = ('user__username', 'user__full_name', 'nip', 'bidang_keahlian')
@@ -92,7 +162,10 @@ class UserDosenAdmin(ModelAdmin):
     get_full_name.short_description = 'Nama Lengkap'
 
 @admin.register(UserMahasiswa)
-class MahasiswaAdmin(ModelAdmin):
+class MahasiswaAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = UserMahasiswaResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_full_name', 'nim', 'program_studi', 'angkatan', 'semester', 'status', 'ipk')
     list_filter = ('program_studi', 'angkatan', 'semester', 'status')
     search_fields = ('user__username', 'user__full_name', 'nim')
@@ -103,7 +176,10 @@ class MahasiswaAdmin(ModelAdmin):
 
 # New: Admin for UserKetuaProdi (replacing UserProdi)
 @admin.register(UserKetuaProdi)
-class UserKetuaProdiAdmin(ModelAdmin):
+class UserKetuaProdiAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = UserKetuaProdiResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_full_name', 'program_studi', 'periode_mulai', 'periode_selesai')
     list_filter = ('program_studi', 'periode_mulai')
     search_fields = ('user__username', 'user__full_name', 'program_studi__nama')
@@ -115,7 +191,10 @@ class UserKetuaProdiAdmin(ModelAdmin):
 
 # New: Admin for UserStaffProdi
 @admin.register(UserStaffProdi)
-class UserStaffProdiAdmin(ModelAdmin):
+class UserStaffProdiAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = UserStaffProdiResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_full_name', 'nip', 'program_studi', 'jabatan')
     list_filter = ('program_studi', 'jabatan')
     search_fields = ('user__username', 'user__full_name', 'nip', 'jabatan')
@@ -126,7 +205,10 @@ class UserStaffProdiAdmin(ModelAdmin):
 
 # Updated: Admin for UserStaffFakultas (renamed from UserFakultas)
 @admin.register(UserStaffFakultas)
-class UserStaffFakultasAdmin(ModelAdmin):
+class UserStaffFakultasAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = UserStaffFakultasResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_full_name', 'nip', 'fakultas', 'jabatan')
     list_filter = ('fakultas', 'jabatan')
     search_fields = ('user__username', 'user__full_name', 'nip', 'jabatan')
@@ -136,19 +218,28 @@ class UserStaffFakultasAdmin(ModelAdmin):
     get_full_name.short_description = 'Nama Lengkap'
 
 @admin.register(Note)
-class NoteAdmin(ModelAdmin):
+class NoteAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = NoteResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('title', 'author', 'visibility', 'created_at')
     list_filter = ('visibility', 'created_at', 'author')
     search_fields = ('title', 'content')
 
 @admin.register(Jurusan)
-class JurusanAdmin(ModelAdmin):
+class JurusanAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = JurusanResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ['nama_jurusan', 'kode_surat', 'status']
     list_filter = ['status']
     search_fields = ['nama_jurusan', 'kode_surat']
 
 @admin.register(PejabatJurusan)
-class PejabatJurusanAdmin(ModelAdmin):
+class PejabatJurusanAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = PejabatJurusanResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('jurusan', 'jabatan', 'get_pejabat_name', 'tgl_mulai', 'tgl_selesai', 'plt')
     list_filter = ('jabatan', 'plt', 'jurusan', 'tgl_mulai')
     search_fields = ('jurusan__nama_jurusan', 'pejabat__full_name', 'label')
@@ -159,7 +250,10 @@ class PejabatJurusanAdmin(ModelAdmin):
     get_pejabat_name.short_description = 'Nama Pejabat'
 
 @admin.register(SkripsiJudul)
-class SkripsiJudulAdmin(ModelAdmin):
+class SkripsiJudulAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = SkripsiJudulResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     list_display = ('get_mahasiswa_name', 'get_program_studi', 'status', 'tanggal_pengajuan', 'judul_diterima')
     list_filter = ('status', 'tanggal_pengajuan', 'mahasiswa__program_studi')
     search_fields = (
@@ -211,5 +305,7 @@ class SkripsiJudulAdmin(ModelAdmin):
         return self.readonly_fields
 
 @admin.register(Group)
-class GroupAdmin(BaseGroupAdmin, ModelAdmin):
+class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
     pass

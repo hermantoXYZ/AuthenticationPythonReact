@@ -213,7 +213,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'email', 'full_name', 'phone_number', 'tempat_lahir', 
+            'id', 'username', 'email', 'full_name', 'phone_number', 'tempat_lahir', 
             'birth_date', 'gender', 'profile_picture', 'user_type', 'is_active',
             'mahasiswa_profile', 'dosen_profile', 'staff_prodi_profile', 
             'ketua_prodi_profile'
