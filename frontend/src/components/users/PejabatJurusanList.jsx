@@ -341,10 +341,11 @@ const PejabatJurusanList = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <Hash className="h-4 w-4 mr-2" />
-                      NIP
+                      Nomor Induk
                     </label>
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {selectedPejabat.user?.dosen_profile?.nip || '-'}
+                      {/* {selectedPejabat.user?.dosen_profile?.nip || '-'} */}
+                      {selectedPejabat.user?.username || 'Data Belum diupdate'}
                     </p>
                   </div>
 
@@ -517,7 +518,7 @@ const PejabatJurusanList = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
             type="text"
-            placeholder="Cari nama, NIP, atau email..."
+            placeholder="Cari nama, Nomor Induk, atau email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -626,7 +627,7 @@ const PejabatJurusanList = () => {
                   </div>
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  NIP
+                  Nomor Induk
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('jurusan.nama_jurusan')}>
                   <div className="flex items-center gap-2">
@@ -665,7 +666,7 @@ const PejabatJurusanList = () => {
                     {pejabat.user?.full_name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {pejabat.user?.dosen_profile?.nip || '-'}
+                    {pejabat.user?.username || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {pejabat.jurusan?.nama_jurusan || '-'}

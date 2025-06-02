@@ -298,9 +298,16 @@ const UserList = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <User className="h-4 w-4 mr-2" />
-                      Username
+                      Nomor Induk
                     </label>
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.username || '-'}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      TypeUser
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{selectedUser.user_type ? selectedUser.user_type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) : '-'}</p>
                   </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -429,7 +436,7 @@ const UserList = () => {
                             NIM
                           </label>
                           <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                            {selectedUser.mahasiswa_profile.nim || '-'}
+                            {selectedUser.mahasiswa_profile.nim || 'Data Belum diupdate'}
                           </p>
                         </div>
 
@@ -473,7 +480,7 @@ const UserList = () => {
                             NIP
                           </label>
                           <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                            {selectedUser.dosen_profile?.nip || selectedUser.staff_prodi_profile?.nip || '-'}
+                            {selectedUser.dosen_profile?.nip || selectedUser.staff_prodi_profile?.nip || 'Data Belum diupdate'}
                           </p>
                         </div>
 
@@ -483,7 +490,7 @@ const UserList = () => {
                             Program Studi
                           </label>
                           <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                            {selectedUser.dosen_profile?.program_studi?.nama || selectedUser.staff_prodi_profile?.program_studi?.nama || '-'}
+                            {selectedUser.dosen_profile?.program_studi?.nama || selectedUser.staff_prodi_profile?.program_studi?.nama || 'Data Belum diupdate'}
                           </p>
                         </div>
 
@@ -495,7 +502,7 @@ const UserList = () => {
                                 Jabatan Akademik
                               </label>
                               <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                                {selectedUser.dosen_profile.jabatan_akademik || '-'}
+                                {selectedUser.dosen_profile.jabatan_akademik || 'Data Belum diupdate'}
                               </p>
                             </div>
 
@@ -505,7 +512,7 @@ const UserList = () => {
                                 Pendidikan Terakhir
                               </label>
                               <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                                {selectedUser.dosen_profile.pendidikan_terakhir || '-'}
+                                {selectedUser.dosen_profile.pendidikan_terakhir || 'Data Belum diupdate'}
                               </p>
                             </div>
                           </>
@@ -540,7 +547,7 @@ const UserList = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Cari nama, email, atau username..."
+              placeholder="Cari nama, email, atau Nomor Induk..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -643,7 +650,7 @@ const UserList = () => {
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('username')}>
                   <div className="flex items-center gap-2">
-                    Username
+                    Nomor Induk
                     {sortBy === 'username' && (sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />)}
                   </div>
                 </th>

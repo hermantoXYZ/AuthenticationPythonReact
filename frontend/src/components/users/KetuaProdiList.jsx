@@ -341,7 +341,7 @@ const KetuaProdiList = () => {
                       NIP
                     </label>
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {selectedKaprodi.user?.dosen_profile?.nip || '-'}
+                      {selectedKaprodi.user?.username || '-'}
                     </p>
                   </div>
 
@@ -733,7 +733,7 @@ const KetuaProdiList = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
             type="text"
-            placeholder="Cari nama, NIP, atau email..."
+            placeholder="Cari nama, Nomor Induk, atau email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -833,7 +833,7 @@ const KetuaProdiList = () => {
                 </div>
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                NIP
+                Nomor Induk
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('program_studi.nama')}>
                 <div className="flex items-center gap-2">
@@ -862,7 +862,7 @@ const KetuaProdiList = () => {
                   <div className="text-sm font-medium text-gray-900">{kaprodi.user?.full_name || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{kaprodi.user?.dosen_profile?.nip || '-'}</div>
+                  <div className="text-sm text-gray-500">{kaprodi.user?.username || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">{kaprodi.program_studi?.nama || '-'}</div>

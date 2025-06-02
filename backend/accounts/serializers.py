@@ -4,7 +4,7 @@ from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMah
 class UserBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'full_name', 'email', 'phone_number', 'user_type']
+        fields = ['id', 'username', 'full_name', 'email', 'phone_number', 'user_type']
 
 class JurusanSerializer(serializers.ModelSerializer):
     class Meta:
