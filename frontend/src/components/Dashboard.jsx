@@ -134,19 +134,9 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
                 path: "/dashboard/users" 
               },
               { 
-                icon: GraduationCap, 
-                label: "Dosen", 
-                path: "/dashboard/users/dosen" 
-              },
-              { 
-                icon: BookOpen, 
-                label: "Mahasiswa", 
-                path: "/dashboard/users/mahasiswa" 
-              },
-              { 
                 icon: Award, 
-                label: "Ketua Program Studi", 
-                path: "/dashboard/users/ketua-prodi" 
+                label: "Dekan Fakultas", 
+                path: "/dashboard/users/dekan" 
               },
               { 
                 icon: School, 
@@ -155,8 +145,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               },
               { 
                 icon: Award, 
-                label: "Dekan Fakultas", 
-                path: "/dashboard/users/dekan" 
+                label: "Ketua Program Studi", 
+                path: "/dashboard/users/ketua-prodi" 
               },
               { 
                 icon: Users, 
@@ -167,7 +157,17 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
                 icon: Users, 
                 label: "Staff Prodi", 
                 path: "/dashboard/users/staff-prodi" 
-              }
+              },
+              { 
+                icon: GraduationCap, 
+                label: "Dosen", 
+                path: "/dashboard/users/dosen" 
+              },
+              { 
+                icon: BookOpen, 
+                label: "Mahasiswa", 
+                path: "/dashboard/users/mahasiswa" 
+              },
             ]
           },
           {

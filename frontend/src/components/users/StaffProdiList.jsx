@@ -33,6 +33,13 @@ const StaffProdiList = () => {
   });
   const [userList, setUserList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userFilterOptions, setUserFilterOptions] = useState({
+    searchTerm: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    onlyUnassigned: true,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,16 +49,15 @@ const StaffProdiList = () => {
         console.log('Staff list:', staffResponse.data);
         setStaffList(staffResponse.data);
         
-        // Then fetch all active users that are not yet staff prodi
+        // Then fetch all active users that are of type staff_prodi
         const userResponse = await api.get('/api/users/');
         console.log('All users:', userResponse.data);
         const availableUsers = userResponse.data.filter(user => 
           user.is_active && 
-          !staffResponse.data.some(staff => staff.user.id === user.id) &&
-          user.user_type !== 'staff_prodi' && // Exclude existing staff_prodi users
-          !['super_admin', 'dekan_fakultas', 'ketua_prodi', 'pejabat_jurusan', 'mahasiswa'].includes(user.user_type) // Exclude certain roles including mahasiswa
+          user.user_type === 'staff_prodi' &&  // Only show users with type staff_prodi
+          !staffResponse.data.some(staff => staff.user.id === user.id)
         );
-        console.log('Available users:', availableUsers);
+        console.log('Available staff users:', availableUsers);
         setUserList(availableUsers);
         
         // Finally fetch prodi list
@@ -68,6 +74,35 @@ const StaffProdiList = () => {
 
     fetchData();
   }, []);
+
+  // Filter and sort users
+  const filteredUsers = useMemo(() => {
+    return userList
+      .filter(user => {
+        const matchesSearch = (
+          user.full_name?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(userFilterOptions.searchTerm.toLowerCase())
+        );
+        
+        // Filter only users not yet assigned as staff prodi
+        const isUnassigned = userFilterOptions.onlyUnassigned ? 
+          !staffList.some(staff => staff.user.id === user.id) : true;
+
+        return matchesSearch && isUnassigned;
+      })
+      .sort((a, b) => {
+        let aValue = userFilterOptions.sortBy === 'name' ? 
+          (a.full_name || '').toLowerCase() : 
+          (a.email || '').toLowerCase();
+        let bValue = userFilterOptions.sortBy === 'name' ? 
+          (b.full_name || '').toLowerCase() : 
+          (b.email || '').toLowerCase();
+        
+        return userFilterOptions.sortOrder === 'asc' ? 
+          aValue.localeCompare(bValue) : 
+          bValue.localeCompare(aValue);
+      });
+  }, [userList, staffList, userFilterOptions]);
 
   // Get unique values for filters
   const uniqueProdi = useMemo(() => {
@@ -449,23 +484,134 @@ const StaffProdiList = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      User
+                      User Staff Program Studi
                     </label>
-                    <select
-                      value={addFormData.user}
-                      onChange={(e) => handleAddInputChange('user', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Pilih User</option>
-                      {userList.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.full_name} - {user.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="mb-6">
+                      <label className="block text-lg font-medium text-gray-900 mb-4">
+                        Pilih User Staff Program Studi
+                      </label>
+                      
+                      {/* Filter Controls */}
+                      <div className="space-y-4 mb-4">
+                        {/* Search and Sort Controls */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                              <input
+                                type="text"
+                                placeholder="Cari berdasarkan nama atau email..."
+                                value={userFilterOptions.searchTerm}
+                                onChange={(e) => setUserFilterOptions(prev => ({
+                                  ...prev,
+                                  searchTerm: e.target.value
+                                }))}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={userFilterOptions.sortBy}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortBy: e.target.value
+                              }))}
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="name">Urutkan: Nama</option>
+                              <option value="email">Urutkan: Email</option>
+                            </select>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setUserFilterOptions(prev => ({
+                                ...prev,
+                                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+                              }))}
+                              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              {userFilterOptions.sortOrder === 'asc' ? 
+                                <SortAsc className="h-5 w-5" /> : 
+                                <SortDesc className="h-5 w-5" />
+                              }
+                            </button>
+                          </div>
+                        </div>
 
+                        {/* Filter Options */}
+                        <div className="flex items-center gap-4 px-2">
+                          <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={userFilterOptions.onlyUnassigned}
+                              onChange={(e) => setUserFilterOptions(prev => ({
+                                ...prev,
+                                onlyUnassigned: e.target.checked
+                              }))}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Hanya tampilkan user yang belum menjadi Staff Program Studi
+                          </label>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="text-sm text-gray-600 px-2">
+                          Menampilkan {filteredUsers.length} dari {userList.length} user
+                        </div>
+                      </div>
+
+                      {/* User List */}
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="divide-y divide-gray-200 max-h-[400px] overflow-y-auto">
+                          {filteredUsers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                              Tidak ada user yang sesuai dengan filter
+                            </div>
+                          ) : (
+                            filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setAddFormData(prev => ({
+                                    ...prev,
+                                    user: user.id
+                                  }));
+                                }}
+                                className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                  selectedUser?.id === user.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <h3 className="font-medium text-gray-900">{user.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{user.email}</p>
+                                    {user.phone_number && (
+                                      <p className="text-sm text-gray-500">
+                                        <Phone className="inline-block h-4 w-4 mr-1" />
+                                        {user.phone_number}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {selectedUser?.id === user.id && (
+                                    <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                      Terpilih
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Program Studi
@@ -484,10 +630,7 @@ const StaffProdiList = () => {
                       ))}
                     </select>
                   </div>
-                </div>
 
-                {/* Right Column */}
-                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Jabatan
