@@ -20,6 +20,9 @@ const StaffProdiList = () => {
   const [prodiList, setProdiList] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [addFormData, setAddFormData] = useState({
     user: '',
     program_studi: '',
@@ -271,6 +274,53 @@ const StaffProdiList = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!staffToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/users/staff-prodi/${staffToDelete.id}/`);
+      
+      // Remove from list
+      setStaffList(prevList => prevList.filter(staff => staff.id !== staffToDelete.id));
+      
+      // Close modal
+      setShowDeleteModal(false);
+      setStaffToDelete(null);
+      
+      // Show success message
+      toast.success('Staff Program Studi berhasil dihapus');
+      
+      // If we're in detail view, go back to list
+      if (selectedStaff?.id === staffToDelete.id) {
+        setSelectedStaff(null);
+      }
+      
+      // Refresh user list
+      const userResponse = await api.get('/api/users/');
+      const availableUsers = userResponse.data.filter(user => 
+        user.is_active && 
+        user.user_type === 'staff_prodi' &&
+        !staffList.some(staff => staff.user.id === user.id)
+      );
+      setUserList(availableUsers);
+      
+    } catch (error) {
+      console.error('Error deleting staff:', error);
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.error || 
+                         'Gagal menghapus Staff Program Studi';
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = (staff) => {
+    setStaffToDelete(staff);
+    setShowDeleteModal(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -297,13 +347,15 @@ const StaffProdiList = () => {
           </button>
           <div className="flex space-x-2">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                <span>Edit Data</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span>Edit Data</span>
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -820,11 +872,11 @@ const StaffProdiList = () => {
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleViewStaff(staff.id)}
-                      className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                      title="Lihat Detail"
+                      onClick={() => handleDeleteClick(staff)}
+                      className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                      title="Hapus Staff"
                     >
-                      <MoreVertical className="h-4 w-4" />
+                      <UserX className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
@@ -848,6 +900,52 @@ const StaffProdiList = () => {
           >
             Reset Filter
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <UserX className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Hapus Staff Program Studi
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus {staffToDelete?.user?.full_name} dari daftar Staff Program Studi? 
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setStaffToDelete(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Hapus Staff</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

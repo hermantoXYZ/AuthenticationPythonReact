@@ -23,6 +23,9 @@ const PejabatJurusanList = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pejabatToDelete, setPejabatToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form data states
   const [addFormData, setAddFormData] = useState({
@@ -264,6 +267,53 @@ const PejabatJurusanList = () => {
       .filter(Boolean))];
   }, [pejabatList]);
 
+  const handleDelete = async () => {
+    if (!pejabatToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/users/pejabat-jurusan/${pejabatToDelete.id}/`);
+      
+      // Remove from list
+      setPejabatList(prevList => prevList.filter(pejabat => pejabat.id !== pejabatToDelete.id));
+      
+      // Close modal
+      setShowDeleteModal(false);
+      setPejabatToDelete(null);
+      
+      // Show success message
+      toast.success('Pejabat Jurusan berhasil dihapus');
+      
+      // If we're in detail view, go back to list
+      if (selectedPejabat?.id === pejabatToDelete.id) {
+        setSelectedPejabat(null);
+      }
+      
+      // Refresh user list
+      const userResponse = await api.get('/api/users/');
+      const availableUsers = userResponse.data.filter(user => 
+        user.is_active && 
+        user.user_type === 'pejabat_jurusan' &&
+        !pejabatList.some(pejabat => pejabat.user.id === user.id)
+      );
+      setUserList(availableUsers);
+      
+    } catch (error) {
+      console.error('Error deleting pejabat:', error);
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.error || 
+                         'Gagal menghapus Pejabat Jurusan';
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = (pejabat) => {
+    setPejabatToDelete(pejabat);
+    setShowDeleteModal(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -287,13 +337,15 @@ const PejabatJurusanList = () => {
           </button>
           <div className="flex space-x-2">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                <span>Edit Data</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span>Edit Data</span>
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -659,8 +711,7 @@ const PejabatJurusanList = () => {
               {filteredAndSortedPejabat.map((pejabat) => (
                 <tr
                   key={pejabat.id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => handleViewPejabat(pejabat.id)}
+                  className="hover:bg-gray-50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {pejabat.user?.full_name || '-'}
@@ -696,11 +747,14 @@ const PejabatJurusanList = () => {
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleViewPejabat(pejabat.id)}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                        title="Lihat Detail"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(pejabat);
+                        }}
+                        className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                        title="Hapus Pejabat Jurusan"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <UserX className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -1001,6 +1055,52 @@ const PejabatJurusanList = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <UserX className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Hapus Pejabat Jurusan
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus {pejabatToDelete?.user?.full_name} dari jabatan {pejabatToDelete?.jabatan} Jurusan {pejabatToDelete?.jurusan?.nama_jurusan}? 
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setPejabatToDelete(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Hapus Pejabat Jurusan</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

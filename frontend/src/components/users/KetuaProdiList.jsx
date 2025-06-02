@@ -19,6 +19,9 @@ const KetuaProdiList = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [prodiList, setProdiList] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [kaprodiToDelete, setKaprodiToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [addFormData, setAddFormData] = useState({
     user: '',
     program_studi: '',
@@ -261,6 +264,53 @@ const KetuaProdiList = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!kaprodiToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/ketua-prodi/${kaprodiToDelete.id}/`);
+      
+      // Remove from list
+      setKaprodiList(prevList => prevList.filter(kaprodi => kaprodi.id !== kaprodiToDelete.id));
+      
+      // Close modal
+      setShowDeleteModal(false);
+      setKaprodiToDelete(null);
+      
+      // Show success message
+      toast.success('Ketua Program Studi berhasil dihapus');
+      
+      // If we're in detail view, go back to list
+      if (selectedKaprodi?.id === kaprodiToDelete.id) {
+        setSelectedKaprodi(null);
+      }
+      
+      // Refresh user list
+      const userResponse = await api.get('/api/users/');
+      const availableUsers = userResponse.data.filter(user => 
+        user.is_active && 
+        user.user_type === 'ketua_prodi' &&
+        !kaprodiList.some(kaprodi => kaprodi.user.id === user.id)
+      );
+      setUserList(availableUsers);
+      
+    } catch (error) {
+      console.error('Error deleting kaprodi:', error);
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.error || 
+                         'Gagal menghapus Ketua Program Studi';
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = (kaprodi) => {
+    setKaprodiToDelete(kaprodi);
+    setShowDeleteModal(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -284,13 +334,22 @@ const KetuaProdiList = () => {
           </button>
           <div className="flex space-x-2">
             {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                <span>Edit Data</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span>Edit Data</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(selectedKaprodi)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+                >
+                  <UserX className="h-4 w-4" />
+                  <span>Hapus Ketua Prodi</span>
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -891,11 +950,11 @@ const KetuaProdiList = () => {
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleViewKaprodi(kaprodi.id)}
-                      className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                      title="Lihat Detail"
+                      onClick={() => handleDeleteClick(kaprodi)}
+                      className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                      title="Hapus Ketua Prodi"
                     >
-                      <MoreVertical className="h-4 w-4" />
+                      <UserX className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
@@ -919,6 +978,52 @@ const KetuaProdiList = () => {
           >
             Reset Filter
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <UserX className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Hapus Ketua Program Studi
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus {kaprodiToDelete?.user?.full_name} dari jabatan Ketua Program Studi {kaprodiToDelete?.program_studi?.nama}? 
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setKaprodiToDelete(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Hapus Ketua Prodi</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
