@@ -269,9 +269,8 @@ const StaffFakultasList = () => {
       const userResponse = await api.get('/api/users/');
       const availableUsers = userResponse.data.filter(user => 
         user.is_active && 
-        !staffList.some(staff => staff.user.id === user.id) &&
-        user.user_type !== 'staff_fakultas' &&
-        !['super_admin', 'dekan_fakultas', 'ketua_prodi', 'pejabat_jurusan', 'mahasiswa', 'staff_prodi'].includes(user.user_type)
+        user.user_type === 'staff_fakultas' &&  // Only show users with type staff_fakultas
+        !staffList.some(staff => staff.user.id === user.id)
       );
       setUserList(availableUsers);
     } catch (error) {
