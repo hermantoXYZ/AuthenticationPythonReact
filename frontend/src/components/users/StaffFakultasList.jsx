@@ -45,18 +45,18 @@ const StaffFakultasList = () => {
       try {
         // First fetch staff list
         const staffResponse = await api.get('/api/users/staff-fakultas/');
-        console.log('Staff list:', staffResponse.data);
+        // console.log('Staff listsss:', staffResponse.data);
         setStaffList(staffResponse.data);
         
         // Then fetch all active users that are of type staff_fakultas
         const userResponse = await api.get('/api/users/');
-        console.log('All users:', userResponse.data);
+        // console.log('All users:', userResponse.data);
         const availableUsers = userResponse.data.filter(user => 
           user.is_active && 
           user.user_type === 'staff_fakultas' &&  // Only show users with type staff_fakultas
           !staffResponse.data.some(staff => staff.user.id === user.id)
         );
-        console.log('Available staff users:', availableUsers);
+        // console.log('Available staff users:', availableUsers);
         setUserList(availableUsers);
         
         // Finally fetch fakultas list

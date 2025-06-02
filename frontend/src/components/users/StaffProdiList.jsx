@@ -24,12 +24,10 @@ const StaffProdiList = () => {
     user: '',
     program_studi: '',
     jabatan: '',
-    nip: ''
   });
   const [editFormData, setEditFormData] = useState({
     program_studi: '',
     jabatan: '',
-    nip: ''
   });
   const [userList, setUserList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,8 +119,7 @@ const StaffProdiList = () => {
   const filteredAndSortedStaff = useMemo(() => {
     return staffList.filter(staff => {
       const matchesSearch = (staff.user?.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (staff.user?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (staff.nip?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+                          (staff.user?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       const matchesProdi = !filterProdi || staff.program_studi?.nama === filterProdi;
       const matchesJabatan = !filterJabatan || staff.jabatan === filterJabatan;
       
@@ -165,8 +162,7 @@ const StaffProdiList = () => {
       setSelectedStaff(response.data);
       setEditFormData({
         program_studi: response.data.program_studi?.id || '',
-        jabatan: response.data.jabatan || '',
-        nip: response.data.nip || ''
+        jabatan: response.data.jabatan || ''
       });
       setIsEditing(false);
     } catch (error) {
@@ -178,8 +174,7 @@ const StaffProdiList = () => {
   const handleEditClick = () => {
     setEditFormData({
       program_studi: selectedStaff.program_studi?.id || '',
-      jabatan: selectedStaff.jabatan || '',
-      nip: selectedStaff.nip || ''
+      jabatan: selectedStaff.jabatan || ''
     });
     setIsEditing(true);
   };
@@ -197,7 +192,6 @@ const StaffProdiList = () => {
       const response = await api.patch(`/api/users/staff-prodi/${selectedStaff.id}/`, {
         program_studi: editFormData.program_studi,
         jabatan: editFormData.jabatan,
-        nip: editFormData.nip
       });
 
       setSelectedStaff(response.data);
@@ -240,7 +234,6 @@ const StaffProdiList = () => {
         user_id: parseInt(addFormData.user),
         program_studi_id: parseInt(addFormData.program_studi),
         jabatan: addFormData.jabatan,
-        nip: addFormData.nip || null
       };
 
       console.log('Submitting data:', formData);
@@ -256,7 +249,6 @@ const StaffProdiList = () => {
         user: '',
         program_studi: '',
         jabatan: '',
-        nip: ''
       });
       toast.success('Staff Program Studi berhasil ditambahkan');
       
@@ -368,22 +360,12 @@ const StaffProdiList = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
-                      <Hash className="h-4 w-4 mr-2" />
-                      NIP
+                      <User className="h-4 w-4 mr-2" />
+                      Nomor Induk
                     </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editFormData.nip || ''}
-                        onChange={(e) => handleInputChange('nip', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Masukkan NIP"
-                      />
-                    ) : (
-                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                        {selectedStaff.nip || '-'}
-                      </p>
-                    )}
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedStaff.user?.username || '-'}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -645,19 +627,6 @@ const StaffProdiList = () => {
                       <option value="Sekretaris Prodi">Sekretaris Prodi</option>
                     </select>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      NIP
-                    </label>
-                    <input
-                      type="text"
-                      value={addFormData.nip}
-                      onChange={(e) => handleAddInputChange('nip', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Masukkan NIP"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -700,7 +669,7 @@ const StaffProdiList = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
             type="text"
-            placeholder="Cari nama, NIP, atau email..."
+            placeholder="Cari nama, Nomor Induk, atau email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -801,7 +770,7 @@ const StaffProdiList = () => {
                 </div>
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                NIP
+                Nomor Induk
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('program_studi.nama')}>
                 <div className="flex items-center gap-2">
@@ -830,7 +799,7 @@ const StaffProdiList = () => {
                   <div className="text-sm font-medium text-gray-900">{staff.user?.full_name || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{staff.nip || '-'}</div>
+                  <div className="text-sm text-gray-500">{staff.user?.username || '-'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">{staff.program_studi?.nama || '-'}</div>
