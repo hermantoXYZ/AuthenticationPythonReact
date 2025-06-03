@@ -372,7 +372,7 @@ class FakultasViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-class DosenListView(generics.ListAPIView):
+class DosenListView(generics.ListCreateAPIView):
     serializer_class = DosenProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -390,18 +390,61 @@ class DosenListView(generics.ListAPIView):
             'user',
             'program_studi'
         ).order_by('user__full_name')
-        
-        # Log the available dosen
-        print("Available dosen in DosenListView:")
-        for dosen in queryset:
-            print(f"ID: {dosen.id}, Name: {dosen.user.full_name}, NIP: {dosen.nip}")
-        
         return queryset
 
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        print("Response data from DosenListView:", response.data)
-        return response
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class DosenDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = DosenProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = UserDosen.objects.select_related('user', 'program_studi')
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            user = instance.user
+            
+            # Delete the dosen profile
+            self.perform_destroy(instance)
+            
+            # Update user type back to default if needed
+            if user.user_type in [UserType.DOSEN, UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN]:
+                user.user_type = UserType.DOSEN
+                user.save()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class KetuaProdiViewSet(viewsets.ModelViewSet):
     serializer_class = KetuaProdiSerializer

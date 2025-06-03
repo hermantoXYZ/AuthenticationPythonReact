@@ -342,13 +342,6 @@ const KetuaProdiList = () => {
                   <Edit2 className="h-4 w-4" />
                   <span>Edit Data</span>
                 </button>
-                <button
-                  onClick={() => handleDeleteClick(selectedKaprodi)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
-                >
-                  <UserX className="h-4 w-4" />
-                  <span>Hapus Ketua Prodi</span>
-                </button>
               </>
             ) : (
               <>

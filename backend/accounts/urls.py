@@ -6,7 +6,7 @@ from .views import (
     FakultasViewSet, DosenListView, KetuaProdiViewSet, StaffProdiListView,
     StaffProdiDetailView, StaffFakultasListView, StaffFakultasDetailView,
     MahasiswaListView, MahasiswaDetailView, DekanFakultasListView, DekanFakultasDetailView,
-    PejabatJurusanViewSet
+    PejabatJurusanViewSet, DosenDetailView
 )
 
 # Create a router and register our viewsets with it.
@@ -34,6 +34,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
     path('users/dosen/', DosenListView.as_view(), name='dosen-list'),
+    path('users/dosen/<int:pk>/', DosenDetailView.as_view(), name='dosen-detail'),
     path('users/mahasiswa/', MahasiswaListView.as_view(), name='mahasiswa-list'),
     path('users/mahasiswa/<int:pk>/', MahasiswaDetailView.as_view(), name='mahasiswa-detail'),
     path('users/staff-prodi/', StaffProdiListView.as_view(), name='staff-prodi-list'),

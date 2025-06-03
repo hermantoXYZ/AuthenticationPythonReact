@@ -108,16 +108,47 @@ class KetuaProdiSerializer(serializers.ModelSerializer):
 class DosenProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
     program_studi = ProgramStudiSerializer(read_only=True)
-    pejabat_jurusan = PejabatJurusanSerializer(read_only=True)
-    id = serializers.IntegerField(source='user.id')  # Add user ID
+    user_id = serializers.IntegerField(write_only=True)
+    program_studi_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = UserDosen
         fields = [
-            'id', 'user', 'nip', 'jabatan_akademik', 'program_studi',
-            'pendidikan_terakhir', 'bidang_keahlian', 'pejabat_jurusan',
+            'id', 'user', 'user_id', 'nip', 'program_studi', 'program_studi_id',
+            'jabatan_akademik', 'pendidikan_terakhir', 'bidang_keahlian',
             'status_kepegawaian'
         ]
+        read_only_fields = ['id', 'user', 'program_studi']
+
+    def create(self, validated_data):
+        user_id = validated_data.pop('user_id')
+        program_studi_id = validated_data.pop('program_studi_id')
+        
+        user = CustomUser.objects.get(id=user_id)
+        program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        
+        # Update user type if needed
+        if user.user_type not in [UserType.DOSEN, UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN]:
+            user.user_type = UserType.DOSEN
+            user.save()
+        
+        dosen = UserDosen.objects.create(
+            user=user,
+            program_studi=program_studi,
+            **validated_data
+        )
+        return dosen
+
+    def update(self, instance, validated_data):
+        if 'program_studi_id' in validated_data:
+            program_studi_id = validated_data.pop('program_studi_id')
+            instance.program_studi = ProgramStudi.objects.get(id=program_studi_id)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 class MahasiswaProfileSerializer(serializers.ModelSerializer):
     user = UserBasicSerializer(read_only=True)
