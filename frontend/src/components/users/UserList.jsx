@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, MoreVertical, Edit2, UserX, UserCheck, GraduationCap, X, Save, ArrowLeft, Building, Award, BookOpen } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, MoreVertical, Edit2, UserX, ShieldPlus, UserCheck, GraduationCap, X, Save, ArrowLeft, Building, Award, BookOpen, ShieldCheck } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'sonner';
 import { Toaster } from "@/components/ui/sonner";
@@ -730,7 +730,7 @@ const UserList = () => {
                         }`}
                         title={user.is_active ? 'Nonaktifkan User' : 'Aktifkan User'}
                       >
-                        {user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                        {user.is_active ? <ShieldPlus className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                       </button>
                       <button
                         onClick={() => handleViewUser(user.id)}

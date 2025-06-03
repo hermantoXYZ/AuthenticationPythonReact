@@ -11,6 +11,8 @@ const DosenList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterJabatan, setFilterJabatan] = useState('');
   const [filterPendidikan, setFilterPendidikan] = useState('');
+  const [filterProdi, setFilterProdi] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [sortBy, setSortBy] = useState('full_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showFilters, setShowFilters] = useState(false);
@@ -46,6 +48,9 @@ const DosenList = () => {
     sortOrder: 'asc',
     onlyUnassigned: true,
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [dosenToDelete, setDosenToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,29 +89,59 @@ const DosenList = () => {
   // Get unique values for filters
   const uniqueJabatan = useMemo(() => {
     return [...new Set(dosenList
-      .map(dosen => dosen.dosen_profile?.jabatan_akademik)
+      .map(dosen => dosen.jabatan_akademik)
       .filter(Boolean))];
   }, [dosenList]);
 
   const uniquePendidikan = useMemo(() => {
     return [...new Set(dosenList
-      .map(dosen => dosen.dosen_profile?.pendidikan_terakhir)
+      .map(dosen => dosen.pendidikan_terakhir)
+      .filter(Boolean))];
+  }, [dosenList]);
+
+  const uniqueStatus = useMemo(() => {
+    return [...new Set(dosenList
+      .map(dosen => dosen.status_kepegawaian)
       .filter(Boolean))];
   }, [dosenList]);
 
   // Filter and sort data
   const filteredAndSortedDosen = useMemo(() => {
     return dosenList.filter(dosen => {
-      const matchesSearch = (dosen.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (dosen.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (dosen.dosen_profile?.nip?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-      const matchesJabatan = !filterJabatan || dosen.dosen_profile?.jabatan_akademik === filterJabatan;
-      const matchesPendidikan = !filterPendidikan || dosen.dosen_profile?.pendidikan_terakhir === filterPendidikan;
+      const matchesSearch = (dosen.user?.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                          (dosen.user?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                          (dosen.nip?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      const matchesJabatan = !filterJabatan || dosen.jabatan_akademik === filterJabatan;
+      const matchesPendidikan = !filterPendidikan || dosen.pendidikan_terakhir === filterPendidikan;
+      const matchesProdi = !filterProdi || dosen.program_studi?.id === parseInt(filterProdi);
+      const matchesStatus = !filterStatus || dosen.status_kepegawaian === filterStatus;
       
-      return matchesSearch && matchesJabatan && matchesPendidikan;
+      return matchesSearch && matchesJabatan && matchesPendidikan && matchesProdi && matchesStatus;
     }).sort((a, b) => {
-      let aValue = a[sortBy] || '';
-      let bValue = b[sortBy] || '';
+      let aValue = '';
+      let bValue = '';
+
+      switch(sortBy) {
+        case 'full_name':
+          aValue = a.user?.full_name || '';
+          bValue = b.user?.full_name || '';
+          break;
+        case 'email':
+          aValue = a.user?.email || '';
+          bValue = b.user?.email || '';
+          break;
+        case 'nip':
+          aValue = a.nip || '';
+          bValue = b.nip || '';
+          break;
+        case 'program_studi':
+          aValue = a.program_studi?.nama || '';
+          bValue = b.program_studi?.nama || '';
+          break;
+        default:
+          aValue = a[sortBy] || '';
+          bValue = b[sortBy] || '';
+      }
       
       if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
@@ -117,7 +152,7 @@ const DosenList = () => {
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     });
-  }, [dosenList, searchTerm, filterJabatan, filterPendidikan, sortBy, sortOrder]);
+  }, [dosenList, searchTerm, filterJabatan, filterPendidikan, filterProdi, filterStatus, sortBy, sortOrder]);
 
   // Filter and sort users
   const filteredUsers = useMemo(() => {
@@ -161,6 +196,8 @@ const DosenList = () => {
     setSearchTerm('');
     setFilterJabatan('');
     setFilterPendidikan('');
+    setFilterProdi('');
+    setFilterStatus('');
     setSortBy('full_name');
     setSortOrder('asc');
   };
@@ -326,6 +363,56 @@ const DosenList = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!dosenToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/users/dosen/${dosenToDelete.id}/`);
+      
+      // Remove from list
+      setDosenList(prevList => prevList.filter(dosen => dosen.id !== dosenToDelete.id));
+      
+      // Close modal
+      setShowDeleteModal(false);
+      setDosenToDelete(null);
+      
+      // Show success message
+      toast.success('Dosen berhasil dihapus');
+      
+      // If we're in detail view, go back to list
+      if (selectedDosen?.id === dosenToDelete.id) {
+        setSelectedDosen(null);
+      }
+      
+      // Refresh user list
+      const userResponse = await api.get('/api/users/');
+      const availableUsers = userResponse.data.filter(user => 
+        user.is_active && 
+        (user.user_type === 'dosen' || 
+         user.user_type === 'dekan_fakultas' || 
+         user.user_type === 'ketua_prodi' || 
+         user.user_type === 'pejabat_jurusan') &&
+        !dosenList.some(dosen => dosen.user.id === user.id)
+      );
+      setUserList(availableUsers);
+      
+    } catch (error) {
+      console.error('Error deleting dosen:', error);
+      const errorMessage = error.response?.data?.detail || 
+                         error.response?.data?.error || 
+                         'Gagal menghapus Dosen';
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = (dosen) => {
+    setDosenToDelete(dosen);
+    setShowDeleteModal(true);
   };
 
   if (isLoading) {
@@ -687,7 +774,7 @@ const DosenList = () => {
             Filter & Urutkan
           </button>
           
-          {(searchTerm || filterJabatan || filterPendidikan || sortBy !== 'full_name') && (
+          {(searchTerm || filterJabatan || filterPendidikan || filterProdi || filterStatus || sortBy !== 'full_name') && (
             <button
               onClick={clearFilters}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -701,6 +788,20 @@ const DosenList = () => {
         {showFilters && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Program Studi</label>
+              <select
+                value={filterProdi}
+                onChange={(e) => setFilterProdi(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Semua Program Studi</option>
+                {programStudiList.map(prodi => (
+                  <option key={prodi.id} value={prodi.id}>{prodi.nama}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Jabatan Akademik</label>
               <select
                 value={filterJabatan}
@@ -710,6 +811,20 @@ const DosenList = () => {
                 <option value="">Semua Jabatan</option>
                 {uniqueJabatan.map(jabatan => (
                   <option key={jabatan} value={jabatan}>{jabatan}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status Kepegawaian</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Semua Status</option>
+                {uniqueStatus.map(status => (
+                  <option key={status} value={status}>{status}</option>
                 ))}
               </select>
             </div>
@@ -738,7 +853,10 @@ const DosenList = () => {
                 >
                   <option value="full_name">Nama</option>
                   <option value="email">Email</option>
-                  <option value="dosen_profile.nip">NIP</option>
+                  <option value="nip">NIP</option>
+                  <option value="program_studi">Program Studi</option>
+                  <option value="jabatan_akademik">Jabatan Akademik</option>
+                  <option value="status_kepegawaian">Status Kepegawaian</option>
                 </select>
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -1121,6 +1239,13 @@ const DosenList = () => {
                       {dosen.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </button>
                     <button
+                      onClick={() => handleDeleteClick(dosen)}
+                      className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                      title="Hapus Dosen"
+                    >
+                      <UserX className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => handleViewDosen(dosen.id)}
                       className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
                       title="Lihat Detail"
@@ -1149,6 +1274,52 @@ const DosenList = () => {
           >
             Reset Filter
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <UserX className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Hapus Dosen
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus {dosenToDelete?.user?.full_name} dari daftar Dosen? 
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDosenToDelete(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Hapus Dosen</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
