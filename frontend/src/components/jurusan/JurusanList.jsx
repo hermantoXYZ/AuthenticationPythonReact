@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, SortAsc, SortDesc, School, BookOpen, Hash, X, Plus } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc, School, BookOpen, Hash, X, Plus, ArrowLeft } from 'lucide-react';
 import api from '../../api';
 import { toast } from 'sonner';
 import { Toaster } from "@/components/ui/sonner";
@@ -15,6 +15,7 @@ const JurusanList = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedJurusan, setSelectedJurusan] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -55,6 +56,11 @@ const JurusanList = () => {
       status: jurusan.status
     });
     setShowEditModal(true);
+  };
+
+  const handleViewDetail = (jurusan) => {
+    setSelectedJurusan(jurusan);
+    setShowDetailModal(true);
   };
 
   const handleEditSubmit = async (e) => {
@@ -273,7 +279,7 @@ const JurusanList = () => {
               <div className="mt-6 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
                 <button 
                   className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                  onClick={() => navigate(`/dashboard/jurusan/${jurusan.id}`)}
+                  onClick={() => handleViewDetail(jurusan)}
                 >
                   Lihat Detail
                 </button>
@@ -303,6 +309,91 @@ const JurusanList = () => {
           >
             Reset Filter
           </button>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedJurusan && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl max-h-[95vh] w-full overflow-hidden flex flex-col">
+            {/* Header - Fixed */}
+            <div className="p-6 border-b border-gray-200 bg-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">Detail Jurusan</h2>
+                  <p className="text-sm text-gray-500 mt-1">Informasi lengkap jurusan</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedJurusan(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 gap-6">
+                {/* Basic Information */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4">Informasi Utama</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Jurusan
+                      </label>
+                      <div className="flex items-center gap-2 text-gray-900 bg-white px-4 py-2.5 rounded-lg border border-gray-200">
+                        <BookOpen className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                        <span className="font-medium break-words">{selectedJurusan.nama_jurusan}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Kode Surat
+                      </label>
+                      <div className="flex items-center gap-2 text-gray-900 bg-white px-4 py-2.5 rounded-lg border border-gray-200">
+                        <Hash className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                        <span className="font-medium">{selectedJurusan.kode_surat}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Status
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <School className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(selectedJurusan.status)}`}>
+                          Status {selectedJurusan.status}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer - Fixed */}
+            <div className="p-6 border-t border-gray-200 bg-white">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedJurusan(null);
+                  }}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
