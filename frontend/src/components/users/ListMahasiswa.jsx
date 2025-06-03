@@ -25,7 +25,6 @@ const ListMahasiswa = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [addFormData, setAddFormData] = useState({
     user: '',
-    nim: '',
     kelas: '',
     program_studi: '',
     angkatan: '',
@@ -297,7 +296,7 @@ const ListMahasiswa = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!addFormData.user || !addFormData.nim || !addFormData.kelas || !addFormData.program_studi || !addFormData.angkatan || !addFormData.tanggal_masuk) {
+    if (!addFormData.user || !addFormData.kelas || !addFormData.program_studi || !addFormData.angkatan || !addFormData.tanggal_masuk) {
       toast.error('Mohon lengkapi semua field yang diperlukan');
       setIsSubmitting(false);
       return;
@@ -308,7 +307,6 @@ const ListMahasiswa = () => {
       
       const formData = {
         user_id: parseInt(addFormData.user),
-        nim: addFormData.nim,
         kelas: addFormData.kelas,
         program_studi_id: parseInt(addFormData.program_studi),
         angkatan: addFormData.angkatan,
@@ -331,7 +329,6 @@ const ListMahasiswa = () => {
       setShowAddModal(false);
       setAddFormData({
         user: '',
-        nim: '',
         kelas: '',
         program_studi: '',
         angkatan: '',
@@ -482,7 +479,7 @@ const ListMahasiswa = () => {
                       NIM
                     </label>
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {selectedMahasiswa.nim || '-'}
+                      {selectedMahasiswa.user?.username || '-'}
                     </p>
                   </div>
 
@@ -616,7 +613,7 @@ const ListMahasiswa = () => {
                         <option value="">Pilih Dosen Wali</option>
                         {dosenList.map(dosen => (
                           <option key={dosen.id} value={dosen.nip}>
-                            {dosen.user?.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
+                            {dosen.user?.full_name} {dosen.user?.username ? `- ${dosen.user?.username}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
                           </option>
                         ))}
                       </select>
@@ -847,7 +844,7 @@ const ListMahasiswa = () => {
                     {mahasiswa.user?.full_name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {mahasiswa.nim || '-'}
+                    {mahasiswa.user?.username || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {mahasiswa.kelas || '-'}
@@ -1065,19 +1062,6 @@ const ListMahasiswa = () => {
                 <div className="space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      NIM
-                    </label>
-                    <input
-                      type="text"
-                      value={addFormData.nim}
-                      onChange={(e) => handleAddInputChange('nim', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Masukkan NIM"
-                      required
-                    />
-                  </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Kelas
                     </label>
                     <select
@@ -1173,7 +1157,7 @@ const ListMahasiswa = () => {
                       <option value="">Pilih Dosen Wali</option>
                       {dosenList.map(dosen => (
                         <option key={dosen.id} value={dosen.nip}>
-                          {dosen.user?.full_name} {dosen.nip ? `- ${dosen.nip}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
+                          {dosen.user?.full_name} {dosen.user?.username ? `- ${dosen.user?.username}` : ''} ({dosen.jabatan_akademik || 'Dosen'})
                         </option>
                       ))}
                     </select>

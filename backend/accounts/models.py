@@ -277,7 +277,7 @@ class UserMahasiswa(models.Model):
         related_name='mahasiswa_profile',
         limit_choices_to={'user_type': UserType.MAHASISWA}
     )
-    nim = models.CharField(max_length=20, unique=True, verbose_name="NIM")
+    nim = models.CharField(max_length=20, unique=True, verbose_name="NIM", null=True, blank=True)
     program_studi = models.ForeignKey(ProgramStudi, on_delete=models.CASCADE, related_name='mahasiswa')
     angkatan = models.CharField(max_length=4)
     semester = models.PositiveIntegerField(default=1)
