@@ -312,27 +312,6 @@ const KetuaProdiList = () => {
     setShowDeleteModal(true);
   };
 
-  const handleToggleActive = async (kaprodi) => {
-    try {
-      const response = await api.patch(`/api/users/${kaprodi.user.id}/`, {
-        is_active: !kaprodi.user.is_active
-      });
-      
-      setKaprodiList(prevList => 
-        prevList.map(item => 
-          item.id === kaprodi.id 
-            ? { ...item, user: { ...item.user, is_active: !item.user.is_active } }
-            : item
-        )
-      );
-      
-      toast.success(`Akun ${kaprodi.user.is_active ? 'dinonaktifkan' : 'diaktifkan'} berhasil`);
-    } catch (error) {
-      console.error('Error toggling kaprodi status:', error);
-      toast.error('Gagal mengubah status Ketua Program Studi');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -923,9 +902,6 @@ const KetuaProdiList = () => {
                 </div>
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status Akun
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status PLT
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -952,15 +928,6 @@ const KetuaProdiList = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    kaprodi.user?.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {kaprodi.user?.is_active ? 'Aktif' : 'Nonaktif'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     kaprodi.plt 
                       ? 'bg-yellow-100 text-yellow-800' 
                       : 'bg-green-100 text-green-800'
@@ -976,17 +943,6 @@ const KetuaProdiList = () => {
                       title="Edit Ketua Prodi"
                     >
                       <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleToggleActive(kaprodi)}
-                      className={`p-1 rounded-full ${
-                        kaprodi.user?.is_active 
-                          ? 'text-red-600 hover:text-red-900 hover:bg-red-50' 
-                          : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                      }`}
-                      title={kaprodi.user?.is_active ? 'Nonaktifkan Ketua Prodi' : 'Aktifkan Ketua Prodi'}
-                    >
-                      {kaprodi.user?.is_active ? <ShieldPlus className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => handleDeleteClick(kaprodi)}
