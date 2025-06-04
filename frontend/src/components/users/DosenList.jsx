@@ -202,25 +202,6 @@ const DosenList = () => {
     setSortOrder('asc');
   };
 
-  const handleToggleActive = async (dosen) => {
-    try {
-      const response = await api.patch(`/api/users/${dosen.id}/`, {
-        is_active: !dosen.is_active
-      });
-      
-      setDosenList(prevList => 
-        prevList.map(item => 
-          item.id === dosen.id ? { ...item, is_active: !item.is_active } : item
-        )
-      );
-      
-      toast.success(`Akun ${dosen.is_active ? 'dinonaktifkan' : 'diaktifkan'} berhasil`);
-    } catch (error) {
-      console.error('Error toggling dosen status:', error);
-      toast.error('Gagal mengubah status dosen');
-    }
-  };
-
   const handleViewDosen = async (dosenId) => {
     try {
       const response = await api.get(`/api/users/dosen/${dosenId}/`);
@@ -1184,9 +1165,6 @@ const DosenList = () => {
                 Jabatan Akademik
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aksi
               </th>
             </tr>
@@ -1209,15 +1187,6 @@ const DosenList = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">{dosen.jabatan_akademik || '-'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    dosen.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {dosen.is_active ? 'Aktif' : 'Nonaktif'}
-                  </span>
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex items-center gap-2">
                     <button
@@ -1228,29 +1197,11 @@ const DosenList = () => {
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleToggleActive(dosen)}
-                      className={`p-1 rounded-full ${
-                        dosen.is_active 
-                          ? 'text-red-600 hover:text-red-900 hover:bg-red-50' 
-                          : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                      }`}
-                      title={dosen.is_active ? 'Nonaktifkan Dosen' : 'Aktifkan Dosen'}
-                    >
-                      {dosen.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                    </button>
-                    <button
                       onClick={() => handleDeleteClick(dosen)}
                       className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
                       title="Hapus Dosen"
                     >
                       <UserX className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleViewDosen(dosen.id)}
-                      className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                      title="Lihat Detail"
-                    >
-                      <MoreVertical className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
