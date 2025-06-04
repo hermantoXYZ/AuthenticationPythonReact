@@ -704,22 +704,23 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
   return (
     <div className="min-h-screen bg-gray-50 flex relative">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-30 px-4 py-3 flex items-center justify-between border-b">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <GraduationCap className="h-5 w-5 text-white" />
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-blue-700 shadow-md z-30 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <GraduationCap className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white">Sistem Akademik</h1>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-800">Sistem Akademik</h1>
-            <p className="text-xs text-gray-500">{getUserTypeDisplay(user.user_type)}</p>
-          </div>
+          <button
+            onClick={toggleSidebar}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Menu className="h-6 w-6 text-white" />
+          </button>
         </div>
-        <button
-          onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <Menu className="h-5 w-5 text-gray-600" />
-        </button>
       </div>
 
       {/* Sidebar Overlay (Mobile) */}
@@ -738,22 +739,22 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         lg:transform-none border-r border-gray-200 flex flex-col
       `}>
-        {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-blue-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-white" />
+        {/* Mobile Sidebar Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-blue-700/10 bg-gradient-to-r from-blue-600 to-blue-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <h1 className="text-lg font-bold text-white">Sistem Akademik</h1>
-              <p className="text-xs text-blue-100">{getUserTypeDisplay(user.user_type)}</p>
+              <p className="text-sm text-blue-100">{getUserTypeDisplay(user.user_type)}</p>
             </div>
           </div>
           <button
             onClick={closeSidebar}
-            className="p-2 hover:bg-white/10 text-white rounded-lg"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6 text-white" />
           </button>
         </div>
 
@@ -762,7 +763,7 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
           <div className={`p-6 bg-gradient-to-r from-blue-600 to-blue-700 ${isCollapsed ? 'px-4' : ''}`}>
             <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <GraduationCap className="h-6 w-6 text-white" />
+                <GraduationCap className="h-7 w-7 text-white" />
               </div>
               {!isCollapsed && (
                 <div>
@@ -780,19 +781,19 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
               isCollapsed ? 'rotate-180' : ''
             }`}
           >
-            <ChevronLeft className="h-3 w-3 text-gray-600" />
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col space-y-1 p-4 flex-1 overflow-hidden">
-          <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 space-y-1 pr-2">
+        <nav className="flex-1 overflow-y-auto py-4">
+          <div className="px-3 space-y-1">
             {menuItems.map((item, index) => renderMenuItem(item, index))}
           </div>
         </nav>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50/50">
+         {/* Logout Button */}
+         <div className="p-4 border-t border-gray-200 bg-gray-50/50">
           <button
             className={`
               ${isCollapsed ? 'justify-center px-2' : 'justify-start px-4'} 
