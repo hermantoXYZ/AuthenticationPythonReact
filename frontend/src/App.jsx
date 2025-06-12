@@ -7,7 +7,7 @@ import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
 import DashboardHome from "./pages/Dashboard/DashboardHome"
 import ListDekanFakultas from './components/users/ListDekanFakultas'
-
+import HomePage from "./components/HomePage"
 
 function Logout() {
   localStorage.clear()
@@ -23,7 +23,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login/>} />
+        <Route path="/" element={<HomePage/>} />
         <Route
           path="/dashboard/note"
           element={
