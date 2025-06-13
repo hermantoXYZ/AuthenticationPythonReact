@@ -4,13 +4,14 @@ from .serializers import (
     UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, 
     UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, 
     StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, 
-    SkripsiJudulSerializer, PejabatJurusanSerializer, KetuaProdiSerializer
+    SkripsiJudulSerializer, PejabatJurusanSerializer, KetuaProdiSerializer,
+    ArticleSerializer
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, 
     UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType, 
-    PejabatJurusan, UserKetuaProdi
+    PejabatJurusan, UserKetuaProdi, Article
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -19,6 +20,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
+from rest_framework.decorators import action
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -940,3 +943,62 @@ class PejabatJurusanViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class ArticleViewSet(viewsets.ModelViewSet):
+    serializer_class = ArticleSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Article.objects.select_related('author', 'related_prodi').all()
+        
+        # Filter by category
+        category = self.request.query_params.get('category', None)
+        if category:
+            queryset = queryset.filter(category=category)
+            
+        # Filter by status
+        status = self.request.query_params.get('status', None)
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter by program studi
+        prodi = self.request.query_params.get('prodi', None)
+        if prodi:
+            queryset = queryset.filter(related_prodi=prodi)
+            
+        # Filter featured articles
+        is_featured = self.request.query_params.get('featured', None)
+        if is_featured:
+            queryset = queryset.filter(is_featured=True)
+            
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(excerpt__icontains=search) |
+                Q(tags__icontains=search)
+            )
+            
+        return queryset.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        
+        # Update view count if status changes to published
+        if 'status' in serializer.validated_data:
+            if serializer.validated_data['status'] == 'published' and instance.status != 'published':
+                instance.published_at = timezone.now()
+        
+        serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def increment_view(self, request, pk=None):
+        article = self.get_object()
+        article.view_count += 1
+        article.save()
+        return Response({'status': 'view count incremented', 'view_count': article.view_count})

@@ -12,8 +12,10 @@
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-label": "^2.1.6",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.2",
     "@tailwindcss/vite": "^4.1.6",
+    "@tinymce/tinymce-react": "^6.2.1",
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -28,6 +30,7 @@
     "swiper": "^11.2.8",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.6",
+    "tinymce": "^7.9.1",
     "zod": "^3.24.4"
   },
   "devDependencies": {

@@ -6,7 +6,7 @@ from .views import (
     FakultasViewSet, DosenListView, KetuaProdiViewSet, StaffProdiListView,
     StaffProdiDetailView, StaffFakultasListView, StaffFakultasDetailView,
     MahasiswaListView, MahasiswaDetailView, DekanFakultasListView, DekanFakultasDetailView,
-    PejabatJurusanViewSet, DosenDetailView
+    PejabatJurusanViewSet, DosenDetailView, ArticleViewSet
 )
 
 # Create a router and register our viewsets with it.
@@ -16,6 +16,7 @@ router.register(r'skripsi/pengajuan', SkripsiJudulViewSet, basename='skripsi-pen
 router.register(r'fakultas', FakultasViewSet)
 router.register(r'ketua-prodi', KetuaProdiViewSet)
 router.register(r'users/pejabat-jurusan', PejabatJurusanViewSet, basename='pejabat-jurusan')
+router.register(r'articles', ArticleViewSet, basename='articles')
 
 
 urlpatterns = [

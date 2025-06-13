@@ -497,3 +497,75 @@ class Note(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+
+# Model untuk Article/News
+class Article(models.Model):
+    CATEGORY_CHOICES = [
+        ('akademik', 'Akademik'),
+        ('event', 'Event'),
+        ('prestasi', 'Prestasi'),
+        ('kerjasama', 'Kerjasama'),
+        ('workshop', 'Workshop'),
+        ('penelitian', 'Penelitian'),
+        ('pengumuman', 'Pengumuman'),
+        ('beasiswa', 'Beasiswa'),
+        ('news', 'News'),
+    ]
+
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+        ('archived', 'Archived'),
+    ]
+
+    title = models.CharField(max_length=255, verbose_name="Judul")
+    slug = models.SlugField(max_length=255, unique=True)
+    content = models.TextField(verbose_name="Konten")
+    excerpt = models.TextField(verbose_name="Ringkasan", max_length=300, help_text="Ringkasan singkat artikel (max 300 karakter)")
+    
+    # Metadata
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="articles")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='news')
+    tags = models.CharField(max_length=255, blank=True, help_text="Pisahkan tag dengan koma")
+    
+    # Media
+    featured_image = models.ImageField(
+        upload_to='articles/images/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name="Gambar Utama"
+    )
+    
+    # Status dan Visibilitas
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    is_featured = models.BooleanField(default=False, verbose_name="Tampilkan di Halaman Utama")
+
+    # Program Studi terkait (opsional)
+    related_prodi = models.ForeignKey(
+        ProgramStudi,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='articles',
+        verbose_name="Program Studi Terkait"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    
+    # SEO Fields
+    meta_title = models.CharField(max_length=100, blank=True, help_text="Judul untuk SEO (opsional)")
+    meta_description = models.TextField(blank=True, help_text="Deskripsi untuk SEO (opsional)")
+    
+    # Statistics
+    view_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        verbose_name = "Artikel"
+        verbose_name_plural = "Artikel"
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return self.title

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article
 
 class UserBasicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -336,6 +336,39 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Judul skripsi tidak boleh sama")
         
         return data
+
+class ArticleSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.full_name', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    related_prodi_name = serializers.CharField(source='related_prodi.nama', read_only=True)
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'slug', 'content', 'excerpt',
+            'author', 'author_name', 'category', 'category_display',
+            'tags', 'featured_image', 'status', 'status_display',
+            'is_featured', 'related_prodi', 'related_prodi_name',
+            'created_at', 'updated_at', 'published_at',
+            'meta_title', 'meta_description', 'view_count'
+        ]
+        read_only_fields = ['author', 'created_at', 'updated_at', 'view_count', 'slug']
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        validated_data['slug'] = self.generate_unique_slug(validated_data['title'])
+        return super().create(validated_data)
+
+    def generate_unique_slug(self, title):
+        from django.utils.text import slugify
+        slug = slugify(title)
+        unique_slug = slug
+        num = 1
+        while Article.objects.filter(slug=unique_slug).exists():
+            unique_slug = f"{slug}-{num}"
+            num += 1
+        return unique_slug
 
 class StaffFakultasSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

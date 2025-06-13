@@ -25,7 +25,10 @@ import {
   School,
   Bell,
   ChevronRight,
-  User2Icon
+  User2Icon,
+  Newspaper,
+  PlusCircle,
+  Tags
 } from "lucide-react";
 import ProfilePage from './ProfilePage';
 import api from "../api";
@@ -55,7 +58,8 @@ import StaffFakultasList from "./users/StaffFakultasList";
 import ListMahasiswa from "./users/ListMahasiswa";
 import ListDekanFakultas from "./users/ListDekanFakultas";
 import PejabatJurusanList from "./users/PejabatJurusanList";
-
+import ArticleForm from "./articles/ArticleForm";
+import ArticleList from "./articles/ArticleList";
 
 
 
@@ -178,6 +182,17 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
             submenu: [
               { icon: List, label: "Semua Pengajuan", path: "/dashboard/skripsi/pengajuan" },
               { icon: Settings, label: "Pengaturan Skripsi", path: "/dashboard/skripsi/settings" }
+            ]
+          },
+          {
+            icon: Newspaper,
+            label: "Artikel",
+            key: "articles",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Semua Artikel", path: "/dashboard/articles" },
+              { icon: PlusCircle, label: "Tambah Artikel", path: "/dashboard/articles/create" },
+              { icon: Tags, label: "Kategori", path: "/dashboard/articles/categories" },
             ]
           },
           {
@@ -641,6 +656,9 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/informasi/pengumuman": Pengumuman,
     "/dashboard/informasi/kalender": KalenderAkademik,
     "/dashboard/informasi/panduan": PanduanAkademik,
+    // Article Routes
+    "/dashboard/articles": ArticleList,
+    "/dashboard/articles/create": ArticleForm,
   };
 
   const renderContent = () => {

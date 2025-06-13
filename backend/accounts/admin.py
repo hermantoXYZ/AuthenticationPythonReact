@@ -6,7 +6,8 @@ from django.contrib.auth.models import Group
 from .models import (
     CustomUser, Fakultas, ProgramStudi, 
     UserDosen, UserMahasiswa, UserKetuaProdi, UserStaffProdi, 
-    UserStaffFakultas, Note, Jurusan, PejabatJurusan, SkripsiJudul
+    UserStaffFakultas, Note, Jurusan, PejabatJurusan, SkripsiJudul,
+    Article  # Add Article to imports
 )
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -90,6 +91,15 @@ class SkripsiJudulResource(resources.ModelResource):
     class Meta:
         model = SkripsiJudul
         exclude = ('id',)
+
+class ArticleResource(resources.ModelResource):
+    class Meta:
+        model = Article
+        fields = ('title', 'slug', 'content', 'excerpt', 'author', 'category', 
+                 'tags', 'featured_image', 'status', 'is_featured', 'related_prodi',
+                 'created_at', 'updated_at', 'published_at', 'meta_title', 
+                 'meta_description', 'view_count')
+        export_order = ('title', 'author', 'category', 'status', 'created_at', 'published_at')
 
 admin.site.unregister(Group)
 
@@ -306,6 +316,58 @@ class SkripsiJudulAdmin(ModelAdmin, ImportExportModelAdmin):
         if obj:  # editing an existing object
             return self.readonly_fields + ('mahasiswa',)
         return self.readonly_fields
+
+@admin.register(Article)
+class ArticleAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = ArticleResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    
+    list_display = ('title', 'author', 'category', 'status', 'is_featured', 'view_count', 'created_at', 'published_at')
+    list_filter = ('status', 'category', 'is_featured', 'created_at', 'published_at')
+    search_fields = ('title', 'content', 'excerpt', 'tags', 'meta_title')
+    prepopulated_fields = {'slug': ('title',)}
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Konten Artikel', {
+            'fields': (
+                'title', 'slug', 'content', 'excerpt', 'featured_image'
+            )
+        }),
+        ('Metadata', {
+            'fields': (
+                'author', 'category', 'tags', 'related_prodi'
+            ),
+        }),
+        ('Status & Visibilitas', {
+            'fields': (
+                'status', 'is_featured', 'published_at'
+            ),
+        }),
+        ('SEO', {
+            'classes': ('collapse',),
+            'fields': (
+                'meta_title', 'meta_description'
+            ),
+        }),
+        ('Statistik', {
+            'classes': ('collapse',),
+            'fields': ('view_count',),
+        }),
+    )
+    
+    readonly_fields = ('created_at', 'updated_at', 'view_count')
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # editing existing object
+            return self.readonly_fields
+        return ('view_count',)  # only view_count readonly when creating new object
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # if creating new object
+            obj.author = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):

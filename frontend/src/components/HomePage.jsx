@@ -397,7 +397,7 @@ function HomePage() {
               <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center text-center">
                 <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-white mb-4 sm:mb-6 animate-slideUp">
                   Innovation
-                </h1>
+            </h1>
                 <p className="text-base sm:text-xl md:text-2xl text-gray-200 max-w-3xl px-4 sm:px-6 animate-fadeIn">
                   Mengembangkan Inovasi dalam Pembelajaran dan Riset Ekonomi Berbasis Teknologi.
                 </p>
@@ -428,7 +428,7 @@ function HomePage() {
           {/* Custom Pagination */}
           <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-10">
             <div className="custom-pagination flex justify-center space-x-2"></div>
-          </div>
+        </div>
         </Swiper>
       </div>
 
