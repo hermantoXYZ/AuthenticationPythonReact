@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'sonner';
 import { Toaster } from "@/components/ui/sonner";
 import { X, Plus, Hash, FileText, Tag, School, Calendar } from 'lucide-react';
 import { Editor } from '@tinymce/tinymce-react';
 
-const ArticleForm = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+const ArticleForm = ({ id, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [programStudi, setProgramStudi] = useState([]);
@@ -30,6 +27,8 @@ const ArticleForm = () => {
     fetchProgramStudi();
     if (id) {
       fetchArticle();
+    } else {
+      setIsLoading(false);
     }
   }, [id]);
 
@@ -37,10 +36,8 @@ const ArticleForm = () => {
     try {
       const response = await api.get('/api/prodi/');
       setProgramStudi(response.data);
-      setIsLoading(false);
     } catch (error) {
       toast.error('Gagal memuat data program studi');
-      setIsLoading(false);
     }
   };
 
@@ -60,9 +57,10 @@ const ArticleForm = () => {
         meta_description: article.meta_description || '',
         related_prodi: article.related_prodi || '',
       });
+      setIsLoading(false);
     } catch (error) {
       toast.error('Gagal memuat artikel');
-      navigate('/dashboard/articles');
+      setIsLoading(false);
     }
   };
 
@@ -105,7 +103,10 @@ const ArticleForm = () => {
         await api.post('/api/articles/', formData);
         toast.success('Artikel berhasil dibuat');
       }
-      navigate('/dashboard/articles');
+      
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Error creating article:', error);
       toast.error(error.response?.data?.detail || 'Gagal membuat artikel');
@@ -328,7 +329,7 @@ const ArticleForm = () => {
           <div className="mt-8 border-t border-gray-200 pt-6 flex justify-end gap-4">
             <button
               type="button"
-              onClick={() => navigate('/dashboard/articles')}
+              onClick={onSuccess}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Batal

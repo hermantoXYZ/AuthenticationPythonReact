@@ -187,13 +187,8 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
           {
             icon: Newspaper,
             label: "Artikel",
-            key: "articles",
-            type: "dropdown",
-            submenu: [
-              { icon: List, label: "Semua Artikel", path: "/dashboard/articles" },
-              { icon: PlusCircle, label: "Tambah Artikel", path: "/dashboard/articles/create" },
-              { icon: Tags, label: "Kategori", path: "/dashboard/articles/categories" },
-            ]
+            type: "single",
+            path: "/dashboard/articles"
           },
           {
             icon: Settings,
@@ -658,7 +653,6 @@ function Dashboard({ children, activeMenu = "/dashboard" }) {
     "/dashboard/informasi/panduan": PanduanAkademik,
     // Article Routes
     "/dashboard/articles": ArticleList,
-    "/dashboard/articles/create": ArticleForm,
   };
 
   const renderContent = () => {

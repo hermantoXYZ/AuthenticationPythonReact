@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { toast } from 'sonner';
 import { Toaster } from "@/components/ui/sonner";
-import { Search, Filter, SortAsc, SortDesc, FileText, Tag, Calendar, Eye, Edit, Trash2, X, Plus } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc, FileText, Tag, Calendar, Eye, Edit, Trash2, X, Plus, ArrowLeft } from 'lucide-react';
+import ArticleForm from './ArticleForm';
 
 const ArticleList = () => {
   const [articles, setArticles] = useState([]);
@@ -17,11 +18,15 @@ const ArticleList = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [showArticleForm, setShowArticleForm] = useState(false);
+  const [editingArticleId, setEditingArticleId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchArticles();
-  }, []);
+    if (!showArticleForm) {
+      fetchArticles();
+    }
+  }, [showArticleForm]);
 
   const fetchArticles = async () => {
     try {
@@ -54,6 +59,17 @@ const ArticleList = () => {
   const handleDeleteClick = (article) => {
     setSelectedArticle(article);
     setShowDeleteModal(true);
+  };
+
+  const handleEditClick = (article) => {
+    setEditingArticleId(article.id);
+    setShowArticleForm(true);
+  };
+
+  const handleBackToList = () => {
+    setShowArticleForm(false);
+    setEditingArticleId(null);
+    fetchArticles(); // Refresh the list
   };
 
   const getStatusBadge = (status) => {
@@ -100,6 +116,31 @@ const ArticleList = () => {
     setSortOrder('asc');
   };
 
+  // If showing article form, render it directly
+  if (showArticleForm) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="mb-6">
+          <button
+            onClick={handleBackToList}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke Daftar Artikel
+          </button>
+        </div>
+        <ArticleForm 
+          id={editingArticleId} 
+          onSuccess={() => {
+            setShowArticleForm(false);
+            setEditingArticleId(null);
+            fetchArticles();
+          }}
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -117,7 +158,7 @@ const ArticleList = () => {
           <p className="text-gray-600">Kelola semua artikel website FEB UNM</p>
         </div>
         <button
-          onClick={() => navigate('/dashboard/articles/create')}
+          onClick={() => setShowArticleForm(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <Plus className="h-5 w-5" />
@@ -285,7 +326,7 @@ const ArticleList = () => {
                   View
                 </button>
                 <button 
-                  onClick={() => navigate(`/dashboard/articles/edit/${article.id}`)}
+                  onClick={() => handleEditClick(article)}
                   className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <Edit className="h-4 w-4" />
