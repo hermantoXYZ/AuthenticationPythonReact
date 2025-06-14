@@ -18,6 +18,7 @@ const JurusanList = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedJurusan, setSelectedJurusan] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   const [editFormData, setEditFormData] = useState({
@@ -33,8 +34,29 @@ const JurusanList = () => {
   });
 
   useEffect(() => {
-    fetchJurusan();
-  }, []);
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/api/profile/');
+        setCurrentUser(response.data);
+        
+        // Check if user is mahasiswa or dosen and redirect
+        if (response.data.user_type === 'mahasiswa' || response.data.user_type === 'dosen') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+        
+        // If not mahasiswa or dosen, proceed with fetching data
+        fetchJurusan();
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        toast.error('Gagal memuat data profil');
+        setIsLoading(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
 
   const fetchJurusan = async () => {
     try {
@@ -167,13 +189,15 @@ const JurusanList = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Daftar Jurusan</h1>
           <p className="text-gray-600">Kelola dan lihat informasi semua jurusan</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Tambah Jurusan
-        </button>
+        {currentUser?.user_type !== 'dosen' && currentUser?.user_type !== 'dekan_fakultas' && currentUser?.user_type !== 'ketua_prodi' && currentUser?.user_type !== 'pejabat_jurusan' && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Tambah Jurusan
+          </button>
+        )}
       </div>
 
       {/* Search and Filter Controls */}
@@ -283,12 +307,14 @@ const JurusanList = () => {
                 >
                   Lihat Detail
                 </button>
-                <button 
-                  className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                  onClick={() => handleEdit(jurusan)}
-                >
-                  Edit
-                </button>
+                {currentUser?.user_type === 'super_admin' && (
+                  <button 
+                    className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                    onClick={() => handleEdit(jurusan)}
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
           </div>

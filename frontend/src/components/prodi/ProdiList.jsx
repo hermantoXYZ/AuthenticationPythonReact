@@ -47,13 +47,35 @@ const ProdiList = () => {
   });
 
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    fetchProdi();
-    fetchFakultas();
-    fetchJurusan();
-    fetchKaprodi();
-  }, []);
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/api/profile/');
+        setCurrentUser(response.data);
+        
+        // Check if user is mahasiswa or dosen and redirect
+        if (response.data.user_type === 'mahasiswa' || response.data.user_type === 'dosen') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+        
+        // If not mahasiswa or dosen, proceed with fetching data
+        fetchProdi();
+        fetchFakultas();
+        fetchJurusan();
+        fetchKaprodi();
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        toast.error('Gagal memuat data profil');
+        setIsLoading(false);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [navigate]);
 
   const fetchProdi = async () => {
     try {
@@ -352,13 +374,15 @@ const ProdiList = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Daftar Program Studi</h1>
           <p className="text-gray-600">Temukan program studi yang sesuai dengan minat Anda</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Tambah Program Studi
-        </button>
+        {currentUser?.user_type !== 'dekan_fakultas' && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Tambah Program Studi
+          </button>
+        )}
       </div>
 
       {/* Search and Filter Controls */}
@@ -512,12 +536,14 @@ const ProdiList = () => {
                 >
                   Lihat Detail
                 </button>
+                {currentUser?.user_type !== 'dekan_fakultas' && (
                 <button 
                   className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
                   onClick={() => handleEdit(prodi)}
                 >
                   Edit
                 </button>
+                ) }
               </div>
             </div>
           </div>

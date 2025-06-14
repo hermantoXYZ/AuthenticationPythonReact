@@ -30,7 +30,11 @@ import {
   Newspaper,
   PlusCircle,
   Tags,
-  Info
+  Info,
+  ChartBar,
+  Clock,
+  Briefcase,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../api";
@@ -212,6 +216,416 @@ function DashboardLayout() {
           baseMenu[1]
         ];
 
+      case 'dekan_fakultas':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: School,
+            label: "Jurusan",
+            key: "jurusan",
+            type: "single",
+            path: "/dashboard/jurusan"
+          },
+          {
+            icon: GraduationCap,
+            label: "Program Studi",
+            key: "prodi",
+            type: "single",
+            path: "/dashboard/prodi"
+          },
+          {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: FileCheck, label: "Persetujuan Judul", path: "/dashboard/skripsi/approve" },
+              { icon: ClipboardList, label: "Laporan Skripsi", path: "/dashboard/skripsi/reports" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Manajemen User",
+            key: "users",
+            type: "dropdown",
+            submenu: [
+              { 
+                icon: User2Icon, 
+                label: "All Users", 
+                path: "/dashboard/users" 
+              },
+              { 
+                icon: Award, 
+                label: "Dekan Fakultas", 
+                path: "/dashboard/users/dekan" 
+              },
+              { 
+                icon: School, 
+                label: "Pejabat Jurusan", 
+                path: "/dashboard/users/pejabat-jurusan" 
+              },
+              { 
+                icon: Award, 
+                label: "Ketua Program Studi", 
+                path: "/dashboard/users/ketua-prodi" 
+              },
+              { 
+                icon: Users, 
+                label: "Staff Fakultas", 
+                path: "/dashboard/users/staff-fakultas" 
+              },
+              { 
+                icon: Users, 
+                label: "Staff Prodi", 
+                path: "/dashboard/users/staff-prodi" 
+              },
+              { 
+                icon: GraduationCap, 
+                label: "Dosen", 
+                path: "/dashboard/users/dosen" 
+              },
+              { 
+                icon: BookOpen, 
+                label: "Mahasiswa", 
+                path: "/dashboard/users/mahasiswa" 
+              },
+            ]
+          },
+          {
+            icon: Info,
+            label: "Tentang",
+            path: "/dashboard/about",
+            type: "single"
+          },
+          baseMenu[1]
+        ];
+
+      case 'pejabat_jurusan':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: GraduationCap,
+            label: "Program Studi",
+            key: "prodi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "List Program Studi", path: "/dashboard/prodi" },
+              { icon: Settings, label: "Koordinasi Prodi", path: "/dashboard/prodi/koordinasi" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Dosen Jurusan",
+            key: "dosen",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "List Dosen", path: "/dashboard/dosen" },
+              { icon: Award, label: "Evaluasi Kinerja", path: "/dashboard/dosen/evaluasi" }
+            ]
+          },
+          {
+            icon: FileText,
+            label: "Laporan Jurusan",
+            key: "laporan",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Laporan Bulanan", path: "/dashboard/laporan/bulanan" },
+              { icon: ClipboardList, label: "Laporan Tahunan", path: "/dashboard/laporan/tahunan" }
+            ]
+          },
+          {
+            icon: Info,
+            label: "Tentang",
+            path: "/dashboard/about",
+            type: "single"
+          },
+          baseMenu[1]
+        ];
+
+      case 'ketua_prodi':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: UserCheck, label: "Penentuan Pembimbing", path: "/dashboard/skripsi/pembimbing" },
+              { icon: ClipboardList, label: "Laporan Skripsi", path: "/dashboard/skripsi/reports" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Dosen Prodi",
+            key: "dosen",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "List Dosen", path: "/dashboard/dosen" },
+              { icon: Settings, label: "Jadwal Mengajar", path: "/dashboard/dosen/jadwal" }
+            ]
+          },
+          {
+            icon: BookOpen,
+            label: "Mahasiswa Prodi",
+            key: "mahasiswa",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "List Mahasiswa", path: "/dashboard/mahasiswa" },
+              { icon: UserPlus, label: "Tambah Mahasiswa", path: "/dashboard/mahasiswa/add" },
+              { icon: FileCheck, label: "Verifikasi Pengajuan", path: "/dashboard/mahasiswa/verifikasi" },
+              { icon: Award, label: "Monitoring IPK", path: "/dashboard/mahasiswa/ipk" }
+            ]
+          },
+          {
+            icon: Info,
+            label: "Tentang",
+            path: "/dashboard/about",
+            type: "single"
+          },
+          baseMenu[1]
+        ];
+
+      case 'staff_fakultas':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: FileText,
+            label: "Administrasi",
+            key: "administrasi",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Surat Menyurat", path: "/dashboard/administrasi/surat" },
+              { icon: FileCheck, label: "Verifikasi Dokumen", path: "/dashboard/administrasi/verifikasi" },
+              { icon: ClipboardList, label: "Arsip Dokumen", path: "/dashboard/administrasi/arsip" },
+              { icon: FileText, label: "Template Surat", path: "/dashboard/administrasi/template" },
+              { icon: Calendar, label: "Jadwal Rapat", path: "/dashboard/administrasi/jadwal-rapat" },
+              { icon: FileText, label: "Notulensi", path: "/dashboard/administrasi/notulensi" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Data Fakultas",
+            key: "data",
+            type: "dropdown",
+            submenu: [
+              { icon: Users, label: "Data Dosen", path: "/dashboard/data/dosen" },
+              { icon: BookOpen, label: "Data Mahasiswa", path: "/dashboard/data/mahasiswa" },
+              { icon: GraduationCap, label: "Data Program Studi", path: "/dashboard/data/prodi" },
+              { icon: Building2, label: "Data Jurusan", path: "/dashboard/data/jurusan" },
+              { icon: Award, label: "Data Alumni", path: "/dashboard/data/alumni" },
+              { icon: FileText, label: "Laporan Statistik", path: "/dashboard/data/statistik" }
+            ]
+          },
+          {
+            icon: FileText,
+            label: "Akademik",
+            key: "akademik",
+            type: "dropdown",
+            submenu: [
+              { icon: Calendar, label: "Kalender Akademik", path: "/dashboard/akademik/kalender" },
+              { icon: FileText, label: "Jadwal Kuliah", path: "/dashboard/akademik/jadwal" },
+              { icon: Award, label: "Wisuda", path: "/dashboard/akademik/wisuda" },
+              { icon: GraduationCap, label: "Yudisium", path: "/dashboard/akademik/yudisium" },
+              { icon: FileCheck, label: "Verifikasi Ijazah", path: "/dashboard/akademik/ijazah" }
+            ]
+          },
+          {
+            icon: Bell,
+            label: "Informasi",
+            key: "informasi",
+            type: "dropdown",
+            submenu: [
+              { icon: Bell, label: "Pengumuman", path: "/dashboard/informasi/pengumuman" },
+              { icon: FileText, label: "Berita Fakultas", path: "/dashboard/informasi/berita" },
+              { icon: Calendar, label: "Event & Seminar", path: "/dashboard/informasi/event" },
+              { icon: Award, label: "Prestasi", path: "/dashboard/informasi/prestasi" }
+            ]
+          },
+          {
+            icon: Settings,
+            label: "Pengaturan",
+            key: "pengaturan",
+            type: "dropdown",
+            submenu: [
+              { icon: Settings, label: "Pengaturan Umum", path: "/dashboard/pengaturan/umum" },
+              { icon: Users, label: "Manajemen User", path: "/dashboard/pengaturan/user" },
+              { icon: FileText, label: "Template Dokumen", path: "/dashboard/pengaturan/template" },
+              { icon: Bell, label: "Notifikasi", path: "/dashboard/pengaturan/notifikasi" }
+            ]
+          },
+          baseMenu[1]
+        ];
+
+      case 'staff_prodi':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: FileText,
+            label: "Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Daftar Pengajuan", path: "/dashboard/skripsi/list" },
+              { icon: FileCheck, label: "Verifikasi Berkas", path: "/dashboard/skripsi/verify" },
+              { icon: ClipboardList, label: "Laporan", path: "/dashboard/skripsi/reports" },
+              { icon: Calendar, label: "Jadwal Seminar", path: "/dashboard/skripsi/jadwal-seminar" },
+              { icon: Award, label: "Penilaian", path: "/dashboard/skripsi/penilaian" },
+              { icon: FileText, label: "Dokumen Skripsi", path: "/dashboard/skripsi/dokumen" }
+            ]
+          },
+          {
+            icon: BookOpen,
+            label: "Mahasiswa Prodi",
+            key: "mahasiswa",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Data Mahasiswa", path: "/dashboard/mahasiswa" },
+              { icon: FileText, label: "Pengajuan Mahasiswa", path: "/dashboard/mahasiswa/pengajuan" },
+              { icon: Award, label: "Transkrip Nilai", path: "/dashboard/mahasiswa/transkrip" },
+              { icon: ChartBar, label: "Progress Studi", path: "/dashboard/mahasiswa/progress" },
+              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/mahasiswa/jadwal" },
+              { icon: FileCheck, label: "Presensi", path: "/dashboard/mahasiswa/presensi" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Dosen",
+            key: "dosen",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Data Dosen", path: "/dashboard/dosen" },
+              { icon: Calendar, label: "Jadwal Mengajar", path: "/dashboard/dosen/jadwal" },
+              { icon: FileText, label: "Beban Mengajar", path: "/dashboard/dosen/beban" },
+              { icon: Award, label: "Penilaian Dosen", path: "/dashboard/dosen/penilaian" }
+            ]
+          },
+          {
+            icon: FileText,
+            label: "Akademik",
+            key: "akademik",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Kurikulum", path: "/dashboard/akademik/kurikulum" },
+              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/akademik/jadwal" },
+              { icon: Award, label: "Nilai & Transkrip", path: "/dashboard/akademik/nilai" },
+              { icon: FileCheck, label: "Verifikasi KRS", path: "/dashboard/akademik/verifikasi-krs" },
+              { icon: GraduationCap, label: "Wisuda", path: "/dashboard/akademik/wisuda" }
+            ]
+          },
+          {
+            icon: Bell,
+            label: "Informasi",
+            key: "informasi",
+            type: "dropdown",
+            submenu: [
+              { icon: Bell, label: "Pengumuman", path: "/dashboard/informasi/pengumuman" },
+              { icon: Calendar, label: "Kalender Akademik", path: "/dashboard/informasi/kalender" },
+              { icon: FileText, label: "Berita Prodi", path: "/dashboard/informasi/berita" },
+              { icon: Award, label: "Prestasi", path: "/dashboard/informasi/prestasi" }
+            ]
+          },
+          {
+            icon: Settings,
+            label: "Pengaturan",
+            key: "pengaturan",
+            type: "dropdown",
+            submenu: [
+              { icon: Settings, label: "Pengaturan Umum", path: "/dashboard/pengaturan/umum" },
+              { icon: FileText, label: "Template Dokumen", path: "/dashboard/pengaturan/template" },
+              { icon: Bell, label: "Notifikasi", path: "/dashboard/pengaturan/notifikasi" }
+            ]
+          },
+          baseMenu[1]
+        ];
+
+      case 'dosen':
+        return [
+          ...baseMenu.slice(0, 1),
+          {
+            icon: FileText,
+            label: "Bimbingan Skripsi",
+            key: "skripsi",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Mahasiswa Bimbingan", path: "/dashboard/skripsi/bimbingan" },
+              { icon: FileCheck, label: "Review Pengajuan", path: "/dashboard/skripsi/review" },
+              { icon: ClipboardList, label: "Riwayat Bimbingan", path: "/dashboard/skripsi/history" },
+              { icon: Award, label: "Penilaian Skripsi", path: "/dashboard/skripsi/penilaian" },
+              { icon: Calendar, label: "Jadwal Bimbingan", path: "/dashboard/skripsi/jadwal" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Mahasiswa",
+            key: "mahasiswa",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Mahasiswa Bimbingan", path: "/dashboard/mahasiswa/bimbingan" },
+              { icon: Award, label: "Nilai Mahasiswa", path: "/dashboard/mahasiswa/nilai" },
+              { icon: FileCheck, label: "Presensi", path: "/dashboard/mahasiswa/presensi" },
+              { icon: BookOpen, label: "Kartu Rencana Studi", path: "/dashboard/mahasiswa/krs" },
+              { icon: ChartBar, label: "Progress Akademik", path: "/dashboard/mahasiswa/progress" }
+            ]
+          },
+          {
+            icon: Calendar,
+            label: "Jadwal Mengajar",
+            key: "jadwal",
+            type: "dropdown",
+            submenu: [
+              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/jadwal/kuliah" },
+              { icon: Clock, label: "Jadwal Ujian", path: "/dashboard/jadwal/ujian" },
+              { icon: Users, label: "Daftar Hadir", path: "/dashboard/jadwal/kehadiran" },
+              { icon: FileText, label: "Laporan Mengajar", path: "/dashboard/jadwal/laporan" }
+            ]
+          },
+          {
+            icon: BookOpen,
+            label: "Materi & Tugas",
+            key: "materi",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Upload Materi", path: "/dashboard/materi/upload" },
+              { icon: List, label: "Daftar Materi", path: "/dashboard/materi/list" },
+              { icon: FileCheck, label: "Tugas & Kuis", path: "/dashboard/materi/tugas" },
+              { icon: Award, label: "Penilaian Tugas", path: "/dashboard/materi/penilaian" }
+            ]
+          },
+          {
+            icon: Newspaper,
+            label: "Publikasi",
+            key: "publikasi",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Jurnal & Artikel", path: "/dashboard/publikasi/jurnal" },
+              { icon: BookOpen, label: "Buku & Modul", path: "/dashboard/publikasi/buku" },
+              { icon: Award, label: "Penelitian", path: "/dashboard/publikasi/penelitian" },
+              { icon: Users, label: "Pengabdian", path: "/dashboard/publikasi/pengabdian" }
+            ]
+          },
+          {
+            icon: Bell,
+            label: "Informasi",
+            key: "informasi",
+            type: "dropdown",
+            submenu: [
+              { icon: Bell, label: "Pengumuman", path: "/dashboard/informasi/pengumuman" },
+              { icon: Calendar, label: "Kalender Akademik", path: "/dashboard/informasi/kalender" },
+              { icon: BookOpen, label: "Panduan Dosen", path: "/dashboard/informasi/panduan" }
+            ]
+          },
+          {
+            icon: Info,
+            label: "Tentang",
+            path: "/dashboard/about",
+            type: "single"
+          },
+          baseMenu[1]
+        ];
+
       case 'mahasiswa':
       default:
         return [
@@ -226,7 +640,23 @@ function DashboardLayout() {
               { icon: Plus, label: "Pengajuan Judul", path: "/dashboard/skripsi/pengajuan" },
               { icon: List, label: "Status Pengajuan", path: "/dashboard/skripsi/status" },
               { icon: FileCheck, label: "Bimbingan", path: "/dashboard/skripsi/bimbingan" },
-              { icon: Award, label: "Nilai Seminar/Ujian", path: "/dashboard/skripsi/nilai" }
+              { icon: Award, label: "Nilai Seminar/Ujian", path: "/dashboard/skripsi/nilai" },
+              { icon: Calendar, label: "Jadwal Bimbingan", path: "/dashboard/skripsi/jadwal" },
+              { icon: FileText, label: "Dokumen Skripsi", path: "/dashboard/skripsi/dokumen" }
+            ]
+          },
+          {
+            icon: BookOpen,
+            label: "Akademik",
+            key: "akademik",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Kartu Rencana Studi", path: "/dashboard/akademik/krs" },
+              { icon: Calendar, label: "Jadwal Kuliah", path: "/dashboard/akademik/jadwal" },
+              { icon: Award, label: "Nilai & Transkrip", path: "/dashboard/akademik/nilai" },
+              { icon: ChartBar, label: "Progress Studi", path: "/dashboard/akademik/progress" },
+              { icon: FileCheck, label: "Presensi", path: "/dashboard/akademik/presensi" },
+              { icon: BookOpen, label: "Materi Kuliah", path: "/dashboard/akademik/materi" }
             ]
           },
           {
@@ -237,7 +667,9 @@ function DashboardLayout() {
             submenu: [
               { icon: FileText, label: "Isi Tracer Study", path: "/dashboard/tracer/form" },
               { icon: List, label: "Riwayat Pengisian", path: "/dashboard/tracer/history" },
-              { icon: Award, label: "Statistik Alumni", path: "/dashboard/tracer/stats" }
+              { icon: Award, label: "Statistik Alumni", path: "/dashboard/tracer/stats" },
+              { icon: Briefcase, label: "Lowongan Kerja", path: "/dashboard/tracer/lowongan" },
+              { icon: Users, label: "Networking Alumni", path: "/dashboard/tracer/networking" }
             ]
           },
           {
@@ -248,7 +680,33 @@ function DashboardLayout() {
             submenu: [
               { icon: Bell, label: "Pengumuman", path: "/dashboard/informasi/pengumuman" },
               { icon: Calendar, label: "Kalender Akademik", path: "/dashboard/informasi/kalender" },
-              { icon: BookOpen, label: "Panduan Akademik", path: "/dashboard/informasi/panduan" }
+              { icon: BookOpen, label: "Panduan Akademik", path: "/dashboard/informasi/panduan" },
+              { icon: Award, label: "Beasiswa", path: "/dashboard/informasi/beasiswa" },
+              { icon: Users, label: "Event & Workshop", path: "/dashboard/informasi/event" }
+            ]
+          },
+          {
+            icon: FileText,
+            label: "Dokumen",
+            key: "dokumen",
+            type: "dropdown",
+            submenu: [
+              { icon: FileText, label: "Surat Keterangan", path: "/dashboard/dokumen/surat" },
+              { icon: FileCheck, label: "Transkrip", path: "/dashboard/dokumen/transkrip" },
+              { icon: Award, label: "Sertifikat", path: "/dashboard/dokumen/sertifikat" },
+              { icon: FileText, label: "Dokumen Pribadi", path: "/dashboard/dokumen/pribadi" }
+            ]
+          },
+          {
+            icon: Users,
+            label: "Bimbingan",
+            key: "bimbingan",
+            type: "dropdown",
+            submenu: [
+              { icon: Users, label: "Dosen Wali", path: "/dashboard/bimbingan/dosen-wali" },
+              { icon: Calendar, label: "Jadwal Bimbingan", path: "/dashboard/bimbingan/jadwal" },
+              { icon: FileText, label: "Riwayat Bimbingan", path: "/dashboard/bimbingan/riwayat" },
+              { icon: MessageSquare, label: "Konsultasi", path: "/dashboard/bimbingan/konsultasi" }
             ]
           },
           {
