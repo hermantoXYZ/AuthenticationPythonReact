@@ -99,7 +99,7 @@ const StatusPengajuan = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold text-gray-800">Status Pengajuan Judul Skripsi</h1>
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">

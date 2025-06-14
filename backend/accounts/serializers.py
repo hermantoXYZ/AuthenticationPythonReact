@@ -304,6 +304,7 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
     mahasiswa_name = serializers.CharField(source='mahasiswa.user.full_name', read_only=True)
     pembimbing_1_name = serializers.CharField(source='pembimbing_1.user.full_name', read_only=True)
     pembimbing_2_name = serializers.CharField(source='pembimbing_2.user.full_name', read_only=True)
+    dosen_wali_name = serializers.CharField(source='mahasiswa.dosen_wali.user.full_name', read_only=True)
     program_studi = serializers.CharField(source='mahasiswa.program_studi.nama', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
@@ -319,6 +320,7 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
             'tanggal_pengajuan', 'tanggal_update',
             'pembimbing_1', 'pembimbing_1_name',
             'pembimbing_2', 'pembimbing_2_name',
+            'dosen_wali_name',
             'catatan_prodi', 'catatan_fakultas', 'catatan_pembimbing'
         ]
         read_only_fields = ['mahasiswa', 'status', 'judul_diterima', 'pembimbing_1', 'pembimbing_2', 'tanggal_pengajuan', 'tanggal_update']

@@ -46,10 +46,12 @@ import UserList from "./users/UserList";
 import JurusanList from "./jurusan/JurusanList";
 import PengajuanJudul from "./skripsi/PengajuanJudul";
 import DaftarPengajuan from "./skripsi/DaftarPengajuan";
+import DaftarPengajuanAdmin from "./skripsi/DaftarPengajuanAdmin";
 import ReviewPengajuan from "./skripsi/ReviewPengajuan";
 import StatusPengajuan from "./skripsi/StatusPengajuan";
 import BimbinganSkripsi from "./skripsi/BimbinganSkripsi";
 import SkripsiRoadmap from "./skripsi/SkripsiRoadmap";
+import AdminRoadmap from "./skripsi/AdminRoadmap";
 import NilaiSeminar from "./skripsi/NilaiSeminar";
 import TracerForm from './tracer/TracerForm';
 import TracerHistory from './tracer/TracerHistory';
@@ -187,6 +189,8 @@ function DashboardLayout() {
             type: "dropdown",
             submenu: [
               { icon: List, label: "Semua Pengajuan", path: "/dashboard/skripsi/pengajuan" },
+              { icon: List, label: "Pengajuan Admin", path: "/dashboard/skripsi/admin-pengajuan" },
+              { icon: FileText, label: "Roadmap Skripsi", path: "/dashboard/skripsi/roadmap" },
               { icon: Settings, label: "Pengaturan Skripsi", path: "/dashboard/skripsi/settings" }
             ]
           },
@@ -1043,6 +1047,8 @@ function DashboardLayout() {
               <Route path="/skripsi/status" element={<StatusPengajuan />} />
               <Route path="/skripsi/bimbingan" element={<BimbinganSkripsi />} />
               <Route path="/skripsi/roadmap" element={<SkripsiRoadmap />} />
+              <Route path="/skripsi/admin-roadmap" element={<AdminRoadmap />} />
+              <Route path="/skripsi/admin-pengajuan" element={<DaftarPengajuanAdmin />} />
               <Route path="/skripsi/nilai" element={<NilaiSeminar />} />
               <Route path="/skripsi/list" element={<DaftarPengajuan />} />
               <Route path="/skripsi/review" element={<ReviewPengajuan />} />
