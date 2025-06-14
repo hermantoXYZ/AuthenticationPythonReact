@@ -5,9 +5,9 @@ import Login from "./pages/Login"
 import Home from "./pages/Home"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
-import DashboardHome from "./pages/Dashboard/DashboardHome"
 import ListDekanFakultas from './components/users/ListDekanFakultas'
 import HomePage from "./components/HomePage"
+import DashboardLayout from "./components/DashboardLayout"
 
 function Logout() {
   localStorage.clear()
@@ -25,6 +25,14 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage/>} />
         <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/note"
           element={
             <ProtectedRoute>
@@ -32,27 +40,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardHome />
-            </ProtectedRoute>
-          }
-        />
-        {/* Article Route */}
-        <Route
-          path="/dashboard/articles"
-          element={
-            <ProtectedRoute>
-              <DashboardHome />
-            </ProtectedRoute>
-          }
-        />
+      
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
-        {/* <Route path="/register" element={<RegisterAndLogout />} /> */}
-        <Route path="/users/dekan" element={<ListDekanFakultas />} />
         <Route path="*" element={<NotFound />}></Route>
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import api from "../../api";
-import Dashboard from "../../components/Dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
 import {
@@ -136,7 +135,7 @@ function DashboardHome() {
   );
 
   return (
-    <Dashboard>
+    <>
       {loading ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -273,7 +272,7 @@ function DashboardHome() {
           </div>
         </div>
       )}
-    </Dashboard>
+    </>
   );
 }
 
