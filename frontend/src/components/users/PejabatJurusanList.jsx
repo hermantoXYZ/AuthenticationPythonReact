@@ -51,15 +51,23 @@ const PejabatJurusanList = () => {
       try {
         setIsLoading(true);
         
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+        
         // Fetch pejabat jurusan list
         const pejabatResponse = await api.get('/api/users/pejabat-jurusan/');
         console.log('Pejabat list:', pejabatResponse.data);
         setPejabatList(pejabatResponse.data);
         
         // Fetch all users that are of type pejabat_jurusan
-        const userResponse = await api.get('/api/users/');
-        console.log('All users:', userResponse.data);
-        const availableUsers = userResponse.data.filter(user => 
+        const userResponseAll = await api.get('/api/users/');
+        console.log('All users:', userResponseAll.data);
+        const availableUsers = userResponseAll.data.filter(user => 
           user.is_active && 
           user.user_type === 'pejabat_jurusan' &&
           !pejabatResponse.data.some(pejabat => pejabat.user?.id === user.id)

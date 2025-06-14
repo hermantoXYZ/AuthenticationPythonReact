@@ -45,13 +45,21 @@ const KetuaProdiList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+
         // First fetch kaprodi list
         const kaprodiResponse = await api.get('/api/ketua-prodi/');
         setKaprodiList(kaprodiResponse.data);
         
         // Then fetch all users that are of type ketua_prodi
-        const userResponse = await api.get('/api/users/');
-        const availableUsers = userResponse.data.filter(user => 
+        const usersResponse = await api.get('/api/users/');
+        const availableUsers = usersResponse.data.filter(user => 
           user.is_active && 
           user.user_type === 'ketua_prodi' &&
           !kaprodiResponse.data.some(kaprodi => kaprodi.user.id === user.id)

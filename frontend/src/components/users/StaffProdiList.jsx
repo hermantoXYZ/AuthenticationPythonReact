@@ -45,15 +45,23 @@ const StaffProdiList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+
         // First fetch staff list
         const staffResponse = await api.get('/api/users/staff-prodi/');
         console.log('Staff list:', staffResponse.data);
         setStaffList(staffResponse.data);
         
         // Then fetch all active users that are of type staff_prodi
-        const userResponse = await api.get('/api/users/');
-        console.log('All users:', userResponse.data);
-        const availableUsers = userResponse.data.filter(user => 
+        const usersResponse = await api.get('/api/users/');
+        console.log('All users:', usersResponse.data);
+        const availableUsers = usersResponse.data.filter(user => 
           user.is_active && 
           user.user_type === 'staff_prodi' &&  // Only show users with type staff_prodi
           !staffResponse.data.some(staff => staff.user.id === user.id)

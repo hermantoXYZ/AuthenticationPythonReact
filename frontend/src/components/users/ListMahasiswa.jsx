@@ -56,52 +56,35 @@ const ListMahasiswa = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+
         // Fetch mahasiswa list
         const mahasiswaResponse = await api.get('/api/users/mahasiswa/');
-        console.log('Mahasiswa list:', mahasiswaResponse.data);
         setMahasiswaList(mahasiswaResponse.data);
         
         // Fetch all active users that are of type mahasiswa but not yet in UserMahasiswa
-        const userResponse = await api.get('/api/users/');
-        console.log('All users:', userResponse.data);
-        const availableUsers = userResponse.data.filter(user => 
+        const usersResponse = await api.get('/api/users/');
+        const availableUsers = usersResponse.data.filter(user => 
           user.is_active && 
-          user.user_type === 'mahasiswa' &&  // Only show users with type mahasiswa
-          !mahasiswaResponse.data.some(mhs => mhs.user.id === user.id)
+          user.user_type === 'mahasiswa' &&
+          !mahasiswaResponse.data.some(mahasiswa => mahasiswa.user.id === user.id)
         );
-        console.log('Available mahasiswa users:', availableUsers);
         setUserList(availableUsers);
         
-        // Fetch program studi list with the correct endpoint
-        console.log('Fetching program studi list...');
+        // Fetch program studi list
         const prodiResponse = await api.get('/api/prodi/');
-        console.log('Program studi response:', prodiResponse.data);
         setProgramStudiList(prodiResponse.data);
-
-        // Fetch dosen list with detailed logging
-        console.log('Fetching dosen list...');
-        const dosenResponse = await api.get('/api/users/dosen/');
-        console.log('Dosen list raw response:', dosenResponse.data);
         
-        // Log each dosen's complete data structure
-        dosenResponse.data.forEach(dosen => {
-          console.log('Dosen complete data:', {
-            id: dosen.id,
-            user: dosen.user,
-            nip: dosen.nip,
-            program_studi: dosen.program_studi,
-            jabatan_akademik: dosen.jabatan_akademik
-          });
-        });
-        
-        setDosenList(dosenResponse.data);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
-        const errorMessage = error.response?.data?.detail || 
-                           error.response?.data?.error || 
-                           'Gagal memuat data';
-        toast.error(errorMessage);
+        toast.error('Gagal memuat data');
         setIsLoading(false);
       }
     };

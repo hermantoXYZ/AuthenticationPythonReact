@@ -55,13 +55,21 @@ const DosenList = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+
         // Fetch dosen list
         const dosenResponse = await api.get('/api/users/dosen/');
         setDosenList(dosenResponse.data);
         
         // Fetch all active users that are of type dosen but not yet in UserDosen
-        const userResponse = await api.get('/api/users/');
-        const availableUsers = userResponse.data.filter(user => 
+        const usersResponse = await api.get('/api/users/');
+        const availableUsers = usersResponse.data.filter(user => 
           user.is_active && 
           (user.user_type === 'dosen' || 
            user.user_type === 'dekan_fakultas' || 

@@ -12,6 +12,14 @@ const ListDekanFakultas = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is mahasiswa
+        const userResponse = await api.get('/api/profile/');
+        if (userResponse.data.user_type === 'mahasiswa') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+
         // Fetch users with type dekan_fakultas
         const dekanResponse = await api.get('/api/users/', {
           params: { user_type: 'dekan_fakultas' }
