@@ -18,6 +18,7 @@ const UserList = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // User type mapping for display
   const userTypeDisplay = {
@@ -44,7 +45,24 @@ const UserList = () => {
       }
     };
 
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/api/profile/');
+        setCurrentUser(response.data);
+        
+        // Check if user is mahasiswa or dosen and redirect
+        if (response.data.user_type === 'mahasiswa' || response.data.user_type === 'dosen') {
+          toast.error('Anda tidak memiliki akses ke halaman ini');
+          navigate('/dashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
     fetchUsers();
+    fetchCurrentUser();
   }, []);
 
   console.log(userList)
@@ -252,6 +270,7 @@ const UserList = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               Kembali ke Daftar Pengguna
             </button>
+            {currentUser?.user_type !== 'dekan_fakultas' && currentUser?.user_type !== 'dosen' && currentUser?.user_type !== 'pejabat_jurusan' && (
             <div className="flex space-x-2">
               {!isEditing ? (
                 <button
@@ -285,6 +304,7 @@ const UserList = () => {
                 </>
               )}
             </div>
+            )}
           </div>
 
           {/* User Details */}
@@ -714,13 +734,15 @@ const UserList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewUser(user.id)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
-                        title="Edit User"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
+                      {currentUser?.user_type !== 'dekan_fakultas' && currentUser?.user_type !== 'dosen' && currentUser?.user_type !== 'pejabat_jurusan' && currentUser?.user_type !== 'mahasiswa' && (
+                        <button
+                          onClick={() => handleViewUser(user.id)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                          title="Edit User"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleToggleActive(user)}
                         className={`p-1 rounded-full ${
