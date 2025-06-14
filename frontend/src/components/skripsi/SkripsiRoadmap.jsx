@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import api from '../../api';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
   Clock,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 const SkripsiRoadmap = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [steps, setSteps] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -214,6 +216,10 @@ const SkripsiRoadmap = () => {
     }
   };
 
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'completed':
@@ -301,14 +307,14 @@ const SkripsiRoadmap = () => {
                   {step.actions && step.status !== 'locked' && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {step.actions.map((action, index) => (
-                        <a
+                        <button
                           key={index}
-                          href={action.path}
+                          onClick={() => handleNavigation(action.path)}
                           className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
                         >
                           {action.label}
                           <ChevronRight className="w-4 h-4 ml-1" />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
