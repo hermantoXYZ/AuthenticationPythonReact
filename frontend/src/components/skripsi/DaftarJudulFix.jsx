@@ -16,7 +16,9 @@ import {
   Check,
   X,
   MessageSquare,
-  ArrowLeft
+  ArrowLeft,
+  UserPlus,
+  UserCheck
 } from 'lucide-react';
 
 const DaftarJudulFix = () => {
@@ -27,10 +29,24 @@ const DaftarJudulFix = () => {
   const [selectedPengajuan, setSelectedPengajuan] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [dosenList, setDosenList] = useState([]);
+  const [showPembimbingModal, setShowPembimbingModal] = useState(false);
+  const [selectedPembimbingType, setSelectedPembimbingType] = useState(null);
 
   useEffect(() => {
     fetchPengajuan();
+    fetchDosenList();
   }, []);
+
+  const fetchDosenList = async () => {
+    try {
+      const response = await api.get('/api/users/dosen/');
+      setDosenList(response.data);
+    } catch (error) {
+      console.error('Error fetching dosen list:', error);
+      toast.error('Gagal memuat daftar dosen');
+    }
+  };
 
   const fetchPengajuan = async () => {
     try {
@@ -97,6 +113,71 @@ const DaftarJudulFix = () => {
     }
   };
 
+  const handleSetPembimbing = async (pengajuanId, pembimbingId, type) => {
+    try {
+      setIsSaving(true);
+      
+      // Get current pengajuan data
+      const currentPengajuan = pengajuan.find(item => item.id === pengajuanId);
+      if (!currentPengajuan) {
+        throw new Error('Data pengajuan tidak ditemukan');
+      }
+
+      // Prepare data with all required fields
+      const data = {
+        [`pembimbing_${type}`]: pembimbingId,
+        // Include existing data to prevent validation errors
+        judul_1: currentPengajuan.judul_1,
+        deskripsi_1: currentPengajuan.deskripsi_1,
+        judul_2: currentPengajuan.judul_2,
+        deskripsi_2: currentPengajuan.deskripsi_2,
+        judul_3: currentPengajuan.judul_3,
+        deskripsi_3: currentPengajuan.deskripsi_3,
+        status: currentPengajuan.status,
+        judul_diterima: currentPengajuan.judul_diterima
+      };
+
+      console.log('Sending data:', data);
+      const response = await api.patch(`/api/skripsi/pengajuan/${pengajuanId}/`, data);
+      console.log('Response:', response.data);
+      
+      // Update local state
+      setPengajuan(pengajuan.map(item => 
+        item.id === pengajuanId 
+          ? { 
+              ...item, 
+              [`pembimbing_${type}`]: response.data[`pembimbing_${type}`],
+              [`pembimbing_${type}_name`]: response.data[`pembimbing_${type}_name`]
+            } 
+          : item
+      ));
+      
+      // Update selected pengajuan
+      setSelectedPengajuan(prev => ({
+        ...prev,
+        [`pembimbing_${type}`]: response.data[`pembimbing_${type}`],
+        [`pembimbing_${type}_name`]: response.data[`pembimbing_${type}_name`]
+      }));
+      
+      toast.success(`Pembimbing ${type} berhasil diset`);
+      setShowPembimbingModal(false);
+      setSelectedPembimbingType(null);
+    } catch (error) {
+      console.error('Error setting pembimbing:', error);
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else if (error.response?.data) {
+        // Handle validation errors
+        const errorMessages = Object.values(error.response.data).flat();
+        toast.error(errorMessages[0] || 'Gagal menyet pembimbing');
+      } else {
+        toast.error('Gagal menyet pembimbing');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filteredPengajuan = pengajuan.filter(item => {
     const searchTermLower = searchTerm.toLowerCase();
     const mahasiswaName = item.mahasiswa_name || '';
@@ -108,6 +189,20 @@ const DaftarJudulFix = () => {
     
     return matchesSearch;
   });
+
+  const renderProgramStudi = (programStudi) => {
+    if (!programStudi) return null;
+    
+    try {
+      if (typeof programStudi === 'object') {
+        return programStudi.nama || programStudi.kode || 'Tidak tersedia';
+      }
+      return String(programStudi);
+    } catch (error) {
+      console.error('Error rendering program studi:', error);
+      return 'Tidak tersedia';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -153,10 +248,120 @@ const DaftarJudulFix = () => {
                     </p>
                   </div>
                   <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Kelas</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.kelas || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Angkatan</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.angkatan || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Status Mahasiswa</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.status || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">IPK</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.ipk || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Semester</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.semester || '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Tanggal Masuk</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.mahasiswa?.tanggal_masuk ? new Date(selectedPengajuan.mahasiswa.tanggal_masuk).toLocaleDateString('id-ID') : '-'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Dosen Wali</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {selectedPengajuan.dosen_wali_name || 'Belum ditentukan'}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Program Studi</label>
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
                       {selectedPengajuan.program_studi}
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pembimbing Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Pembimbing</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Pembimbing 1 */}
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">Pembimbing 1</h3>
+                      <button
+                        onClick={() => {
+                          setSelectedPembimbingType(1);
+                          setShowPembimbingModal(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        {selectedPengajuan.pembimbing_1 ? 'Ubah' : 'Tambah'}
+                      </button>
+                    </div>
+                    {selectedPengajuan.pembimbing_1 ? (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <UserCheck className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {selectedPengajuan.pembimbing_1_name}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Belum ada pembimbing</p>
+                    )}
+                  </div>
+
+                  {/* Pembimbing 2 */}
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">Pembimbing 2</h3>
+                      <button
+                        onClick={() => {
+                          setSelectedPembimbingType(2);
+                          setShowPembimbingModal(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        {selectedPengajuan.pembimbing_2 ? 'Ubah' : 'Tambah'}
+                      </button>
+                    </div>
+                    {selectedPengajuan.pembimbing_2 ? (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <UserCheck className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {selectedPengajuan.pembimbing_2_name}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Belum ada pembimbing</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -190,6 +395,144 @@ const DaftarJudulFix = () => {
             </div>
           </div>
         </div>
+
+        {/* Pembimbing Selection Modal */}
+        {showPembimbingModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Pilih Pembimbing {selectedPembimbingType}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Pilih dosen yang akan menjadi pembimbing {selectedPembimbingType}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowPembimbingModal(false);
+                      setSelectedPembimbingType(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-500 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari dosen berdasarkan nama atau NIP..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+              
+              {/* Dosen List */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {dosenList.map((dosen) => (
+                    <button
+                      key={dosen.id}
+                      onClick={() => handleSetPembimbing(selectedPengajuan.id, dosen.id, selectedPembimbingType)}
+                      disabled={isSaving}
+                      className={`w-full p-4 rounded-lg border transition-all duration-200 ${
+                        isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md hover:border-blue-300'
+                      } ${
+                        (selectedPembimbingType === 1 && selectedPengajuan.pembimbing_1?.id === dosen.id) ||
+                        (selectedPembimbingType === 2 && selectedPengajuan.pembimbing_2?.id === dosen.id)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0">
+                          <div className={`h-14 w-14 rounded-full flex items-center justify-center ${
+                            (selectedPembimbingType === 1 && selectedPengajuan.pembimbing_1?.id === dosen.id) ||
+                            (selectedPembimbingType === 2 && selectedPengajuan.pembimbing_2?.id === dosen.id)
+                              ? 'bg-blue-100 ring-2 ring-blue-500'
+                              : 'bg-gray-100'
+                          }`}>
+                            <UserCheck className={`h-7 w-7 ${
+                              (selectedPembimbingType === 1 && selectedPengajuan.pembimbing_1?.id === dosen.id) ||
+                              (selectedPembimbingType === 2 && selectedPengajuan.pembimbing_2?.id === dosen.id)
+                                ? 'text-blue-600'
+                                : 'text-gray-400'
+                            }`} />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-base font-semibold text-gray-900 truncate">
+                              {dosen.user.full_name}
+                            </p>
+                            {(selectedPembimbingType === 1 && selectedPengajuan.pembimbing_1?.id === dosen.id) ||
+                             (selectedPembimbingType === 2 && selectedPengajuan.pembimbing_2?.id === dosen.id) ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Terpilih
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <span className="font-medium text-gray-700 w-16">NIP:</span>
+                              {dosen.nip || '-'}
+                            </p>
+                            {dosen.program_studi && (
+                              <p className="text-sm text-gray-600 flex items-center">
+                                <span className="font-medium text-gray-700 w-16">Prodi:</span>
+                                {renderProgramStudi(dosen.program_studi)}
+                              </p>
+                            )}
+                            {dosen.gelar && (
+                              <p className="text-sm text-gray-600 flex items-center">
+                                <span className="font-medium text-gray-700 w-16">Gelar:</span>
+                                {dosen.gelar}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Empty State */}
+                {dosenList.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <UserCheck className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada dosen ditemukan</h3>
+                    <p className="text-gray-600">Coba ubah kriteria pencarian Anda</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowPembimbingModal(false);
+                      setSelectedPembimbingType(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -326,7 +326,7 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
             'dosen_wali_name',
             'catatan_prodi', 'catatan_fakultas', 'catatan_pembimbing'
         ]
-        read_only_fields = ['mahasiswa', 'pembimbing_1', 'pembimbing_2', 'tanggal_pengajuan', 'tanggal_update']
+        read_only_fields = ['mahasiswa', 'tanggal_pengajuan', 'tanggal_update']
 
     def validate(self, data):
         # Validate that all required fields are present
