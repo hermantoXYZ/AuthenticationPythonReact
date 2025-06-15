@@ -18,7 +18,11 @@ import {
   MessageSquare,
   ArrowLeft,
   UserPlus,
-  UserCheck
+  UserCheck,
+  Trash2,
+  FileEdit,
+  FileUp,
+  ArrowRight
 } from 'lucide-react';
 
 const DaftarJudulFix = () => {
@@ -32,6 +36,12 @@ const DaftarJudulFix = () => {
   const [dosenList, setDosenList] = useState([]);
   const [showPembimbingModal, setShowPembimbingModal] = useState(false);
   const [selectedPembimbingType, setSelectedPembimbingType] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSKModal, setShowSKModal] = useState(false);
+  const [showRevisiModal, setShowRevisiModal] = useState(false);
+  const [selectedAction, setSelectedAction] = useState(null);
+  const [showPerpanjangModal, setShowPerpanjangModal] = useState(false);
+  const [showSeminarModal, setShowSeminarModal] = useState(false);
 
   useEffect(() => {
     fetchPengajuan();
@@ -173,6 +183,86 @@ const DaftarJudulFix = () => {
       } else {
         toast.error('Gagal menyet pembimbing');
       }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
+  const handleCreateSK = async (pengajuanId) => {
+    try {
+      setIsSaving(true);
+      const response = await api.post(`/api/skripsi/pengajuan/${pengajuanId}/create-sk/`);
+      toast.success('SK berhasil dibuat');
+      setShowSKModal(false);
+      // Refresh data
+      fetchPengajuan();
+    } catch (error) {
+      console.error('Error creating SK:', error);
+      toast.error('Gagal membuat SK');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRevisiSK = async (pengajuanId) => {
+    try {
+      setIsSaving(true);
+      const response = await api.post(`/api/skripsi/pengajuan/${pengajuanId}/revisi-sk/`);
+      toast.success('Revisi SK berhasil diajukan');
+      setShowRevisiModal(false);
+      // Refresh data
+      fetchPengajuan();
+    } catch (error) {
+      console.error('Error revising SK:', error);
+      toast.error('Gagal mengajukan revisi SK');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLanjutProposal = async (pengajuanId) => {
+    try {
+      setIsSaving(true);
+      const response = await api.post(`/api/skripsi/pengajuan/${pengajuanId}/lanjut-proposal/`);
+      toast.success('Berhasil lanjut ke proposal');
+      // Redirect ke halaman proposal
+      window.location.href = `/dashboard/skripsi/proposal/${pengajuanId}`;
+    } catch (error) {
+      console.error('Error continuing to proposal:', error);
+      toast.error('Gagal lanjut ke proposal');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePerpanjangSK = async (pengajuanId) => {
+    try {
+      setIsSaving(true);
+      const response = await api.post(`/api/skripsi/pengajuan/${pengajuanId}/perpanjang-sk/`);
+      toast.success('Surat Keputusan berhasil diperpanjang');
+      setShowPerpanjangModal(false);
+      // Refresh data
+      fetchPengajuan();
+    } catch (error) {
+      console.error('Error perpanjang SK:', error);
+      toast.error('Gagal memperpanjang Surat Keputusan');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAjukanSeminar = async (pengajuanId) => {
+    try {
+      setIsSaving(true);
+      const response = await api.post(`/api/skripsi/pengajuan/${pengajuanId}/ajukan-seminar/`);
+      toast.success('Seminar proposal berhasil diajukan');
+      setShowSeminarModal(false);
+      // Refresh data
+      fetchPengajuan();
+    } catch (error) {
+      console.error('Error ajukan seminar:', error);
+      toast.error('Gagal mengajukan seminar proposal');
     } finally {
       setIsSaving(false);
     }
@@ -396,6 +486,56 @@ const DaftarJudulFix = () => {
           </div>
         </div>
 
+        {/* Action Buttons */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Aksi</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={() => {
+                setSelectedAction('sk');
+                setShowSKModal(true);
+              }}
+              className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <FileCheck className="h-5 w-5 mr-2" />
+              Buat SK
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedAction('perpanjang');
+                setShowPerpanjangModal(true);
+              }}
+              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Clock className="h-5 w-5 mr-2" />
+              Perpanjang SK
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedAction('revisi');
+                setShowRevisiModal(true);
+              }}
+              className="flex items-center justify-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+            >
+              <FileEdit className="h-5 w-5 mr-2" />
+              Revisi SK
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedAction('seminar');
+                setShowSeminarModal(true);
+              }}
+              className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              <BookOpen className="h-5 w-5 mr-2" />
+              Ajukan Seminar
+            </button>
+          </div>
+        </div>
+
         {/* Pembimbing Selection Modal */}
         {showPembimbingModal && (
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -527,6 +667,122 @@ const DaftarJudulFix = () => {
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create SK Modal */}
+        {showSKModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Buat Surat Keputusan</h3>
+                <p className="text-gray-600 mb-6">
+                  Apakah Anda yakin ingin membuat Surat Keputusan untuk pengajuan ini?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowSKModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handleCreateSK(selectedPengajuan.id)}
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {isSaving ? 'Memproses...' : 'Buat SK'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Perpanjang SK Modal */}
+        {showPerpanjangModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Perpanjang Surat Keputusan</h3>
+                <p className="text-gray-600 mb-6">
+                  Apakah Anda yakin ingin memperpanjang Surat Keputusan ini?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowPerpanjangModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handlePerpanjangSK(selectedPengajuan.id)}
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSaving ? 'Memproses...' : 'Perpanjang SK'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Revisi SK Modal */}
+        {showRevisiModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Ajukan Revisi SK</h3>
+                <p className="text-gray-600 mb-6">
+                  Apakah Anda yakin ingin mengajukan revisi untuk Surat Keputusan ini?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowRevisiModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handleRevisiSK(selectedPengajuan.id)}
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+                  >
+                    {isSaving ? 'Memproses...' : 'Ajukan Revisi'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ajukan Seminar Modal */}
+        {showSeminarModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Ajukan Seminar Proposal</h3>
+                <p className="text-gray-600 mb-6">
+                  Apakah Anda yakin ingin mengajukan seminar proposal untuk pengajuan ini?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowSeminarModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => handleAjukanSeminar(selectedPengajuan.id)}
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {isSaving ? 'Memproses...' : 'Ajukan Seminar'}
                   </button>
                 </div>
               </div>
