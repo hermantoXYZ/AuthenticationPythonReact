@@ -5,13 +5,13 @@ from .serializers import (
     UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, 
     StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, 
     SkripsiJudulSerializer, PejabatJurusanSerializer, KetuaProdiSerializer,
-    ArticleSerializer
+    ArticleSerializer, NomorSuratSerializer, TandaTanganSuratSerializer, JenisLayananSerializer, LayananSerializer
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, 
     UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType, 
-    PejabatJurusan, UserKetuaProdi, Article
+    PejabatJurusan, UserKetuaProdi, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -1006,3 +1006,19 @@ class ArticleViewSet(viewsets.ModelViewSet):
         article.view_count += 1
         article.save()
         return Response({'status': 'view count incremented', 'view_count': article.view_count})
+
+class NomorSuratViewSet(viewsets.ModelViewSet):
+    queryset = NomorSurat.objects.all()
+    serializer_class = NomorSuratSerializer
+
+class TandaTanganSuratViewSet(viewsets.ModelViewSet):
+    queryset = TandaTanganSurat.objects.all()
+    serializer_class = TandaTanganSuratSerializer
+
+class JenisLayananViewSet(viewsets.ModelViewSet):
+    queryset = JenisLayanan.objects.all()
+    serializer_class = JenisLayananSerializer
+
+class LayananViewSet(viewsets.ModelViewSet):
+    queryset = Layanan.objects.all()
+    serializer_class = LayananSerializer

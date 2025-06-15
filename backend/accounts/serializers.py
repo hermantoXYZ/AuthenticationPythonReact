@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
 
 class UserBasicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -421,3 +421,24 @@ class StaffFakultasSerializer(serializers.ModelSerializer):
         instance.nip = validated_data.get('nip', instance.nip)
         instance.save()
         return instance
+
+
+class NomorSuratSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NomorSurat
+        fields = '__all__'
+
+class TandaTanganSuratSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TandaTanganSurat
+        fields = '__all__'
+
+class JenisLayananSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisLayanan
+        fields = '__all__'
+
+class LayananSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Layanan
+        fields = '__all__'
