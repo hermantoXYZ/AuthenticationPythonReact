@@ -301,9 +301,13 @@ class SkripsiJudulViewSet(viewsets.ModelViewSet):
 
         # Validasi berdasarkan user type
         if user.user_type == 'mahasiswa':
-            # Mahasiswa hanya bisa update jika status masih pending atau perlu revisi
-            if instance.status not in ['pending', 'revision']:
+            # Mahasiswa hanya bisa update jika status masih pending, perlu revisi, atau ditolak
+            if instance.status not in ['pending', 'revision', 'rejected']:
                 raise PermissionDenied("Tidak dapat mengubah pengajuan yang sudah diproses")
+            
+            # Jika status rejected atau revision, reset status ke pending
+            if instance.status in ['rejected', 'revision']:
+                request.data['status'] = 'pending'
             
         elif user.user_type == 'staff_prodi':
             # Staff prodi hanya bisa update status dan catatan prodi
