@@ -80,6 +80,10 @@ const ListMahasiswa = () => {
         // Fetch program studi list
         const prodiResponse = await api.get('/api/prodi/');
         setProgramStudiList(prodiResponse.data);
+
+        // Fetch dosen list
+        const dosenResponse = await api.get('/api/users/dosen/');
+        setDosenList(dosenResponse.data);
         
         setIsLoading(false);
       } catch (error) {
