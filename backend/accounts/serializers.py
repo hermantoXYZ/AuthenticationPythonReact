@@ -308,6 +308,9 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
     program_studi = serializers.CharField(source='mahasiswa.program_studi.nama', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
+    # Tambahkan nested serializer untuk mahasiswa
+    mahasiswa = MahasiswaProfileSerializer(read_only=True)
+    
     class Meta:
         model = SkripsiJudul
         fields = [
@@ -323,7 +326,7 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
             'dosen_wali_name',
             'catatan_prodi', 'catatan_fakultas', 'catatan_pembimbing'
         ]
-        read_only_fields = ['mahasiswa', 'status', 'judul_diterima', 'pembimbing_1', 'pembimbing_2', 'tanggal_pengajuan', 'tanggal_update']
+        read_only_fields = ['mahasiswa', 'pembimbing_1', 'pembimbing_2', 'tanggal_pengajuan', 'tanggal_update']
 
     def validate(self, data):
         # Validate that all required fields are present
@@ -336,6 +339,16 @@ class SkripsiJudulSerializer(serializers.ModelSerializer):
         titles = [data.get('judul_1'), data.get('judul_2'), data.get('judul_3')]
         if len(set(titles)) != len(titles):
             raise serializers.ValidationError("Judul skripsi tidak boleh sama")
+        
+        # Validate judul_diterima when status is accepted
+        if data.get('status') == 'accepted':
+            if not data.get('judul_diterima'):
+                raise serializers.ValidationError("Judul yang diterima harus dipilih ketika status 'accepted'")
+            
+            # Validate that judul_diterima matches one of the submitted titles
+            valid_titles = [data.get('judul_1'), data.get('judul_2'), data.get('judul_3')]
+            if data.get('judul_diterima') not in valid_titles:
+                raise serializers.ValidationError("Judul yang diterima harus salah satu dari judul yang diajukan")
         
         return data
 
