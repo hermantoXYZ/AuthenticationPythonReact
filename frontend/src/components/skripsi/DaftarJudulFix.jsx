@@ -178,7 +178,7 @@ const DaftarJudulFix = () => {
                             selectedPengajuan.judul_diterima === selectedPengajuan[`judul_${num}`] ? 'bg-green-600 hover:bg-green-700' : ''
                           }`}
                         >
-                          {selectedPengajuan.judul_diterima === selectedPengajuan[`judul_${num}`] ? 'Judul Terpilih' : 'Pilih Judul Ini'}
+                          {selectedPengajuan.judul_diterima === selectedPengajuan[`judul_${num}`] ? 'Judul Terpilih' : 'Judul Tidak Terpilih'}
                         </button>
                       </div>
                       <p className="text-gray-900 mb-2">{selectedPengajuan[`judul_${num}`]}</p>

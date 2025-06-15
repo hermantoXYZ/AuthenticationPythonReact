@@ -290,7 +290,7 @@ const DaftarPengajuanAdmin = () => {
         </div>
 
         {/* Detail Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100">
           <div className="p-6">
             <div className="space-y-8">
               {/* Student Information */}
@@ -427,10 +427,19 @@ const DaftarPengajuanAdmin = () => {
                   </div>
 
                   {selectedPengajuan.status === 'accepted' && (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <h3 className="text-lg font-medium text-blue-900 mb-3">Pilih Judul yang Diterima</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-start space-x-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200 shadow-sm">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="p-2 rounded-lg">
+                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-semibold text-blue-900">Pilih Judul yang Diterima</h3>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {/* Judul 1 */}
+                        <div className="relative">
                           <input
                             type="radio"
                             id="judul1"
@@ -444,15 +453,32 @@ const DaftarPengajuanAdmin = () => {
                                 judul_diterima: e.target.value
                               });
                             }}
-                            className="mt-1"
+                            className="peer sr-only"
                           />
-                          <label htmlFor="judul1" className="flex-1">
-                            <div className="font-medium text-blue-900">Judul 1 (Prioritas Utama)</div>
-                            <div className="text-sm text-blue-700">{selectedPengajuan.judul_1}</div>
+                          <label
+                            htmlFor="judul1"
+                            className="flex items-start p-4 bg-white rounded-lg border-2 cursor-pointer transition-all duration-200
+                                     peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-blue-300
+                                     peer-checked:shadow-md hover:shadow-sm"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-blue-900">Judul 1</span>
+                                <span className="text-sm px-2 py-1 bg-blue-100 text-blue-700 rounded-full">Prioritas Utama</span>
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{selectedPengajuan.judul_1}</p>
+                            </div>
+                            <div className="ml-4 flex-shrink-0">
+                              <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center
+                                            peer-checked:border-green-500 peer-checked:bg-green-500">
+                                <div className="w-2.5 h-2.5 rounded-full bg-white peer-checked:block hidden"></div>
+                              </div>
+                            </div>
                           </label>
                         </div>
 
-                        <div className="flex items-start space-x-3">
+                        {/* Judul 2 */}
+                        <div className="relative">
                           <input
                             type="radio"
                             id="judul2"
@@ -466,15 +492,32 @@ const DaftarPengajuanAdmin = () => {
                                 judul_diterima: e.target.value
                               });
                             }}
-                            className="mt-1"
+                            className="peer sr-only"
                           />
-                          <label htmlFor="judul2" className="flex-1">
-                            <div className="font-medium text-blue-900">Judul 2 (Alternatif 1)</div>
-                            <div className="text-sm text-blue-700">{selectedPengajuan.judul_2}</div>
+                          <label
+                            htmlFor="judul2"
+                            className="flex items-start p-4 bg-white rounded-lg border-2 cursor-pointer transition-all duration-200
+                                     peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-blue-300
+                                     peer-checked:shadow-md hover:shadow-sm"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-blue-900">Judul 2</span>
+                                <span className="text-sm px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">Alternatif 1</span>
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{selectedPengajuan.judul_2}</p>
+                            </div>
+                            <div className="ml-4 flex-shrink-0">
+                              <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center
+                                            peer-checked:border-green-500 peer-checked:bg-green-500">
+                                <div className="w-2.5 h-2.5 rounded-full bg-white peer-checked:block hidden"></div>
+                              </div>
+                            </div>
                           </label>
                         </div>
 
-                        <div className="flex items-start space-x-3">
+                        {/* Judul 3 */}
+                        <div className="relative">
                           <input
                             type="radio"
                             id="judul3"
@@ -488,13 +531,38 @@ const DaftarPengajuanAdmin = () => {
                                 judul_diterima: e.target.value
                               });
                             }}
-                            className="mt-1"
+                            className="peer sr-only"
                           />
-                          <label htmlFor="judul3" className="flex-1">
-                            <div className="font-medium text-blue-900">Judul 3 (Alternatif 2)</div>
-                            <div className="text-sm text-blue-700">{selectedPengajuan.judul_3}</div>
+                          <label
+                            htmlFor="judul3"
+                            className="flex items-start p-4 bg-white rounded-lg border-2 cursor-pointer transition-all duration-200
+                                     peer-checked:border-green-500 peer-checked:bg-green-50 hover:border-blue-300
+                                     peer-checked:shadow-md hover:shadow-sm"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-blue-900">Judul 3</span>
+                                <span className="text-sm px-2 py-1 bg-purple-100 text-purple-700 rounded-full">Alternatif 2</span>
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{selectedPengajuan.judul_3}</p>
+                            </div>
+                            <div className="ml-4 flex-shrink-0">
+                              <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center
+                                            peer-checked:border-green-500 peer-checked:bg-green-500">
+                                <div className="w-2.5 h-2.5 rounded-full bg-white peer-checked:block hidden"></div>
+                              </div>
+                            </div>
                           </label>
                         </div>
+                      </div>
+
+                      <div className="mt-4 text-sm text-blue-600">
+                        <p className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Pilih salah satu judul yang akan diterima sebagai judul skripsi
+                        </p>
                       </div>
                     </div>
                   )}
