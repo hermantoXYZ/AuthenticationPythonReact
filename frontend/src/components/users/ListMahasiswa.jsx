@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, MoreVertical, Edit2, X, Save, ArrowLeft, Building, Award, BookOpen, Plus, GraduationCap, UserCheck } from 'lucide-react';
+import { Search, Filter, SortAsc, SortDesc, User, Mail, Phone, Calendar, Hash, MoreVertical, Edit2, X, Save, ArrowLeft, Building, Award, BookOpen, Plus, GraduationCap, UserCheck, UserX } from 'lucide-react';
 import api from '../../api';
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -52,6 +52,9 @@ const ListMahasiswa = () => {
     sortOrder: 'asc',
     onlyUnassigned: true, // hanya tampilkan yang belum jadi mahasiswa
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mahasiswaToDelete, setMahasiswaToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -380,6 +383,77 @@ const ListMahasiswa = () => {
           bValue.localeCompare(aValue);
       });
   }, [userList, mahasiswaList, userFilterOptions]);
+
+  const handleDeleteClick = (mahasiswa) => {
+    setMahasiswaToDelete(mahasiswa);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!mahasiswaToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      // First check if mahasiswa exists
+      try {
+        await api.get(`/api/users/mahasiswa/${mahasiswaToDelete.id}/`);
+      } catch (error) {
+        if (error.response?.status === 404) {
+          toast.error('Mahasiswa tidak ditemukan');
+          // Refresh the list to ensure data is up to date
+          const mahasiswaResponse = await api.get('/api/users/mahasiswa/');
+          setMahasiswaList(mahasiswaResponse.data);
+          setShowDeleteModal(false);
+          setMahasiswaToDelete(null);
+          return;
+        }
+        throw error;
+      }
+
+      // Delete the mahasiswa record
+      await api.delete(`/api/users/mahasiswa/${mahasiswaToDelete.id}/`);
+      
+      // Show success message
+      toast.success('Mahasiswa berhasil dihapus');
+      
+      // Close modals and reset states
+      setShowDeleteModal(false);
+      setShowDetailModal(false);
+      setSelectedMahasiswa(null);
+      setMahasiswaToDelete(null);
+      
+      // Refresh the data
+      const mahasiswaResponse = await api.get('/api/users/mahasiswa/');
+      setMahasiswaList(mahasiswaResponse.data);
+      
+      // Refresh available users
+      const userResponse = await api.get('/api/users/');
+      const availableUsers = userResponse.data.filter(user => 
+        user.is_active && 
+        user.user_type === 'mahasiswa' &&
+        !mahasiswaResponse.data.some(mhs => mhs.user.id === user.id)
+      );
+      setUserList(availableUsers);
+      
+    } catch (error) {
+      console.error('Error deleting mahasiswa:', error);
+      let errorMessage = 'Gagal menghapus Mahasiswa';
+      
+      if (error.response?.data) {
+        if (typeof error.response.data === 'object') {
+          errorMessage = Object.entries(error.response.data)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n');
+        } else {
+          errorMessage = error.response.data;
+        }
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // If a mahasiswa is selected, show the detail/edit view
   if (selectedMahasiswa) {
@@ -861,11 +935,14 @@ const ListMahasiswa = () => {
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleViewMahasiswa(mahasiswa.id)}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-50"
-                        title="Lihat Detail"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(mahasiswa);
+                        }}
+                        className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                        title="Hapus Mahasiswa"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <UserX className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -1198,6 +1275,52 @@ const ListMahasiswa = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Delete Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <UserX className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Hapus Mahasiswa
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus {mahasiswaToDelete?.user?.full_name} dari daftar Mahasiswa? 
+                Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setMahasiswaToDelete(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Hapus Mahasiswa</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

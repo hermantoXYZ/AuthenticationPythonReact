@@ -798,8 +798,8 @@ class MahasiswaDetailView(generics.RetrieveUpdateDestroyAPIView):
             # Delete the mahasiswa profile
             self.perform_destroy(instance)
             
-            # Update user type
-            user.user_type = None
+            # Update user type to default value
+            user.user_type = UserType.MAHASISWA  # Set to default value instead of None
             user.save()
             
             return Response(status=status.HTTP_204_NO_CONTENT)
