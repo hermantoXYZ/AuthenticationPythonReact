@@ -7,7 +7,7 @@ from .models import (
     CustomUser, Fakultas, ProgramStudi, 
     UserDosen, UserMahasiswa, UserKetuaProdi, UserStaffProdi, 
     UserStaffFakultas, Note, Jurusan, PejabatJurusan, SkripsiJudul,
-    Article  # Add Article to imports
+    Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
 )
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -369,8 +369,67 @@ class ArticleAdmin(ModelAdmin, ImportExportModelAdmin):
             obj.author = request.user
         super().save_model(request, obj, form, change)
 
+class NomorSuratResource(resources.ModelResource):
+    class Meta:
+        model = NomorSurat
+        exclude = ('id',)
+
+class TandaTanganSuratResource(resources.ModelResource):
+    class Meta:
+        model = TandaTanganSurat
+        exclude = ('id',)
+
+class JenisLayananResource(resources.ModelResource):
+    class Meta:
+        model = JenisLayanan
+        exclude = ('id',)
+
+class LayananResource(resources.ModelResource):
+    class Meta:
+        model = Layanan
+        exclude = ('id',)
+
+@admin.register(NomorSurat)
+class NomorSuratAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = NomorSuratResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ('nomor', 'perihal', 'tahun', 'jurusan', 'admin_nomor_surat', 'tanggal_dibuat')
+    list_filter = ('tahun', 'jurusan')
+    search_fields = ('nomor', 'perihal', 'tujuan')
+    ordering = ('-tanggal_dibuat',)
+
+@admin.register(TandaTanganSurat)
+class TandaTanganSuratAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = TandaTanganSuratResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ('surat', 'jabatan_penandatangan', 'user_penandatangan', 'jenis_tanda_tangan', 'status', 'waktu_tanda_tangan')
+    list_filter = ('jenis_tanda_tangan', 'status', 'jabatan_penandatangan')
+    search_fields = ('surat__nomor', 'jabatan_penandatangan', 'user_penandatangan__full_name')
+    ordering = ('surat', 'urutan')
+
+@admin.register(JenisLayanan)
+class JenisLayananAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = JenisLayananResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ('nama_layanan', 'deskripsi_layanan')
+    search_fields = ('nama_layanan',)
+
+@admin.register(Layanan)
+class LayananAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = LayananResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ('mahasiswa', 'jenis_layanan', 'status', 'tanggal_dibuat', 'nomor_surat')
+    list_filter = ('status', 'jenis_layanan', 'program_studi')
+    search_fields = ('mahasiswa__full_name', 'jenis_layanan__nama_layanan', 'isi_permohonan')
+    ordering = ('-tanggal_dibuat',)
+
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
     pass
+

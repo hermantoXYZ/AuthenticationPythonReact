@@ -569,3 +569,77 @@ class Article(models.Model):
         
     def __str__(self):
         return self.title
+
+# Layanan pengajuan surat
+
+class NomorSurat(models.Model):
+    tanggal_dibuat = models.DateField(auto_now_add=True)
+    admin_nomor_surat = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="nomorsurat_admin")
+    jurusan = models.ForeignKey(Jurusan, on_delete=models.SET_NULL, null=True, blank=True)
+    tahun = models.CharField(max_length=5)
+    nomor = models.IntegerField()
+    perihal = models.CharField(max_length=255)
+    tujuan = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('tahun', 'nomor')
+        ordering = ['-tanggal_dibuat']
+
+    def __str__(self):
+        return f"{self.nomor}/{self.perihal}/{self.tahun}"
+
+class TandaTanganSurat(models.Model):
+    surat = models.ForeignKey(NomorSurat, on_delete=models.CASCADE, related_name="daftar_tanda_tangan")
+    jabatan_penandatangan = models.CharField(max_length=255)  # Contoh: Dekan, Ketua Prodi, dsb
+    user_penandatangan = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="tanda_tangan_user")
+    perihal = models.CharField(max_length=255, blank=True, null=True)
+    jenis_tanda_tangan = models.CharField(
+        max_length=20,
+        choices=[('manual', 'Manual'), ('elektronik', 'Elektronik')],
+        default='manual'
+    )
+    file_tanda_tangan = models.ImageField(upload_to='ttd/manual/', null=True, blank=True)
+    tanda_tangan_elektronik = models.CharField(max_length=255, null=True, blank=True)
+    waktu_tanda_tangan = models.DateTimeField(null=True, blank=True)
+    urutan = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Belum Ditandatangani'), ('signed', 'Sudah Ditandatangani')],
+        default='pending'
+    )
+
+    class Meta:
+        ordering = ['urutan']
+
+    def __str__(self):
+        return f"{self.surat} - {self.jabatan_penandatangan} - {self.user_penandatangan}"
+
+class JenisLayanan(models.Model):
+    nama_layanan = models.CharField(max_length=255)
+    deskripsi_layanan = models.TextField(blank=True, null=True)
+    prasyarat_layanan = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nama_layanan
+
+class Layanan(models.Model):
+    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
+    mahasiswa = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_mahasiswa')
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True)
+    jenis_layanan = models.ForeignKey(JenisLayanan, on_delete=models.SET_NULL, null=True, blank=True)
+    isi_permohonan = models.TextField()
+    file_permohonan = models.FileField(upload_to='layanan/permohonan/', null=True, blank=True)
+    status = models.CharField(max_length=50, default='Waiting', choices=[
+        ('Waiting', 'Menunggu Diproses'),
+        ('Processing', 'Sedang Diproses'),
+        ('Completed', 'Selesai'),
+        ('Rejected', 'Ditolak'),
+    ])
+    admin_pemroses = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_admin_pemroses')
+    hasil_proses = models.TextField(null=True, blank=True)
+    file_hasil = models.FileField(upload_to='layanan/hasil/', null=True, blank=True)
+    link_hasil = models.URLField(null=True, blank=True)
+    nomor_surat = models.ForeignKey(NomorSurat, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_nomor_surat')
+
+    def __str__(self):
+        return f"{self.mahasiswa} - {self.jenis_layanan}"
