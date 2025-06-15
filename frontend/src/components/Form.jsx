@@ -81,7 +81,7 @@ function Form({ route, method }) {
                     <div className="inline-block p-2 bg-blue-600 rounded-lg shadow-lg mb-4">
                         <Lock className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">XYZ App</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">E-Success</h1>
                     <p className="text-gray-600 mt-2">Sistem Informasi Manajemen Akademik</p>
                 </div>
 
