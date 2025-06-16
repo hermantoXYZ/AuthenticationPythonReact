@@ -1022,3 +1022,7 @@ class JenisLayananViewSet(viewsets.ModelViewSet):
 class LayananViewSet(viewsets.ModelViewSet):
     queryset = Layanan.objects.all()
     serializer_class = LayananSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(mahasiswa=self.request.user)
+

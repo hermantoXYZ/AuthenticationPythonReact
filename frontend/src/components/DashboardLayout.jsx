@@ -34,7 +34,9 @@ import {
   ChartBar,
   Clock,
   Briefcase,
-  MessageSquare
+  MessageSquare,
+  Loader2,
+  Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../api";
@@ -70,6 +72,11 @@ import ListDekanFakultas from "./users/ListDekanFakultas";
 import PejabatJurusanList from "./users/PejabatJurusanList";
 import ArticleForm from "./articles/ArticleForm";
 import ArticleList from "./articles/ArticleList";
+// Layanan
+import TandaTangan from "./layanan/TandaTangan";
+import JenisLayanan from "./layanan/JenisLayanan";
+import AjukanLayanan from "./layanan/AjukanLayanan";
+import DaftarAjuanLayanan from "./layanan/DaftarAjuanLayanan";
 
 // Import halaman dari folder pages
 import AboutPage from './pages/AboutPage';
@@ -134,6 +141,18 @@ function DashboardLayout() {
             key: "prodi",
             type: "single",
             path: "/dashboard/prodi"
+          },
+          {
+            icon: FileText,
+            label: "Layanan",
+            key: "layanan",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Daftar Layanan", path: "/dashboard/layanan/list" },
+              { icon: Settings, label: "Jenis Layanan", path: "/dashboard/layanan/jenis" },
+              { icon: FileText, label: "Nomor Surat", path: "/dashboard/layanan/nomor-surat" },
+              { icon: FileCheck, label: "Tanda Tangan", path: "/dashboard/layanan/tanda-tangan" }
+            ]
           },
           {
             icon: Users,
@@ -637,6 +656,16 @@ function DashboardLayout() {
           ...baseMenu.slice(0, 1),
           {
             icon: FileText,
+            label: "Layanan",
+            key: "layanan",
+            type: "dropdown",
+            submenu: [
+              { icon: List, label: "Pengajuan Layanan", path: "/dashboard/layanan/ajukan" },
+              { icon: FileCheck, label: "Status Layanan", path: "/dashboard/layanan/list" },
+            ]
+          },
+          {
+            icon: FileText,
             label: "Skripsi",
             key: "skripsi",
             type: "dropdown",
@@ -1055,6 +1084,13 @@ function DashboardLayout() {
               <Route path="/skripsi/list" element={<DaftarPengajuan />} />
               <Route path="/skripsi/review" element={<ReviewPengajuan />} />
               
+               {/* Layanan Routes */}
+              <Route path="/layanan/ajukan" element={<AjukanLayanan />} />
+              <Route path="/layanan/jenis" element={<JenisLayanan />} />
+              <Route path="/layanan/tanda-tangan" element={<TandaTangan />} />
+              <Route path="/layanan/list" element={<DaftarAjuanLayanan />} />
+
+
               {/* Tracer Study Routes */}
               <Route path="/tracer/form" element={<TracerForm />} />
               <Route path="/tracer/history" element={<TracerHistory />} />

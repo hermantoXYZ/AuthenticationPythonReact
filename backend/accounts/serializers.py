@@ -438,7 +438,48 @@ class JenisLayananSerializer(serializers.ModelSerializer):
         model = JenisLayanan
         fields = '__all__'
 
+    def validate(self, data):
+        # Validasi nama layanan tidak boleh kosong
+        if not data.get('nama_layanan'):
+            raise serializers.ValidationError("Nama layanan harus diisi")
+        
+        # Validasi deskripsi layanan tidak boleh kosong
+        if not data.get('deskripsi_layanan'):
+            raise serializers.ValidationError("Deskripsi layanan harus diisi")
+        
+        # Validasi prasyarat layanan tidak boleh kosong
+        if not data.get('prasyarat_layanan'):
+            raise serializers.ValidationError("Prasyarat layanan harus diisi")
+        
+        return data
+
 class LayananSerializer(serializers.ModelSerializer):
+    mahasiswa_name = serializers.SerializerMethodField()
+    mahasiswa_nim = serializers.SerializerMethodField()
+    jenis_layanan_nama = serializers.SerializerMethodField()
+    program_studi_nama = serializers.SerializerMethodField()
+
     class Meta:
         model = Layanan
         fields = '__all__'
+        read_only_fields = ['mahasiswa']
+
+    def get_mahasiswa_name(self, obj):
+        if obj.mahasiswa:
+            return obj.mahasiswa.full_name
+        return None
+
+    def get_mahasiswa_nim(self, obj):
+        if obj.mahasiswa and hasattr(obj.mahasiswa, 'mahasiswa_profile'):
+            return obj.mahasiswa.mahasiswa_profile.nim
+        return None
+
+    def get_jenis_layanan_nama(self, obj):
+        if obj.jenis_layanan:
+            return obj.jenis_layanan.nama_layanan
+        return None
+
+    def get_program_studi_nama(self, obj):
+        if obj.program_studi:
+            return obj.program_studi.nama
+        return None
