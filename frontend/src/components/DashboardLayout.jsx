@@ -77,6 +77,7 @@ import TandaTangan from "./layanan/TandaTangan";
 import JenisLayanan from "./layanan/JenisLayanan";
 import AjukanLayanan from "./layanan/AjukanLayanan";
 import DaftarAjuanLayanan from "./layanan/DaftarAjuanLayanan";
+import NomorSurat from "./layanan/NomorSurat";
 
 // Import halaman dari folder pages
 import AboutPage from './pages/AboutPage';
@@ -1089,6 +1090,7 @@ function DashboardLayout() {
               <Route path="/layanan/jenis" element={<JenisLayanan />} />
               <Route path="/layanan/tanda-tangan" element={<TandaTangan />} />
               <Route path="/layanan/list" element={<DaftarAjuanLayanan />} />
+              <Route path="/layanan/nomor-surat" element={<NomorSurat />} />
 
 
               {/* Tracer Study Routes */}

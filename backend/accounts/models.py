@@ -571,15 +571,23 @@ class Article(models.Model):
         return self.title
 
 # Layanan pengajuan surat
-
 class NomorSurat(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('aktif', 'Aktif'),
+        ('nonaktif', 'Nonaktif'),
+        ('dihapus', 'Dihapus')
+    ]
+
     tanggal_dibuat = models.DateField(auto_now_add=True)
     admin_nomor_surat = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="nomorsurat_admin")
     jurusan = models.ForeignKey(Jurusan, on_delete=models.SET_NULL, null=True, blank=True)
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True)
     tahun = models.CharField(max_length=5)
     nomor = models.IntegerField()
     perihal = models.CharField(max_length=255)
     tujuan = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
     class Meta:
         unique_together = ('tahun', 'nomor')
