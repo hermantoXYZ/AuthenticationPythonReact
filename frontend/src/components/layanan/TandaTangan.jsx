@@ -269,7 +269,7 @@ const TandaTangan = () => {
       </div>
 
       {modalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white p-6 border-b border-gray-200 z-10">
               <div className="flex items-center justify-between">

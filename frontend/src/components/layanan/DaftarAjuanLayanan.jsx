@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "sonner";
-import { FileText, Loader2, FileCheck, Download, Clock, CheckCircle2, AlertCircle, XCircle, Search, Eye, Users } from "lucide-react";
+import { FileText, Loader2, FileCheck, Download, Clock, CheckCircle2, AlertCircle, XCircle, Search, Eye, Users, Trash2 } from "lucide-react";
 
 const statusConfig = {
   Waiting: {
@@ -30,6 +30,9 @@ const DaftarAjuanLayanan = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedLayanan, setSelectedLayanan] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     const fetchAjuan = async () => {
@@ -45,6 +48,29 @@ const DaftarAjuanLayanan = () => {
     };
     fetchAjuan();
   }, []);
+
+  const handleDelete = async () => {
+    if (!selectedLayanan) return;
+    
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/layanan/${selectedLayanan.id}/`);
+      setData(data.filter(item => item.id !== selectedLayanan.id));
+      toast.success("Ajuan layanan berhasil dihapus");
+      setShowDeleteModal(false);
+      setSelectedLayanan(null);
+    } catch (err) {
+      console.error("Error deleting layanan:", err);
+      toast.error("Gagal menghapus ajuan layanan");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const openDeleteModal = (layanan) => {
+    setSelectedLayanan(layanan);
+    setShowDeleteModal(true);
+  };
 
   const getStatusBadge = (status) => {
     const config = statusConfig[status] || statusConfig.Waiting;
@@ -145,15 +171,9 @@ const DaftarAjuanLayanan = () => {
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600" />
-                      </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
                           {item.mahasiswa_name || "-"}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {item.mahasiswa_nim || "-"}
                         </div>
                       </div>
                     </div>
@@ -203,12 +223,22 @@ const DaftarAjuanLayanan = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => window.location.href = `/dashboard/layanan/detail/${item.id}`}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <Eye className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => window.location.href = `/dashboard/layanan/detail/${item.id}`}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                      {item.status === 'Waiting' && (
+                        <button
+                          onClick={() => openDeleteModal(item)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -231,6 +261,44 @@ const DaftarAjuanLayanan = () => {
           >
             Reset Pencarian
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Konfirmasi Hapus</h3>
+            <p className="text-gray-600 mb-6">
+              Apakah Anda yakin ingin menghapus ajuan layanan ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedLayanan(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                disabled={deleteLoading}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Menghapus...
+                  </div>
+                ) : (
+                  "Hapus"
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

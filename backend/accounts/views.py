@@ -1024,5 +1024,9 @@ class LayananViewSet(viewsets.ModelViewSet):
     serializer_class = LayananSerializer
 
     def perform_create(self, serializer):
-        serializer.save(mahasiswa=self.request.user)
+        # Get the program_studi from the mahasiswa's profile
+        program_studi = None
+        if hasattr(self.request.user, 'mahasiswa_profile'):
+            program_studi = self.request.user.mahasiswa_profile.program_studi
+        serializer.save(mahasiswa=self.request.user, program_studi=program_studi)
 
