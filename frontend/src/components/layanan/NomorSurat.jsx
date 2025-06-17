@@ -42,6 +42,14 @@ const NomorSurat = () => {
     admin_nomor_surat: ''
   });
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    tahun: '',
+    jenis: '',
+    status: '',
+    jurusan: ''
+  });
+
   useEffect(() => {
     fetchNomorSurat();
     fetchJurusan();
@@ -341,15 +349,41 @@ const NomorSurat = () => {
     );
   };
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      tahun: '',
+      jenis: '',
+      status: '',
+      jurusan: ''
+    });
+  };
+
   const filteredNomorSurat = nomorSuratList.filter(item => {
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = 
       item.perihal.toLowerCase().includes(searchTermLower) ||
       item.tujuan.toLowerCase().includes(searchTermLower) ||
-      item.tahun.toLowerCase().includes(searchTermLower) ||
-      item.nomor.toString().includes(searchTermLower)
-    );
+      item.full_nomor.toLowerCase().includes(searchTermLower);
+
+    const matchesFilters = 
+      (!filters.tahun || item.tahun === filters.tahun) &&
+      (!filters.jenis || item.jenis === filters.jenis) &&
+      (!filters.status || item.status === filters.status) &&
+      (!filters.jurusan || item.jurusan?.id === parseInt(filters.jurusan));
+
+    return matchesSearch && matchesFilters;
   });
+
+  // Get unique years from nomor surat list
+  const uniqueYears = [...new Set(nomorSuratList.map(item => item.tahun))].sort((a, b) => b - a);
 
   if (loading) {
     return (
@@ -377,19 +411,108 @@ const NomorSurat = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4">
+        {/* Search */}
         <div className="flex-1">
           <div className="relative">
             <input
               type="text"
-              placeholder="Cari berdasarkan perihal, tujuan, tahun, atau nomor..."
+              placeholder="Cari berdasarkan perihal, tujuan, atau nomor surat..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Tahun Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tahun
+            </label>
+            <select
+              name="tahun"
+              value={filters.tahun}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Semua Tahun</option>
+              {uniqueYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Jenis Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Jenis Surat
+            </label>
+            <select
+              name="jenis"
+              value={filters.jenis}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Semua Jenis</option>
+              <option value="KM">KM</option>
+              <option value="SK">SK</option>
+              <option value="PP">PP</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Semua Status</option>
+              <option value="draft">Draft</option>
+              <option value="aktif">Aktif</option>
+              <option value="nonaktif">Nonaktif</option>
+            </select>
+          </div>
+
+          {/* Jurusan Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Jurusan
+            </label>
+            <select
+              name="jurusan"
+              value={filters.jurusan}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Semua Jurusan</option>
+              {jurusanList.map((jurusan) => (
+                <option key={jurusan.id} value={jurusan.id}>
+                  {jurusan.nama_jurusan}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Reset Filters Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={resetFilters}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Reset Filter
+          </button>
         </div>
       </div>
 
