@@ -22,6 +22,7 @@ from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
 from rest_framework.decorators import action
+from rest_framework import serializers
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -1010,6 +1011,37 @@ class ArticleViewSet(viewsets.ModelViewSet):
 class NomorSuratViewSet(viewsets.ModelViewSet):
     queryset = NomorSurat.objects.all()
     serializer_class = NomorSuratSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = NomorSurat.objects.select_related(
+            'admin_nomor_surat',
+            'jurusan',
+            'program_studi'
+        ).all()
+        return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(admin_nomor_surat=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except serializers.ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class TandaTanganSuratViewSet(viewsets.ModelViewSet):
     queryset = TandaTanganSurat.objects.all()

@@ -145,13 +145,19 @@ function DashboardLayout() {
           },
           {
             icon: FileText,
+            label: "Nomor Surat",
+            key: "nomor-surat",
+            type: "single",
+            path: "/dashboard/layanan/nomor-surat"
+          },
+          {
+            icon: FileText,
             label: "Layanan",
             key: "layanan",
             type: "dropdown",
             submenu: [
               { icon: List, label: "Daftar Layanan", path: "/dashboard/layanan/list" },
               { icon: Settings, label: "Jenis Layanan", path: "/dashboard/layanan/jenis" },
-              { icon: FileText, label: "Nomor Surat", path: "/dashboard/layanan/nomor-surat" },
               { icon: FileCheck, label: "Tanda Tangan", path: "/dashboard/layanan/tanda-tangan" }
             ]
           },

@@ -579,22 +579,27 @@ class NomorSurat(models.Model):
         ('dihapus', 'Dihapus')
     ]
 
-    tanggal_dibuat = models.DateField(auto_now_add=True)
-    admin_nomor_surat = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="nomorsurat_admin")
-    jurusan = models.ForeignKey(Jurusan, on_delete=models.SET_NULL, null=True, blank=True)
-    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True)
-    tahun = models.CharField(max_length=5)
+    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
+    admin_nomor_surat = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='nomor_surat_created')
+    jurusan = models.ForeignKey(Jurusan, on_delete=models.SET_NULL, null=True, blank=True, related_name='nomor_surat')
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True, related_name='nomor_surat')
     nomor = models.IntegerField()
-    perihal = models.CharField(max_length=255)
-    tujuan = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    kode = models.CharField(max_length=20, default='UN36.7.1')  # Kode tetap
+    jenis = models.CharField(max_length=10, default='KM')  # Jenis surat (KM, SK, dll)
+    tahun = models.CharField(max_length=4)
+    perihal = models.TextField()
+    tujuan = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
 
     class Meta:
-        unique_together = ('tahun', 'nomor')
-        ordering = ['-tanggal_dibuat']
+        unique_together = ['nomor', 'tahun', 'jenis']
+        ordering = ['-tahun', '-nomor']
 
     def __str__(self):
-        return f"{self.nomor}/{self.perihal}/{self.tahun}"
+        return f"{self.nomor}/{self.kode}/{self.jenis}/{self.tahun}"
+
+    def get_full_nomor(self):
+        return f"{self.nomor}/{self.kode}/{self.jenis}/{self.tahun}"
 
 class TandaTanganSurat(models.Model):
     surat = models.ForeignKey(NomorSurat, on_delete=models.CASCADE, related_name="daftar_tanda_tangan")

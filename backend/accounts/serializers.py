@@ -424,9 +424,67 @@ class StaffFakultasSerializer(serializers.ModelSerializer):
 
 
 class NomorSuratSerializer(serializers.ModelSerializer):
+    admin_nomor_surat_detail = UserSerializer(source='admin_nomor_surat', read_only=True)
+    jurusan_detail = JurusanSerializer(source='jurusan', read_only=True)
+    program_studi_detail = ProgramStudiSerializer(source='program_studi', read_only=True)
+    full_nomor = serializers.CharField(source='get_full_nomor', read_only=True)
+
     class Meta:
         model = NomorSurat
-        fields = '__all__'
+        fields = [
+            'id', 'tanggal_dibuat', 'admin_nomor_surat', 'admin_nomor_surat_detail',
+            'jurusan', 'jurusan_detail', 'program_studi', 'program_studi_detail',
+            'nomor', 'kode', 'jenis', 'tahun', 'perihal', 'tujuan', 'status',
+            'full_nomor'
+        ]
+        read_only_fields = ['tanggal_dibuat', 'admin_nomor_surat', 'kode']
+
+    def validate_tahun(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError("Tahun harus berupa angka")
+        if len(value) > 4:
+            raise serializers.ValidationError("Tahun maksimal 4 digit")
+        return value
+
+    def validate_nomor(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Nomor harus lebih besar dari 0")
+        return value
+
+    def validate(self, data):
+        # Check if nomor, tahun, and jenis combination is unique
+        nomor = data.get('nomor')
+        tahun = data.get('tahun')
+        jenis = data.get('jenis', 'KM')
+        
+        if nomor and tahun:
+            # Get the current instance if it exists (for updates)
+            instance = getattr(self, 'instance', None)
+            
+            # Check for existing records with the same combination
+            exists = NomorSurat.objects.filter(nomor=nomor, tahun=tahun, jenis=jenis)
+            
+            # If this is an update, exclude the current instance
+            if instance:
+                exists = exists.exclude(pk=instance.pk)
+            
+            if exists.exists():
+                raise serializers.ValidationError({
+                    'non_field_errors': ['Nomor surat dengan kombinasi nomor, tahun, dan jenis tersebut sudah ada']
+                })
+        
+        return data
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['admin_nomor_surat'] = request.user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Don't allow changing admin_nomor_surat during update
+        validated_data.pop('admin_nomor_surat', None)
+        return super().update(instance, validated_data)
 
 class TandaTanganSuratSerializer(serializers.ModelSerializer):
     class Meta:
