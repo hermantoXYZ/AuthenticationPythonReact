@@ -352,6 +352,7 @@ const JenisLayanan = () => {
                           <option value="text">Text</option>
                           <option value="number">Number</option>
                           <option value="date">Date</option>
+                          <option value="file">File</option>
                         </select>
                         <button
                           type="button"
