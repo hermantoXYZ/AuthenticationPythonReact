@@ -194,7 +194,6 @@ const JenisLayanan = () => {
                     <tr>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Layanan</th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prasyarat</th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                   </thead>
@@ -207,11 +206,6 @@ const JenisLayanan = () => {
                         <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">
                           <div className="max-w-xs truncate">
                             {item.deskripsi_layanan}
-                          </div>
-                        </td>
-                        <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">
-                          <div className="max-w-xs truncate">
-                            {item.prasyarat_layanan}
                           </div>
                         </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
