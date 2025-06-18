@@ -13,6 +13,7 @@ const AjukanLayanan = () => {
   });
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [extraFields, setExtraFields] = useState({});
 
   useEffect(() => {
     api.get("/api/jenis-layanan/")
@@ -27,7 +28,38 @@ const AjukanLayanan = () => {
       setFileName(files[0]?.name || "");
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+      // Reset extraFields jika jenis layanan berubah
+      if (name === "jenis_layanan") {
+        setExtraFields({});
+      }
     }
+  };
+
+  const handleExtraChange = (e) => {
+    setExtraFields(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  // Ambil konfigurasi_field dari jenis layanan yang dipilih
+  const selectedLayanan = jenisLayanan.find(jl => String(jl.id) === String(formData.jenis_layanan));
+  const konfigurasiField = selectedLayanan?.konfigurasi_field || [];
+
+  const renderExtraFields = () => {
+    if (!konfigurasiField.length) return null;
+    return konfigurasiField.map(field => (
+      <div key={field.name}>
+        <label className="block mb-2 text-sm font-semibold text-gray-700">{field.label}</label>
+        <input
+          name={field.name}
+          value={extraFields[field.name] || ""}
+          onChange={handleExtraChange}
+          type={field.type || "text"}
+          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+        />
+      </div>
+    ));
   };
 
   const handleSubmit = async (e) => {
@@ -39,6 +71,9 @@ const AjukanLayanan = () => {
     if (formData.file_permohonan) {
       data.append("file_permohonan", formData.file_permohonan);
     }
+    if (konfigurasiField.length) {
+      data.append("data_tambahan", JSON.stringify(extraFields));
+    }
     try {
       await api.post("/api/layanan/", data, {
         headers: { "Content-Type": "multipart/form-data" }
@@ -46,6 +81,7 @@ const AjukanLayanan = () => {
       toast.success("Pengajuan layanan berhasil dikirim");
       setFormData({ jenis_layanan: "", isi_permohonan: "", file_permohonan: null });
       setFileName("");
+      setExtraFields({});
     } catch (err) {
       toast.error("Gagal mengajukan layanan");
     } finally {
@@ -103,6 +139,8 @@ const AjukanLayanan = () => {
             )}
           </div>
         </div>
+        {/* Field Tambahan Dinamis */}
+        {renderExtraFields()}
         {/* Tombol Submit */}
         <button
           type="submit"

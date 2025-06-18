@@ -631,23 +631,25 @@ class JenisLayanan(models.Model):
     nama_layanan = models.CharField(max_length=255)
     deskripsi_layanan = models.TextField(blank=True, null=True)
     prasyarat_layanan = models.TextField(blank=True, null=True)
+    konfigurasi_field = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.nama_layanan
 
 class Layanan(models.Model):
-    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
-    mahasiswa = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_mahasiswa')
-    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True)
-    jenis_layanan = models.ForeignKey(JenisLayanan, on_delete=models.SET_NULL, null=True, blank=True)
-    isi_permohonan = models.TextField()
-    file_permohonan = models.FileField(upload_to='layanan/permohonan/', null=True, blank=True)
     status = models.CharField(max_length=50, default='Waiting', choices=[
         ('Waiting', 'Menunggu Diproses'),
         ('Processing', 'Sedang Diproses'),
         ('Completed', 'Selesai'),
         ('Rejected', 'Ditolak'),
     ])
+    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
+    mahasiswa = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_mahasiswa')
+    program_studi = models.ForeignKey(ProgramStudi, on_delete=models.SET_NULL, null=True, blank=True)
+    jenis_layanan = models.ForeignKey(JenisLayanan, on_delete=models.SET_NULL, null=True, blank=True)
+    isi_permohonan = models.TextField()
+    file_permohonan = models.FileField(upload_to='layanan/permohonan/', null=True, blank=True)
+    data_tambahan = models.JSONField(null=True, blank=True)  # Untuk data dinamis per jenis layanan
     admin_pemroses = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_admin_pemroses')
     hasil_proses = models.TextField(null=True, blank=True)
     file_hasil = models.FileField(upload_to='layanan/hasil/', null=True, blank=True)

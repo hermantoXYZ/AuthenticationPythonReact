@@ -23,6 +23,7 @@ const JenisLayanan = () => {
     nama_layanan: "",
     deskripsi_layanan: "",
     prasyarat_layanan: "",
+    konfigurasi_field: [],
   });
 
   useEffect(() => {
@@ -47,6 +48,7 @@ const JenisLayanan = () => {
       nama_layanan: "",
       deskripsi_layanan: "",
       prasyarat_layanan: "",
+      konfigurasi_field: [],
     });
     setModalVisible(true);
   };
@@ -57,6 +59,7 @@ const JenisLayanan = () => {
       nama_layanan: item.nama_layanan || "",
       deskripsi_layanan: item.deskripsi_layanan || "",
       prasyarat_layanan: item.prasyarat_layanan || "",
+      konfigurasi_field: item.konfigurasi_field || [],
     });
     setModalVisible(true);
   };
@@ -122,6 +125,32 @@ const JenisLayanan = () => {
         toast.error("Gagal menyimpan jenis layanan");
       }
     }
+  };
+
+  const addFieldConfig = () => {
+    setFormData(prev => ({
+      ...prev,
+      konfigurasi_field: [
+        ...prev.konfigurasi_field,
+        { name: "", label: "", type: "text" }
+      ]
+    }));
+  };
+
+  const updateFieldConfig = (idx, key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      konfigurasi_field: prev.konfigurasi_field.map((f, i) =>
+        i === idx ? { ...f, [key]: value } : f
+      )
+    }));
+  };
+
+  const removeFieldConfig = (idx) => {
+    setFormData(prev => ({
+      ...prev,
+      konfigurasi_field: prev.konfigurasi_field.filter((_, i) => i !== idx)
+    }));
   };
 
   if (loading) {
@@ -283,6 +312,67 @@ const JenisLayanan = () => {
                     placeholder="Masukkan prasyarat layanan..."
                     required
                   />
+                </div>
+
+                {/* Field Tambahan (Konfigurasi Form) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Field Tambahan (Konfigurasi Form)
+                  </label>
+                  <div className="space-y-3">
+                    {formData.konfigurasi_field.map((field, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 bg-gray-50 border border-gray-200 rounded-lg shadow-sm relative"
+                      >
+                        <span className="absolute -top-2 -left-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded shadow">
+                          Field {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Nama Field (misal: ipk_terakhir)"
+                          value={field.name}
+                          onChange={e => updateFieldConfig(idx, "name", e.target.value)}
+                          className="w-full sm:w-auto flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Label (misal: IPK Terakhir)"
+                          value={field.label}
+                          onChange={e => updateFieldConfig(idx, "label", e.target.value)}
+                          className="w-full sm:w-auto flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                          required
+                        />
+                        <select
+                          value={field.type}
+                          onChange={e => updateFieldConfig(idx, "type", e.target.value)}
+                          className="w-full sm:w-auto flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                        >
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="date">Date</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeFieldConfig(idx)}
+                          className="w-full sm:w-auto ml-0 sm:ml-2 p-2 rounded-full bg-red-100 hover:bg-red-200 transition flex items-center justify-center"
+                          title="Hapus Field"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addFieldConfig}
+                    className="mt-4 w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+                  >
+                    + Tambah Field
+                  </button>
                 </div>
               </div>
 
