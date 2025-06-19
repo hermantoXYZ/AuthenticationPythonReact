@@ -658,3 +658,12 @@ class Layanan(models.Model):
 
     def __str__(self):
         return f"{self.mahasiswa} - {self.jenis_layanan}"
+
+class DataTambahanFile(models.Model):
+    layanan = models.ForeignKey(Layanan, on_delete=models.CASCADE, related_name='file_tambahan')
+    nama_field = models.CharField(max_length=255)
+    file = models.FileField(upload_to='layanan/file_tambahan/')
+    tanggal_upload = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.layanan} - {self.nama_field}"

@@ -36,10 +36,18 @@ const AjukanLayanan = () => {
   };
 
   const handleExtraChange = (e) => {
-    setExtraFields(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value, type, files } = e.target;
+    if (type === 'file') {
+      setExtraFields(prev => ({
+        ...prev,
+        [name]: files[0]
+      }));
+    } else {
+      setExtraFields(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   // Ambil konfigurasi_field dari jenis layanan yang dipilih
@@ -51,13 +59,29 @@ const AjukanLayanan = () => {
     return konfigurasiField.map(field => (
       <div key={field.name}>
         <label className="block mb-2 text-sm font-semibold text-gray-700">{field.label}</label>
-        <input
-          name={field.name}
-          value={extraFields[field.name] || ""}
-          onChange={handleExtraChange}
-          type={field.type || "text"}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-        />
+        {field.type === 'file' ? (
+          <div className="flex items-center gap-3">
+            <input
+              name={field.name}
+              type="file"
+              onChange={handleExtraChange}
+              className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {extraFields[field.name] && (
+              <span className="text-xs text-gray-500 truncate max-w-[120px]">
+                {extraFields[field.name].name}
+              </span>
+            )}
+          </div>
+        ) : (
+          <input
+            name={field.name}
+            value={extraFields[field.name] || ""}
+            onChange={handleExtraChange}
+            type={field.type || "text"}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+          />
+        )}
       </div>
     ));
   };
@@ -71,9 +95,24 @@ const AjukanLayanan = () => {
     if (formData.file_permohonan) {
       data.append("file_permohonan", formData.file_permohonan);
     }
-    if (konfigurasiField.length) {
-      data.append("data_tambahan", JSON.stringify(extraFields));
+
+    // Handle extra fields
+    const textFields = {};
+    for (const field of konfigurasiField) {
+      if (field.type === 'file') {
+        if (extraFields[field.name]) {
+          data.append(field.name, extraFields[field.name]);
+        }
+      } else {
+        textFields[field.name] = extraFields[field.name] || "";
+      }
     }
+    
+    // Append text fields as JSON
+    if (Object.keys(textFields).length > 0) {
+      data.append("data_tambahan", JSON.stringify(textFields));
+    }
+
     try {
       await api.post("/api/layanan/", data, {
         headers: { "Content-Type": "multipart/form-data" }
@@ -83,6 +122,7 @@ const AjukanLayanan = () => {
       setFileName("");
       setExtraFields({});
     } catch (err) {
+      console.error("Error submitting form:", err);
       toast.error("Gagal mengajukan layanan");
     } finally {
       setLoading(false);

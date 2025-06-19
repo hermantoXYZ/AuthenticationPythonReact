@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan, DataTambahanFile
+import json
 
 class UserBasicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -511,16 +512,23 @@ class JenisLayananSerializer(serializers.ModelSerializer):
         
         return data
 
+class DataTambahanFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DataTambahanFile
+        fields = ['id', 'nama_field', 'file', 'tanggal_upload']
+        read_only_fields = ['tanggal_upload']
+
 class LayananSerializer(serializers.ModelSerializer):
     mahasiswa_name = serializers.SerializerMethodField()
     mahasiswa_nim = serializers.SerializerMethodField()
     jenis_layanan_nama = serializers.SerializerMethodField()
     program_studi_nama = serializers.SerializerMethodField()
+    file_tambahan = DataTambahanFileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Layanan
         fields = '__all__'
-        read_only_fields = ['mahasiswa']
+        read_only_fields = ['mahasiswa', 'program_studi', 'status', 'admin_pemroses', 'hasil_proses', 'file_hasil', 'link_hasil', 'nomor_surat']
 
     def get_mahasiswa_name(self, obj):
         if obj.mahasiswa:
@@ -541,3 +549,96 @@ class LayananSerializer(serializers.ModelSerializer):
         if obj.program_studi:
             return obj.program_studi.nama
         return None
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError("Request context is required")
+
+        # Get jenis_layanan from validated_data
+        jenis_layanan = validated_data.get('jenis_layanan')
+        if not jenis_layanan:
+            raise serializers.ValidationError("Jenis layanan is required")
+
+        # Handle data_tambahan (text/number fields)
+        data_tambahan = {}
+        if 'data_tambahan' in request.data:
+            try:
+                if isinstance(request.data['data_tambahan'], str):
+                    data_tambahan = json.loads(request.data['data_tambahan'])
+                else:
+                    data_tambahan = request.data['data_tambahan']
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("Invalid data_tambahan format")
+
+        # Create layanan instance
+        instance = Layanan.objects.create(**validated_data)
+
+        # Process file fields from request.FILES
+        if request.FILES:
+            for field_name, file in request.FILES.items():
+                # Check if this is a file field from konfigurasi_field
+                if jenis_layanan.konfigurasi_field:
+                    field_config = next(
+                        (field for field in jenis_layanan.konfigurasi_field 
+                         if field.get('name') == field_name and field.get('type') == 'file'),
+                        None
+                    )
+                    if field_config:
+                        # Create DataTambahanFile instance
+                        DataTambahanFile.objects.create(
+                            layanan=instance,
+                            nama_field=field_name,
+                            file=file
+                        )
+
+        # Update data_tambahan
+        if data_tambahan:
+            instance.data_tambahan = data_tambahan
+            instance.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        if not request:
+            raise serializers.ValidationError("Request context is required")
+
+        # Handle data_tambahan (text/number fields)
+        data_tambahan = instance.data_tambahan or {}
+        if 'data_tambahan' in request.data:
+            try:
+                if isinstance(request.data['data_tambahan'], str):
+                    new_data = json.loads(request.data['data_tambahan'])
+                else:
+                    new_data = request.data['data_tambahan']
+                data_tambahan.update(new_data)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("Invalid data_tambahan format")
+
+        # Process file fields from request.FILES
+        if request.FILES:
+            for field_name, file in request.FILES.items():
+                # Check if this is a file field from konfigurasi_field
+                if instance.jenis_layanan.konfigurasi_field:
+                    field_config = next(
+                        (field for field in instance.jenis_layanan.konfigurasi_field 
+                         if field.get('name') == field_name and field.get('type') == 'file'),
+                        None
+                    )
+                    if field_config:
+                        # Update or create DataTambahanFile instance
+                        DataTambahanFile.objects.update_or_create(
+                            layanan=instance,
+                            nama_field=field_name,
+                            defaults={'file': file}
+                        )
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Update data_tambahan
+        instance.data_tambahan = data_tambahan
+        instance.save()
+        return instance
