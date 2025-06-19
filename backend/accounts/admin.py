@@ -7,7 +7,7 @@ from .models import (
     CustomUser, Fakultas, ProgramStudi, 
     UserDosen, UserMahasiswa, UserKetuaProdi, UserStaffProdi, 
     UserStaffFakultas, Note, Jurusan, PejabatJurusan, SkripsiJudul,
-    Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
+    Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan, DataTambahanFile
 )
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -100,6 +100,11 @@ class ArticleResource(resources.ModelResource):
                  'created_at', 'updated_at', 'published_at', 'meta_title', 
                  'meta_description', 'view_count')
         export_order = ('title', 'author', 'category', 'status', 'created_at', 'published_at')
+
+class DataTambahanFileResource(resources.ModelResource):
+    class Meta:
+        model = DataTambahanFile
+        exclude = ('id',)
 
 admin.site.unregister(Group)
 
@@ -426,6 +431,17 @@ class LayananAdmin(ModelAdmin, ImportExportModelAdmin):
     list_filter = ('status', 'jenis_layanan', 'program_studi')
     search_fields = ('mahasiswa__full_name', 'jenis_layanan__nama_layanan', 'isi_permohonan')
     ordering = ('-tanggal_dibuat',)
+
+@admin.register(DataTambahanFile)
+class DataTambahanFileAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = DataTambahanFileResource
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ('layanan', 'nama_field', 'file', 'tanggal_upload')
+    list_filter = ('nama_field', 'tanggal_upload', 'layanan__jenis_layanan')
+    search_fields = ('layanan__mahasiswa__full_name', 'nama_field', 'layanan__jenis_layanan__nama_layanan')
+    ordering = ('-tanggal_upload',)
+    readonly_fields = ('tanggal_upload',)
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin, ImportExportModelAdmin):
