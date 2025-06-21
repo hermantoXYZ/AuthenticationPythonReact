@@ -1,0 +1,237 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Surat Permohonan Cuti Akademik - {{ layanan.mahasiswa.full_name }}</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+        }
+        .container {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            padding: 1.5cm;
+            position: relative;
+        }
+        .kop-surat {
+            text-align: center;
+            border-bottom: 3px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .kop-surat .logo {
+            width: 75px;
+            height: auto;
+            position: absolute;
+            top: 1.5cm;
+            left: 1.5cm;
+        }
+        .kop-surat h1, .kop-surat h2, .kop-surat p {
+            margin: 0;
+            padding: 0;
+            font-weight: bold;
+        }
+        .kop-surat h1 {
+            font-size: 14pt;
+        }
+        .kop-surat h2 {
+            font-size: 16pt;
+        }
+        .kop-surat p {
+            font-size: 10pt;
+            font-weight: normal;
+        }
+        .judul-surat {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 30px 0;
+            font-size: 14pt;
+        }
+        .nomor-surat {
+            text-align: center;
+            margin-top: -25px;
+            margin-bottom: 30px;
+        }
+        .tujuan-surat {
+            margin-bottom: 20px;
+        }
+        .isi-surat table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .isi-surat table td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+        .isi-surat table td:first-child {
+            width: 30%;
+        }
+        .isi-surat table td:nth-child(2) {
+            width: 2%;
+            text-align: left;
+        }
+        .paragraf {
+            text-align: justify;
+            margin-top: 20px;
+        }
+        .penutup {
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px 10px; /* row-gap column-gap */
+            margin-top: 20px;
+            page-break-inside: avoid;
+            text-align: center;
+        }
+        .sig-box {
+            padding-top: 10px;
+        }
+        .sig-box p {
+            margin: 0;
+        }
+        .sig-box .name {
+            margin-top: 70px;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .sig-box .nim-nip {
+            margin-top: 5px;
+        }
+        .sig-pemohon {
+            grid-column: 3 / 4;
+            grid-row: 1 / 2;
+            text-align: left;
+        }
+        .sig-pemohon .name {
+            text-decoration: none;
+            font-weight: normal;
+        }
+        .sig-dosen {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+        .sig-ortu {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+        }
+        .sig-kaprodi {
+            grid-column: 1 / 4; /* Span all columns */
+            grid-row: 3 / 4;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="kop-surat">
+            <img src="{{ base_url }}/media/images/logo_unm.png" alt="Logo UNM" class="logo">
+            <h1>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h1>
+            <h2>UNIVERSITAS NEGERI MAKASSAR (UNM)</h2>
+            <h2 style="font-size: 14pt;">FAKULTAS EKONOMI</h2>
+            <p>Alamat: Jalan Raya Pendidikan Makassar, Kode Pos – 90222</p>
+            <p>Telepon: (0411) 889464 - 881244 Fax. (0411) 889464</p>
+            <p>Laman: www.fe.unm.ac.id, Surel: tatausaha.fe@unm.ac.id</p>
+        </div>
+
+        <h3 class="judul-surat">SURAT PERMOHONAN CUTI AKADEMIK</h3>
+        {% if layanan.nomor_surat %}
+        <p class="nomor-surat">Nomor: {{ layanan.nomor_surat.get_full_nomor }}</p>
+        {% else %}
+        <p class="nomor-surat">Nomor: ________/UN36.7.1/KM/{{ layanan.tanggal_dibuat|date:"Y" }}</p>
+        {% endif %}
+
+        <div class="tujuan-surat">
+            <p>Kepada Yth<br>
+            Dekan Fakultas Ekonomi<br>
+            Universitas Negeri Makassar<br>
+            di<br>
+            Tempat</p>
+        </div>
+
+        <p>Dengan hormat, saya yang bertanda tangan di bawah ini:</p>
+
+        <div class="isi-surat">
+            <table>
+                <tr>
+                    <td>Nama</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.full_name|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>NIM</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.mahasiswa_profile.nim|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>Program Studi</td>
+                    <td>:</td>
+                    <td>{{ layanan.program_studi.nama|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>Jumlah Semester Aktif</td>
+                    <td>:</td>
+                    <td>{{ layanan.data_tambahan.jumlah_semester_aktif|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>Alasan Cuti</td>
+                    <td>:</td>
+                    <td>{{ layanan.data_tambahan.alasan_cuti|default:"-" }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <p class="paragraf">
+            Dengan ini mengajukan permohonan agar mendapatkan surat Cuti Akademik untuk semester
+            {{ layanan.data_tambahan.semester_cuti_diajukan|default:"[Semester Cuti Diajukan]" }} 
+            Tahun Akademik {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:"1" }}.
+        </p>
+
+        <p class="paragraf">
+            Sebagai bahan pertimbangan, saya melampirkan bukti pembayaran UKT Semester Ganjil 
+            {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:"1" }}.
+        </p>
+        
+        <p class="penutup">
+            Demikian permohonan cuti akademik yang saya ajukan, atas persetujuannya saya ucapkan terima kasih.
+        </p>
+
+        <div class="signature-grid">
+            <div class="sig-box sig-pemohon">
+                <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
+                <p>Pemohon</p>
+                <p class="name">{{ layanan.mahasiswa.full_name|upper }}</p>
+                <p class="nim-nip">NIM. {{ layanan.mahasiswa.mahasiswa_profile.nim }}</p>
+            </div>
+
+            <div class="sig-box sig-dosen">
+                <p>Dosen Penasehat Akademik</p>
+                <p class="name">{{ layanan.mahasiswa.mahasiswa_profile.dosen_wali.user.full_name|default:"-"|upper }}</p>
+                <p class="nim-nip">NIP. {{ layanan.mahasiswa.mahasiswa_profile.dosen_wali.nip|default:"-" }}</p>
+            </div>
+
+            <div class="sig-box sig-ortu">
+                <p>Mengetahui</p>
+                <p>Orang Tua/Wali</p>
+                <p class="name">{{ layanan.data_tambahan.nama_orang_tua_wali|default:"-"|upper }}</p>
+            </div>
+
+            <div class="sig-box sig-kaprodi">
+                <p>Menyetujui :</p>
+                <p>Ketua Program Studi</p>
+                <p class="name">{{ layanan.program_studi.kaprodi.full_name|default:"-"|upper }}</p>
+                <p class="nim-nip">NIP. {{ layanan.program_studi.kaprodi.dosen_profile.nip|default:"-" }}</p>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html> 

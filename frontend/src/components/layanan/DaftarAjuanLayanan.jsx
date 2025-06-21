@@ -60,6 +60,7 @@ const DaftarAjuanLayanan = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [detailLayanan, setDetailLayanan] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
 
   useEffect(() => {
     const fetchAjuan = async () => {
@@ -111,6 +112,27 @@ const DaftarAjuanLayanan = () => {
       toast.error("Gagal memuat detail layanan");
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleCetakSurat = async (layananId) => {
+    setPrintLoading(true);
+    try {
+      const response = await api.get(`/api/layanan/${layananId}/cetak-surat/`);
+      const htmlContent = response.data;
+
+      const newWindow = window.open("", "_blank");
+      if (newWindow) {
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+      } else {
+        toast.error("Gagal membuka tab baru. Mohon izinkan pop-up untuk situs ini.");
+      }
+    } catch (error) {
+      console.error("Gagal membuat surat:", error);
+      toast.error("Gagal membuat surat. Pastikan template dan data sudah benar.");
+    } finally {
+      setPrintLoading(false);
     }
   };
 
@@ -205,6 +227,25 @@ const DaftarAjuanLayanan = () => {
           </div>
           
           <div className="flex items-center gap-2">
+            {detailLayanan.status === 'Completed' && (
+                <button
+                  onClick={() => handleCetakSurat(detailLayanan.id)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50"
+                  disabled={printLoading}
+                >
+                  {printLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Memuat...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      Cetak Surat
+                    </>
+                  )}
+                </button>
+            )}
             {detailLayanan.status === 'Waiting' && (
               <>
                 <button

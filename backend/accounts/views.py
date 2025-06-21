@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, viewsets, permissions
 from .serializers import (
     UserSerializer, NoteSerializer, FakultasSerializer, ProgramStudiSerializer, 
@@ -23,6 +23,8 @@ from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework import serializers
+from django.http import HttpResponse
+from django.template.loader import get_template
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -1051,14 +1053,68 @@ class JenisLayananViewSet(viewsets.ModelViewSet):
     queryset = JenisLayanan.objects.all()
     serializer_class = JenisLayananSerializer
 
+class CanCetakSuratPermission(permissions.BasePermission):
+    """
+    Custom permission to allow access to cetak_surat action.
+    - Allows any authenticated user for now.
+    - Can be extended to check for roles (e.g., admin, or the user who owns the request).
+    """
+    def has_object_permission(self, request, view, obj):
+        # `obj` is the Layanan instance.
+        # For now, let's allow any authenticated user to print.
+        # A stricter check could be:
+        # return request.user.is_staff or obj.mahasiswa == request.user
+        return request.user.is_authenticated
+
 class LayananViewSet(viewsets.ModelViewSet):
     queryset = Layanan.objects.all()
     serializer_class = LayananSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff or user.user_type in [UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN, UserType.STAFF_FAKULTAS, UserType.STAFF_PRODI]:
+            return Layanan.objects.select_related(
+                'mahasiswa', 'program_studi', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
+            ).prefetch_related('file_tambahan').all()
+        elif user.user_type == UserType.MAHASISWA:
+            return Layanan.objects.filter(mahasiswa=user).select_related(
+                'mahasiswa', 'program_studi', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
+            ).prefetch_related('file_tambahan')
+        return Layanan.objects.none()
+
+    def get_serializer_context(self):
+        return {'request': self.request}
 
     def perform_create(self, serializer):
-        # Get the program_studi from the mahasiswa's profile
-        program_studi = None
-        if hasattr(self.request.user, 'mahasiswa_profile'):
-            program_studi = self.request.user.mahasiswa_profile.program_studi
-        serializer.save(mahasiswa=self.request.user, program_studi=program_studi)
+        user = self.request.user
+        if not hasattr(user, 'mahasiswa_profile'):
+            raise serializers.ValidationError("Hanya mahasiswa yang bisa mengajukan layanan.")
+        
+        program_studi = user.mahasiswa_profile.program_studi
+        serializer.save(mahasiswa=user, program_studi=program_studi)
+
+    @action(detail=True, methods=['get'], url_path='cetak-surat', permission_classes=[CanCetakSuratPermission])
+    def cetak_surat(self, request, pk=None):
+        layanan = self.get_object() # Use get_object() to leverage the viewset's lookup
+        
+        if not layanan.jenis_layanan or not layanan.jenis_layanan.template_surat:
+            return HttpResponse("Template surat untuk jenis layanan ini tidak ditemukan.", status=404)
+            
+        template_path = layanan.jenis_layanan.template_surat
+        
+        try:
+            template = get_template(template_path)
+        except Exception as e:
+             return HttpResponse(f"Error: Template tidak ditemukan di path '{template_path}'. Pastikan path benar dan file ada.", status=404)
+
+        base_url = request.build_absolute_uri('/')
+
+        context = {
+            'layanan': layanan,
+            'base_url': base_url,
+        }
+        
+        html = template.render(context)
+        return HttpResponse(html)
 

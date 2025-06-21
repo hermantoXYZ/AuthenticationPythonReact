@@ -632,6 +632,7 @@ class JenisLayanan(models.Model):
     deskripsi_layanan = models.TextField(blank=True, null=True)
     prasyarat_layanan = models.TextField(blank=True, null=True)
     konfigurasi_field = models.JSONField(null=True, blank=True)
+    template_surat = models.CharField(max_length=255, blank=True, null=True, help_text="Path ke template surat, contoh: surat/cuti_akademik.html")
 
     def __str__(self):
         return self.nama_layanan
