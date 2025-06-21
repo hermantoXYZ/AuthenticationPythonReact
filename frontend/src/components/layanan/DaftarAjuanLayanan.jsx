@@ -305,19 +305,19 @@ const DaftarAjuanLayanan = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Nama Lengkap</label>
-                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_name || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.mahasiswa_name || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">NIM</label>
-                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_username || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.mahasiswa_username || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Email</label>
-                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_email || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.mahasiswa_email || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Nomor Telepon</label>
-                      <p className="border border-gray-200 rounded-lg p-4 bg-gray-50">{detailLayanan.mahasiswa_phone || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-4 bg-gray-50 mt-2">{detailLayanan.mahasiswa_phone || "-"}</p>
                     </div>
                   </div>
                 </div>
@@ -331,11 +331,11 @@ const DaftarAjuanLayanan = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Nama Program Studi</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_nama || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.program_studi_nama || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Fakultas</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_fakultas || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.program_studi_fakultas || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Jenjang</label>
@@ -353,15 +353,15 @@ const DaftarAjuanLayanan = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Nama Layanan</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_nama || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.jenis_layanan_nama || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Deskripsi</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_deskripsi || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.jenis_layanan_deskripsi || "-"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Prasyarat</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_prasyarat || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.jenis_layanan_prasyarat || "-"}</p>
                     </div>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ const DaftarAjuanLayanan = () => {
                           <label className="text-sm font-medium text-gray-600 capitalize">
                             {key.replace(/_/g, ' ')}
                           </label>
-                          <p className="text-sm text-gray-900">{value || "-"}</p>
+                          <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{value || "-"}</p>
                         </div>
                       ))}
                     </div>
