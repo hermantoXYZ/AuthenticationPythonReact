@@ -1,28 +1,52 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { toast } from "sonner";
-import { FileText, Loader2, FileCheck, Download, Clock, CheckCircle2, AlertCircle, XCircle, Search, Eye, Users, Trash2 } from "lucide-react";
+import { 
+  FileText, 
+  Loader2, 
+  FileCheck, 
+  Download, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle, 
+  XCircle, 
+  Search, 
+  Eye, 
+  Users, 
+  Trash2,
+  User,
+  Building,
+  File,
+  Link,
+  X,
+  Calendar,
+  ArrowLeft
+} from "lucide-react";
 
 const statusConfig = {
   Waiting: {
     icon: Clock,
     text: "Menunggu Diproses",
-    color: "bg-yellow-100 text-yellow-800"
+    color: "bg-yellow-100 text-yellow-800",
+    bgColor: "bg-yellow-50"
   },
   Processing: {
     icon: FileCheck,
     text: "Sedang Diproses",
-    color: "bg-blue-100 text-blue-800"
+    color: "bg-blue-100 text-blue-800",
+    bgColor: "bg-blue-50"
   },
   Completed: {
     icon: CheckCircle2,
     text: "Selesai",
-    color: "bg-green-100 text-green-800"
+    color: "bg-green-100 text-green-800",
+    bgColor: "bg-green-50"
   },
   Rejected: {
     icon: XCircle,
     text: "Ditolak",
-    color: "bg-red-100 text-red-800"
+    color: "bg-red-100 text-red-800",
+    bgColor: "bg-red-50"
   }
 };
 
@@ -33,6 +57,9 @@ const DaftarAjuanLayanan = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedLayanan, setSelectedLayanan] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailLayanan, setDetailLayanan] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     const fetchAjuan = async () => {
@@ -72,6 +99,26 @@ const DaftarAjuanLayanan = () => {
     setShowDeleteModal(true);
   };
 
+  const openDetail = async (layanan) => {
+    setDetailLoading(true);
+    setShowDetail(true);
+    
+    try {
+      const response = await api.get(`/api/layanan/${layanan.id}/`);
+      setDetailLayanan(response.data);
+    } catch (error) {
+      console.error("Error fetching layanan detail:", error);
+      toast.error("Gagal memuat detail layanan");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeDetail = () => {
+    setShowDetail(false);
+    setDetailLayanan(null);
+  };
+
   const getStatusBadge = (status) => {
     const config = statusConfig[status] || statusConfig.Waiting;
     const Icon = config.icon;
@@ -82,6 +129,37 @@ const DaftarAjuanLayanan = () => {
         {config.text}
       </span>
     );
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "Unknown";
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const getVerificationStatus = (layanan) => {
+    const hasMainFile = !!layanan.file_permohonan;
+    const hasSupportFiles = layanan.file_tambahan && layanan.file_tambahan.length > 0;
+    const hasAdditionalData = layanan.data_tambahan && Object.keys(layanan.data_tambahan).length > 0;
+    
+    return {
+      mainFile: hasMainFile,
+      supportFiles: hasSupportFiles,
+      additionalData: hasAdditionalData,
+      overall: hasMainFile && hasSupportFiles && hasAdditionalData
+    };
   };
 
   const filteredData = data.filter(item => {
@@ -107,11 +185,508 @@ const DaftarAjuanLayanan = () => {
     );
   }
 
+  // Detail View
+  if (showDetail && detailLayanan) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={closeDetail}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Detail Ajuan Layanan</h1>
+              <p className="text-gray-600">Informasi lengkap ajuan layanan</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {detailLayanan.status === 'Waiting' && (
+              <>
+                <button
+                  onClick={() => window.location.href = `/dashboard/layanan/edit/${detailLayanan.id}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => openDeleteModal(detailLayanan)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Hapus
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {detailLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Status Verifikasi */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Status Verifikasi</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">File Permohonan</span>
+                      {getVerificationStatus(detailLayanan).mainFile ? (
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          ✓ Terverifikasi
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                          ✗ Belum ada file
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">File Pendukung</span>
+                      {getVerificationStatus(detailLayanan).supportFiles ? (
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          ✓ {detailLayanan.file_tambahan?.length || 0} file terverifikasi
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                          ⚠ Belum ada file pendukung
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Data Tambahan</span>
+                      {getVerificationStatus(detailLayanan).additionalData ? (
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          ✓ Lengkap
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                          ⚠ Belum ada data
+                        </span>
+                      )}
+                    </div>
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Status Keseluruhan</span>
+                        {getVerificationStatus(detailLayanan).overall ? (
+                          <span className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
+                            ✓ Siap Diproses
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 text-sm font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                            ⚠ Perlu Dilengkapi
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informasi Pemohon */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Informasi Pemohon</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nama Lengkap</label>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_name || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">NIM</label>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_username || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Email</label>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50">{detailLayanan.mahasiswa_email || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nomor Telepon</label>
+                      <p className="border border-gray-200 rounded-lg p-4 bg-gray-50">{detailLayanan.mahasiswa_phone || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informasi Program Studi */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Building className="w-5 h-5 text-green-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Program Studi</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nama Program Studi</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_nama || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Fakultas</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_fakultas || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Jenjang</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_jenjang || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Jenis Layanan */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Jenis Layanan</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nama Layanan</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_nama || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Deskripsi</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_deskripsi || "-"}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Prasyarat</label>
+                      <p className="text-sm text-gray-900">{detailLayanan.jenis_layanan_prasyarat || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                
+                {/* Isi Permohonan */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-5 h-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Isi Permohonan</h3>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{detailLayanan.isi_permohonan || "-"}</p>
+                  </div>
+                </div>
+                
+                {/* File Permohonan */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <File className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">File Permohonan</h3>
+                  </div>
+                  {detailLayanan.file_permohonan ? (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <label className="text-sm font-semibold text-gray-700">
+                              File Permohonan Utama
+                            </label>
+                          </div>
+                          <div className="space-y-1 text-xs text-gray-600">
+                            <p>
+                              <span className="font-medium">File:</span> {detailLayanan.file_permohonan.split('/').pop()}
+                            </p>
+                            <p>
+                              <span className="font-medium">Status:</span> 
+                              <span className="ml-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                ✓ Terverifikasi
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 ml-4">
+                          <a
+                            href={detailLayanan.file_permohonan}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </a>
+                          <button
+                            onClick={() => window.open(detailLayanan.file_permohonan, '_blank')}
+                            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Preview
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-gray-400" />
+                        <p className="text-sm text-gray-500">Tidak ada file yang diunggah</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* File Pendukung */}
+                {detailLayanan.file_tambahan && detailLayanan.file_tambahan.length > 0 && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <File className="w-5 h-5 text-amber-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">File Pendukung</h3>
+                      <span className="ml-2 px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
+                        {detailLayanan.file_tambahan.length} file
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      {detailLayanan.file_tambahan.map((fileItem, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <File className="w-4 h-4 text-amber-600" />
+                                <label className="text-sm font-semibold text-gray-700 capitalize">
+                                  {fileItem.nama_field.replace(/_/g, ' ')}
+                                </label>
+                              </div>
+                              <div className="space-y-1 text-xs text-gray-600">
+                                <p>
+                                  <span className="font-medium">Upload:</span> {new Date(fileItem.tanggal_upload).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit"
+                                  })}
+                                </p>
+                                <p>
+                                  <span className="font-medium">File:</span> {fileItem.file.split('/').pop()}
+                                </p>
+                                <p>
+                                  <span className="font-medium">Status:</span> 
+                                  <span className="ml-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                    ✓ Terverifikasi
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 ml-4">
+                              <a
+                                href={fileItem.file}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                Download
+                              </a>
+                              <button
+                                onClick={() => window.open(fileItem.file, '_blank')}
+                                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                Preview
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <p className="text-sm text-green-800 font-medium">
+                          Semua file pendukung telah diverifikasi dan siap diproses
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Data Tambahan */}
+                {detailLayanan.data_tambahan && Object.keys(detailLayanan.data_tambahan).length > 0 && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="w-5 h-5 text-indigo-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Data Tambahan</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {Object.entries(detailLayanan.data_tambahan).map(([key, value]) => (
+                        <div key={key}>
+                          <label className="text-sm font-medium text-gray-600 capitalize">
+                            {key.replace(/_/g, ' ')}
+                          </label>
+                          <p className="text-sm text-gray-900">{value || "-"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hasil Proses */}
+                {(detailLayanan.hasil_proses || detailLayanan.file_hasil || detailLayanan.link_hasil) && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Hasil Proses</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {detailLayanan.hasil_proses && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">Keterangan Hasil</label>
+                          <div className="bg-gray-50 p-4 rounded-lg mt-1">
+                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{detailLayanan.hasil_proses}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {detailLayanan.file_hasil && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">File Hasil</label>
+                          <div className="mt-1">
+                            <a
+                              href={detailLayanan.file_hasil}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download Hasil
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {detailLayanan.link_hasil && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-600">Link Hasil</label>
+                          <div className="mt-1">
+                            <a
+                              href={detailLayanan.link_hasil}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                            >
+                              <Link className="w-4 h-4" />
+                              Buka Link
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Informasi Admin Pemroses */}
+                {detailLayanan.admin_pemroses && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Users className="w-5 h-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Admin Pemroses</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Nama Admin</label>
+                        <p className="text-sm text-gray-900">{detailLayanan.admin_pemroses_name || "-"}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Email</label>
+                        <p className="text-sm text-gray-900">{detailLayanan.admin_pemroses_email || "-"}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Jabatan</label>
+                        <p className="text-sm text-gray-900">{detailLayanan.admin_pemroses_user_type || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nomor Surat */}
+                {detailLayanan.nomor_surat && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="w-5 h-5 text-red-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Nomor Surat</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Nomor Lengkap</label>
+                        <p className="text-sm font-medium text-gray-900">{detailLayanan.nomor_surat_full || "-"}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Perihal</label>
+                        <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_perihal || "-"}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Tujuan</label>
+                        <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_tujuan || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Konfirmasi Hapus</h3>
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus ajuan layanan ini? Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedLayanan(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  disabled={deleteLoading}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Menghapus...
+                    </div>
+                  ) : (
+                    "Hapus"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // List View
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Daftar Ajuan Layanan Saya</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Daftar Ajuan Layanan</h1>
           <p className="mt-2 text-gray-600">
             Kelola semua ajuan layanan yang telah Anda buat
           </p>
@@ -185,13 +760,7 @@ const DaftarAjuanLayanan = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(item.tanggal_dibuat).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
+                      {formatDate(item.tanggal_dibuat)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -225,8 +794,9 @@ const DaftarAjuanLayanan = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => window.location.href = `/dashboard/layanan/detail/${item.id}`}
+                        onClick={() => openDetail(item)}
                         className="text-blue-600 hover:text-blue-900"
+                        title="Lihat Detail"
                       >
                         <Eye className="h-5 w-5" />
                       </button>
@@ -234,6 +804,7 @@ const DaftarAjuanLayanan = () => {
                         <button
                           onClick={() => openDeleteModal(item)}
                           className="text-red-600 hover:text-red-900"
+                          title="Hapus"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>

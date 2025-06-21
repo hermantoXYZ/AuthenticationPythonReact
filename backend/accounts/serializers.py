@@ -521,6 +521,7 @@ class DataTambahanFileSerializer(serializers.ModelSerializer):
 class LayananSerializer(serializers.ModelSerializer):
     mahasiswa_name = serializers.SerializerMethodField()
     mahasiswa_nim = serializers.SerializerMethodField()
+    mahasiswa_username = serializers.SerializerMethodField()
     jenis_layanan_nama = serializers.SerializerMethodField()
     program_studi_nama = serializers.SerializerMethodField()
     file_tambahan = DataTambahanFileSerializer(many=True, read_only=True)
@@ -533,6 +534,11 @@ class LayananSerializer(serializers.ModelSerializer):
     def get_mahasiswa_name(self, obj):
         if obj.mahasiswa:
             return obj.mahasiswa.full_name
+        return None
+
+    def get_mahasiswa_username(self, obj): 
+        if obj.mahasiswa:
+            return obj.mahasiswa.username
         return None
 
     def get_mahasiswa_nim(self, obj):
