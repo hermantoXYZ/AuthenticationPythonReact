@@ -221,14 +221,14 @@
             <div class="sig-box sig-ortu">
                 <p>Mengetahui</p>
                 <p>Orang Tua/Wali</p>
-                <p class="name">{{ layanan.data_tambahan.nama_orang_tua_wali|default:"-"|upper }}</p>
+                <p class="name">{{ layanan.data_tambahan.nama_orang_tua_wali|default:"Orang Tua Siswa"|upper }}</p>
             </div>
 
             <div class="sig-box sig-kaprodi">
                 <p>Menyetujui :</p>
                 <p>Ketua Program Studi</p>
-                <p class="name">{{ layanan.program_studi.kaprodi.full_name|default:"-"|upper }}</p>
-                <p class="nim-nip">NIP. {{ layanan.program_studi.kaprodi.dosen_profile.nip|default:"-" }}</p>
+                <p class="name">{{ layanan.program_studi.kaprodi.full_name|default:"Andi Hermanto"|upper }}</p>
+                <p class="nim-nip">NIP. {{ layanan.program_studi.kaprodi.dosen_profile.nip|default:"199606062025060101" }}</p>
             </div>
         </div>
 

@@ -125,6 +125,10 @@ const DaftarAjuanLayanan = () => {
       if (newWindow) {
         newWindow.document.write(htmlContent);
         newWindow.document.close();
+        newWindow.onload = () => {
+          newWindow.focus();
+          newWindow.print();
+        };
       } else {
         toast.error("Gagal membuka tab baru. Mohon izinkan pop-up untuk situs ini.");
       }
