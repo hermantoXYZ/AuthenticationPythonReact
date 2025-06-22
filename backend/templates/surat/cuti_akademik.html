@@ -27,7 +27,7 @@
             width: 75px;
             height: auto;
             position: absolute;
-            top: 1.5cm;
+            top: 2.5cm;
             left: 1.5cm;
         }
         .kop-surat h1, .kop-surat h2, .kop-surat p {
@@ -86,7 +86,7 @@
         .signature-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: auto auto auto;
+            grid-template-rows: auto auto;
             gap: 20px 10px; /* row-gap column-gap */
             margin-top: 20px;
             page-break-inside: avoid;
@@ -99,7 +99,7 @@
             margin: 0;
         }
         .sig-box .name {
-            margin-top: 70px;
+            margin-top: 50px;
             font-weight: bold;
             text-decoration: underline;
         }
@@ -112,21 +112,24 @@
             text-align: left;
         }
         .sig-pemohon .name {
-            text-decoration: none;
-            font-weight: normal;
+            text-decoration: underline;
+            font-weight: bold;
         }
         .sig-dosen {
             grid-column: 1 / 2;
-            grid-row: 2 / 3;
+            grid-row: 1 / 2;
         }
         .sig-ortu {
             grid-column: 2 / 3;
-            grid-row: 2 / 3;
+            grid-row: 1 / 2;
         }
         .sig-kaprodi {
             grid-column: 1 / 4; /* Span all columns */
-            grid-row: 3 / 4;
-            margin-top: 40px;
+            grid-row: 2 / 3;
+            margin-top: 10px;
+        }
+        .sig-header {
+            min-height: 4.5em; /* Ensures consistent starting point for names */
         }
     </style>
 </head>
@@ -169,12 +172,12 @@
                 <tr>
                     <td>NIM</td>
                     <td>:</td>
-                    <td>{{ layanan.mahasiswa.mahasiswa_profile.nim|default:"-" }}</td>
+                    <td>{{ layanan.mahasiswa.username|default:"-" }}</td>
                 </tr>
                 <tr>
                     <td>Program Studi</td>
                     <td>:</td>
-                    <td>{{ layanan.program_studi.nama|default:"-" }}</td>
+                    <td>{{ layanan.mahasiswa.mahasiswa_profile.program_studi.nama|default:"-" }}</td>
                 </tr>
                 <tr>
                     <td>Jumlah Semester Aktif</td>
@@ -192,12 +195,12 @@
         <p class="paragraf">
             Dengan ini mengajukan permohonan agar mendapatkan surat Cuti Akademik untuk semester
             {{ layanan.data_tambahan.semester_cuti_diajukan|default:"[Semester Cuti Diajukan]" }} 
-            Tahun Akademik {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:"1" }}.
+            Tahun Akademik {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:1 }}.
         </p>
 
         <p class="paragraf">
             Sebagai bahan pertimbangan, saya melampirkan bukti pembayaran UKT Semester Ganjil 
-            {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:"1" }}.
+            {{ layanan.tanggal_dibuat|date:"Y" }}/{{ layanan.tanggal_dibuat|date:"Y"|add:1 }}.
         </p>
         
         <p class="penutup">
@@ -205,30 +208,38 @@
         </p>
 
         <div class="signature-grid">
-            <div class="sig-box sig-pemohon">
-                <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
-                <p>Pemohon</p>
-                <p class="name">{{ layanan.mahasiswa.full_name|upper }}</p>
-                <p class="nim-nip">NIM. {{ layanan.mahasiswa.mahasiswa_profile.nim }}</p>
-            </div>
-
             <div class="sig-box sig-dosen">
-                <p>Dosen Penasehat Akademik</p>
+                <div class="sig-header">
+                    <p>Dosen Penasehat Akademik</p>
+                </div>
                 <p class="name">{{ layanan.mahasiswa.mahasiswa_profile.dosen_wali.user.full_name|default:"-"|upper }}</p>
                 <p class="nim-nip">NIP. {{ layanan.mahasiswa.mahasiswa_profile.dosen_wali.nip|default:"-" }}</p>
             </div>
 
             <div class="sig-box sig-ortu">
-                <p>Mengetahui</p>
-                <p>Orang Tua/Wali</p>
+                <div class="sig-header">
+                    <p>Mengetahui</p>
+                    <p>Orang Tua/Wali</p>
+                </div>
                 <p class="name">{{ layanan.data_tambahan.nama_orang_tua_wali|default:"Orang Tua Siswa"|upper }}</p>
             </div>
 
+            <div class="sig-box sig-pemohon">
+                <div class="sig-header">
+                    <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
+                    <p>Pemohon</p>
+                </div>
+                <p class="name">{{ layanan.mahasiswa.full_name|upper }}</p>
+                <p class="nim-nip">NIM. {{ layanan.mahasiswa.username }}</p>
+            </div>
+
             <div class="sig-box sig-kaprodi">
-                <p>Menyetujui :</p>
-                <p>Ketua Program Studi</p>
-                <p class="name">{{ layanan.program_studi.kaprodi.full_name|default:"Andi Hermanto"|upper }}</p>
-                <p class="nim-nip">NIP. {{ layanan.program_studi.kaprodi.dosen_profile.nip|default:"199606062025060101" }}</p>
+                <div class="sig-header">
+                    <p>Menyetujui :</p>
+                    <p>Ketua Program Studi {{ layanan.mahasiswa.mahasiswa_profile.program_studi.nama }}</p>
+                </div>
+                <p class="name">{{ layanan.mahasiswa.mahasiswa_profile.program_studi.kaprodi.full_name|default:"-"|upper }}</p>
+                <p class="nim-nip">NIP. {{ layanan.mahasiswa.mahasiswa_profile.program_studi.kaprodi.username|default:"-" }}</p>
             </div>
         </div>
 
