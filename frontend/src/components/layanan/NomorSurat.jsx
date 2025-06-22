@@ -565,8 +565,8 @@ const NomorSurat = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
-                      {item.jurusan ? item.jurusan.nama_jurusan : '-'}
-                      {item.program_studi && ` / ${item.program_studi.nama}`}
+                      {item.jurusan_detail ? item.jurusan_detail.nama_jurusan : '-'}
+                      {item.program_studi_detail && ` / ${item.program_studi_detail.nama}`}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

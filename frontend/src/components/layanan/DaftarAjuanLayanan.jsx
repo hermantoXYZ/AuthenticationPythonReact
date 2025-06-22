@@ -212,7 +212,7 @@ const DaftarAjuanLayanan = () => {
       nomor: '',
       jenis: 'KM',
       perihal: `Surat ${layanan.jenis_layanan_nama} a.n. ${layanan.mahasiswa_name}`,
-      tujuan: layanan.mahasiswa_name,
+      tujuan: layanan.jenis_layanan_nama, 
       jurusan: layanan.program_studi_jurusan_id || '',
       program_studi: layanan.program_studi || '',
       status: 'aktif',
