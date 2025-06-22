@@ -661,7 +661,13 @@ class JenisLayanan(models.Model):
     prasyarat_layanan = models.TextField(blank=True, null=True)
     konfigurasi_field = models.JSONField(null=True, blank=True)
     template_surat = models.CharField(max_length=255, blank=True, null=True, help_text="Path ke template surat, contoh: surat/cuti_akademik.html")
-
+    # Ini adalah cara yang BENAR untuk mendefinisikan JSONField
+    penandatangan_otomatis = models.JSONField(
+        null=True,
+        blank=True,
+        default=list, # Penting: gunakan 'default=list' agar defaultnya adalah list kosong []
+        help_text="Daftar penandatangan otomatis dalam format JSON. Contoh: [{'role': 'Ketua Prodi', 'user_type': 'ketua_prodi', 'order': 1}]"
+    )
     def __str__(self):
         return self.nama_layanan
 
