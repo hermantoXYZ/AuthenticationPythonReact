@@ -1075,11 +1075,11 @@ class LayananViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_staff or user.user_type in [UserType.DEKAN_FAKULTAS, UserType.KETUA_PRODI, UserType.PEJABAT_JURUSAN, UserType.STAFF_FAKULTAS, UserType.STAFF_PRODI]:
             return Layanan.objects.select_related(
-                'mahasiswa', 'program_studi', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
+                'mahasiswa', 'program_studi', 'program_studi__fakultas', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
             ).prefetch_related('file_tambahan').all()
         elif user.user_type == UserType.MAHASISWA:
             return Layanan.objects.filter(mahasiswa=user).select_related(
-                'mahasiswa', 'program_studi', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
+                'mahasiswa', 'program_studi', 'program_studi__fakultas', 'jenis_layanan', 'admin_pemroses', 'nomor_surat'
             ).prefetch_related('file_tambahan')
         return Layanan.objects.none()
 

@@ -384,7 +384,7 @@ const DaftarAjuanLayanan = () => {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Jenjang</label>
-                      <p className="text-sm text-gray-900">{detailLayanan.program_studi_jenjang || "-"}</p>
+                      <p className="border border-gray-200 rounded-lg p-2 bg-gray-50 mt-2">{detailLayanan.program_studi_jenjang || "-"}</p>
                     </div>
                   </div>
                 </div>

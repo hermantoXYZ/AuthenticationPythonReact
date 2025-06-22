@@ -522,8 +522,20 @@ class LayananSerializer(serializers.ModelSerializer):
     mahasiswa_name = serializers.SerializerMethodField()
     mahasiswa_nim = serializers.SerializerMethodField()
     mahasiswa_username = serializers.SerializerMethodField()
+    mahasiswa_email = serializers.SerializerMethodField()
+    mahasiswa_phone = serializers.SerializerMethodField()
     jenis_layanan_nama = serializers.SerializerMethodField()
+    jenis_layanan_deskripsi = serializers.SerializerMethodField()
+    jenis_layanan_prasyarat = serializers.SerializerMethodField()
     program_studi_nama = serializers.SerializerMethodField()
+    program_studi_fakultas = serializers.SerializerMethodField()
+    program_studi_jenjang = serializers.SerializerMethodField()
+    admin_pemroses_name = serializers.SerializerMethodField()
+    admin_pemroses_email = serializers.SerializerMethodField()
+    admin_pemroses_user_type = serializers.SerializerMethodField()
+    nomor_surat_full = serializers.SerializerMethodField()
+    nomor_surat_perihal = serializers.SerializerMethodField()
+    nomor_surat_tujuan = serializers.SerializerMethodField()
     file_tambahan = DataTambahanFileSerializer(many=True, read_only=True)
 
     class Meta:
@@ -546,14 +558,74 @@ class LayananSerializer(serializers.ModelSerializer):
             return obj.mahasiswa.mahasiswa_profile.nim
         return None
 
+    def get_mahasiswa_email(self, obj):
+        if obj.mahasiswa:
+            return obj.mahasiswa.email
+        return None
+
+    def get_mahasiswa_phone(self, obj):
+        if obj.mahasiswa:
+            return obj.mahasiswa.phone_number
+        return None
+
     def get_jenis_layanan_nama(self, obj):
         if obj.jenis_layanan:
             return obj.jenis_layanan.nama_layanan
         return None
 
+    def get_jenis_layanan_deskripsi(self, obj):
+        if obj.jenis_layanan:
+            return obj.jenis_layanan.deskripsi_layanan
+        return None
+
+    def get_jenis_layanan_prasyarat(self, obj):
+        if obj.jenis_layanan:
+            return obj.jenis_layanan.prasyarat_layanan
+        return None
+
     def get_program_studi_nama(self, obj):
         if obj.program_studi:
             return obj.program_studi.nama
+        return None
+
+    def get_program_studi_fakultas(self, obj):
+        if obj.program_studi and obj.program_studi.fakultas:
+            return obj.program_studi.fakultas.nama
+        return None
+
+    def get_program_studi_jenjang(self, obj):
+        if obj.program_studi:
+            return obj.program_studi.jenjang
+        return None
+
+    def get_admin_pemroses_name(self, obj):
+        if obj.admin_pemroses:
+            return obj.admin_pemroses.full_name
+        return None
+
+    def get_admin_pemroses_email(self, obj):
+        if obj.admin_pemroses:
+            return obj.admin_pemroses.email
+        return None
+
+    def get_admin_pemroses_user_type(self, obj):
+        if obj.admin_pemroses:
+            return obj.admin_pemroses.get_user_type_display()
+        return None
+
+    def get_nomor_surat_full(self, obj):
+        if obj.nomor_surat:
+            return obj.nomor_surat.get_full_nomor()
+        return None
+
+    def get_nomor_surat_perihal(self, obj):
+        if obj.nomor_surat:
+            return obj.nomor_surat.perihal
+        return None
+
+    def get_nomor_surat_tujuan(self, obj):
+        if obj.nomor_surat:
+            return obj.nomor_surat.tujuan
         return None
 
     def create(self, validated_data):
