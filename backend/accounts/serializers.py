@@ -530,6 +530,7 @@ class LayananSerializer(serializers.ModelSerializer):
     program_studi_nama = serializers.SerializerMethodField()
     program_studi_fakultas = serializers.SerializerMethodField()
     program_studi_jenjang = serializers.SerializerMethodField()
+    program_studi_jurusan_id = serializers.SerializerMethodField()
     admin_pemroses_name = serializers.SerializerMethodField()
     admin_pemroses_email = serializers.SerializerMethodField()
     admin_pemroses_user_type = serializers.SerializerMethodField()
@@ -596,6 +597,11 @@ class LayananSerializer(serializers.ModelSerializer):
     def get_program_studi_jenjang(self, obj):
         if obj.program_studi:
             return obj.program_studi.jenjang
+        return None
+
+    def get_program_studi_jurusan_id(self, obj):
+        if obj.program_studi and obj.program_studi.jurusan:
+            return obj.program_studi.jurusan.id
         return None
 
     def get_admin_pemroses_name(self, obj):

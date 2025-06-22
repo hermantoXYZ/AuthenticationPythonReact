@@ -20,7 +20,11 @@ import {
   Link,
   X,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  Plus,
+  Save,
+  Building2,
+  GraduationCap
 } from "lucide-react";
 
 const statusConfig = {
@@ -62,6 +66,27 @@ const DaftarAjuanLayanan = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [printLoading, setPrintLoading] = useState(false);
 
+  // State for Nomor Surat Modal
+  const [showNomorSuratModal, setShowNomorSuratModal] = useState(false);
+  const [showSelectNomorSuratModal, setShowSelectNomorSuratModal] = useState(false);
+  const [nomorSuratFormData, setNomorSuratFormData] = useState({
+    tahun: '',
+    nomor: '',
+    jenis: 'KM',
+    perihal: '',
+    tujuan: '',
+    jurusan: '',
+    program_studi: '',
+    status: 'aktif',
+  });
+  const [isSubmittingNomorSurat, setIsSubmittingNomorSurat] = useState(false);
+  const [jurusanList, setJurusanList] = useState([]);
+  const [prodiList, setProdiList] = useState([]);
+  const [nomorSuratList, setNomorSuratList] = useState([]);
+  const [nomorSuratLoading, setNomorSuratLoading] = useState(false);
+  const [nomorSuratSearchTerm, setNomorSuratSearchTerm] = useState('');
+  const [isLinkingNomorSurat, setIsLinkingNomorSurat] = useState(false);
+
   useEffect(() => {
     const fetchAjuan = async () => {
       try {
@@ -74,8 +99,44 @@ const DaftarAjuanLayanan = () => {
         setLoading(false);
       }
     };
+
+    const fetchJurusan = async () => {
+      try {
+          const response = await api.get('/api/jurusan/');
+          setJurusanList(response.data);
+      } catch (error) {
+          console.error('Error fetching jurusan:', error);
+          toast.error('Gagal mengambil data jurusan');
+      }
+    };
+
+    const fetchProdi = async () => {
+        try {
+            const response = await api.get('/api/prodi/');
+            setProdiList(response.data);
+        } catch (error) {
+            console.error('Error fetching prodi:', error);
+            toast.error('Gagal mengambil data program studi');
+        }
+    };
+
     fetchAjuan();
+    fetchJurusan();
+    fetchProdi();
   }, []);
+
+  const fetchNomorSurat = async () => {
+    setNomorSuratLoading(true);
+    try {
+        const response = await api.get('/api/nomor-surat/?status=aktif');
+        setNomorSuratList(response.data);
+    } catch (error) {
+        console.error('Error fetching nomor surat:', error);
+        toast.error('Gagal memuat daftar nomor surat.');
+    } finally {
+        setNomorSuratLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!selectedLayanan) return;
@@ -143,6 +204,86 @@ const DaftarAjuanLayanan = () => {
   const closeDetail = () => {
     setShowDetail(false);
     setDetailLayanan(null);
+  };
+
+  const openNomorSuratModal = (layanan) => {
+    setNomorSuratFormData({
+      tahun: new Date().getFullYear().toString(),
+      nomor: '',
+      jenis: 'KM',
+      perihal: `Surat ${layanan.jenis_layanan_nama} a.n. ${layanan.mahasiswa_name}`,
+      tujuan: layanan.mahasiswa_name,
+      jurusan: layanan.program_studi_jurusan_id || '',
+      program_studi: layanan.program_studi || '',
+      status: 'aktif',
+    });
+    setSelectedLayanan(layanan);
+    setShowNomorSuratModal(true);
+  };
+
+  const openSelectNomorSuratModal = (layanan) => {
+    setSelectedLayanan(layanan);
+    fetchNomorSurat();
+    setShowSelectNomorSuratModal(true);
+  };
+
+  const handleNomorSuratInputChange = (e) => {
+    const { name, value } = e.target;
+    setNomorSuratFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNomorSuratSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingNomorSurat(true);
+    try {
+        const submitData = {
+            ...nomorSuratFormData,
+            nomor: parseInt(nomorSuratFormData.nomor, 10),
+            jurusan: nomorSuratFormData.jurusan || null,
+            program_studi: nomorSuratFormData.program_studi || null,
+        };
+
+        if (!submitData.nomor || !submitData.tahun || !submitData.perihal || !submitData.tujuan) {
+          toast.error("Pastikan semua field nomor surat terisi.");
+          return;
+        }
+
+        const nomorSuratResponse = await api.post('/api/nomor-surat/', submitData);
+        const newNomorSurat = nomorSuratResponse.data;
+        toast.success('Nomor surat berhasil dibuat.');
+
+        await api.patch(`/api/layanan/${selectedLayanan.id}/`, {
+            nomor_surat: newNomorSurat.id,
+        });
+        toast.success('Layanan berhasil diperbarui dengan nomor surat.');
+
+        setShowNomorSuratModal(false);
+        // Refresh detail view by re-fetching the layanan details
+        openDetail(selectedLayanan);
+
+    } catch (error) {
+        console.error('Error creating nomor surat:', error);
+        toast.error(error.response?.data?.detail || 'Gagal membuat nomor surat.');
+    } finally {
+        setIsSubmittingNomorSurat(false);
+    }
+  };
+
+  const handleLinkNomorSurat = async (nomorSuratId) => {
+    setIsLinkingNomorSurat(true);
+    try {
+      await api.patch(`/api/layanan/${selectedLayanan.id}/`, {
+        nomor_surat: nomorSuratId,
+      });
+      toast.success('Nomor surat berhasil ditautkan.');
+      setShowSelectNomorSuratModal(false);
+      openDetail(selectedLayanan); // Refresh detail view
+    } catch (error) {
+      console.error('Error linking nomor surat:', error);
+      toast.error(error.response?.data?.detail || 'Gagal menautkan nomor surat.');
+    } finally {
+      setIsLinkingNomorSurat(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -415,6 +556,46 @@ const DaftarAjuanLayanan = () => {
               {/* Right Column */}
               <div className="space-y-6">
                 
+                {/* Nomor Surat */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <FileText className="w-5 h-5 text-red-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Nomor Surat</h3>
+                    </div>
+                    {detailLayanan.nomor_surat ? (
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-sm font-medium text-gray-600">Nomor Lengkap</label>
+                                <p className="text-sm font-medium text-gray-900">{detailLayanan.nomor_surat_full || "-"}</p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-600">Perihal</label>
+                                <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_perihal || "-"}</p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-600">Tujuan</label>
+                                <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_tujuan || "-"}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <button
+                                onClick={() => openNomorSuratModal(detailLayanan)}
+                                className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex-1"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Buat Baru
+                            </button>
+                            <button
+                                onClick={() => openSelectNomorSuratModal(detailLayanan)}
+                                className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors flex-1"
+                            >
+                                <Link className="w-4 h-4" />
+                                Pilih Yang Ada
+                            </button>
+                        </div>
+                    )}
+                </div>
                 {/* Isi Permohonan */}
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
@@ -656,30 +837,6 @@ const DaftarAjuanLayanan = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Nomor Surat */}
-                {detailLayanan.nomor_surat && (
-                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="flex items-center gap-2 mb-4">
-                      <FileText className="w-5 h-5 text-red-600" />
-                      <h3 className="text-lg font-semibold text-gray-900">Nomor Surat</h3>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Nomor Lengkap</label>
-                        <p className="text-sm font-medium text-gray-900">{detailLayanan.nomor_surat_full || "-"}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Perihal</label>
-                        <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_perihal || "-"}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Tujuan</label>
-                        <p className="text-sm text-gray-900">{detailLayanan.nomor_surat_tujuan || "-"}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -718,6 +875,199 @@ const DaftarAjuanLayanan = () => {
                     "Hapus"
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Nomor Surat Modal */}
+        {showNomorSuratModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl mx-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Buat Nomor Surat</h2>
+                <button
+                  onClick={() => setShowNomorSuratModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <form onSubmit={handleNomorSuratSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Tahun */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+                    <div className="relative">
+                      <input
+                        type="text" name="tahun" value={nomorSuratFormData.tahun}
+                        onChange={handleNomorSuratInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" required
+                      />
+                      <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Nomor */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nomor</label>
+                    <div className="relative">
+                      <input
+                        type="number" name="nomor" value={nomorSuratFormData.nomor}
+                        onChange={handleNomorSuratInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" required
+                      />
+                      <FileText className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Jenis */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Jenis</label>
+                    <input
+                      type="text" name="jenis" value={nomorSuratFormData.jenis}
+                      onChange={handleNomorSuratInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg" required
+                    />
+                  </div>
+
+                  {/* Perihal */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
+                    <input
+                      type="text" name="perihal" value={nomorSuratFormData.perihal}
+                      onChange={handleNomorSuratInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg" required
+                    />
+                  </div>
+
+                  {/* Tujuan */}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tujuan</label>
+                    <input
+                      type="text" name="tujuan" value={nomorSuratFormData.tujuan}
+                      onChange={handleNomorSuratInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg" required
+                    />
+                  </div>
+
+                  {/* Jurusan */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Jurusan</label>
+                    <div className="relative">
+                      <select name="jurusan" value={nomorSuratFormData.jurusan} onChange={handleNomorSuratInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg appearance-none bg-white">
+                        <option value="">Pilih Jurusan</option>
+                        {jurusanList.map((jurusan) => (
+                          <option key={jurusan.id} value={jurusan.id}>{jurusan.nama_jurusan}</option>
+                        ))}
+                      </select>
+                      <Building2 className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Program Studi */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Program Studi</label>
+                    <div className="relative">
+                      <select name="program_studi" value={nomorSuratFormData.program_studi} onChange={handleNomorSuratInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg appearance-none bg-white">
+                        <option value="">Pilih Program Studi</option>
+                        {prodiList.map((prodi) => (
+                          <option key={prodi.id} value={prodi.id}>{prodi.nama}</option>
+                        ))}
+                      </select>
+                      <GraduationCap className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowNomorSuratModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Batal
+                  </button>
+                  <button type="submit" disabled={isSubmittingNomorSurat}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                    {isSubmittingNomorSurat ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2 inline" />Menyimpan...</>
+                    ) : (
+                      <><Save className="h-4 w-4 mr-2 inline" />Simpan</>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Select Nomor Surat Modal */}
+        {showSelectNomorSuratModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-4xl mx-4 h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Pilih Nomor Surat</h2>
+                <button onClick={() => setShowSelectNomorSuratModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan perihal, tujuan, atau nomor..."
+                  value={nomorSuratSearchTerm}
+                  onChange={(e) => setNomorSuratSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                {nomorSuratLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  </div>
+                ) : (
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Nomor</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Perihal</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Tanggal</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {nomorSuratList
+                        .filter(item => {
+                          const searchTerm = nomorSuratSearchTerm.toLowerCase();
+                          return (
+                            item.full_nomor.toLowerCase().includes(searchTerm) ||
+                            item.perihal.toLowerCase().includes(searchTerm) ||
+                            item.tujuan.toLowerCase().includes(searchTerm)
+                          );
+                        })
+                        .map((item) => (
+                          <tr key={item.id}>
+                            <td className="px-6 py-4 font-medium text-gray-900">{item.full_nomor}</td>
+                            <td className="px-6 py-4 text-gray-700">{item.perihal}</td>
+                            <td className="px-6 py-4 text-gray-700">{formatDate(item.tanggal_dibuat)}</td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                onClick={() => handleLinkNomorSurat(item.id)}
+                                disabled={isLinkingNomorSurat}
+                                className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                {isLinkingNomorSurat ? '...' : 'Pilih'}
+                              </button>
+                            </td>
+                          </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </div>
