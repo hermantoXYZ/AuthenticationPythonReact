@@ -164,9 +164,37 @@ class Fakultas(models.Model):
         related_name='fakultas_dipimpin',
         limit_choices_to={'user_type': UserType.DEKAN_FAKULTAS}
     )
+    wakil_dekan_akademik = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fakultas_wd_akademik',
+        verbose_name="Wakil Dekan Bidang Akademik",
+        limit_choices_to={'user_type__in': [UserType.DEKAN_FAKULTAS]}
+    )
+    wakil_dekan_umum_keuangan = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fakultas_wd_umum_keuangan',
+        verbose_name="Wakil Dekan Bidang Umum dan Keuangan",
+        limit_choices_to={'user_type__in': [UserType.DEKAN_FAKULTAS]}
+    )
+    wakil_dekan_kemahasiswaan_alumni = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fakultas_wd_kemahasiswaan_alumni',
+        verbose_name="Wakil Dekan Bidang Kemahasiswaan dan Alumni",
+        limit_choices_to={'user_type__in': [UserType.DEKAN_FAKULTAS]}
+    )
+    wakil_dekan_kerjasama = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fakultas_wd_kerjasama',
+        verbose_name="Wakil Dekan Bidang Kerjasama",
+        limit_choices_to={'user_type__in': [UserType.DEKAN_FAKULTAS]}
+    )
     
     class Meta:
-        verbose_name = "Nama Fakultas"  # Fixed: was inconsistent
+        verbose_name = "Nama Fakultas"
         verbose_name_plural = "Nama Fakultas"
     
     def __str__(self):
