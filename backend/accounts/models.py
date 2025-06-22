@@ -689,7 +689,7 @@ class Layanan(models.Model):
     hasil_proses = models.TextField(null=True, blank=True)
     file_hasil = models.FileField(upload_to='layanan/hasil/', null=True, blank=True)
     link_hasil = models.URLField(null=True, blank=True)
-    nomor_surat = models.ForeignKey(NomorSurat, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_nomor_surat')
+    nomor_surat = models.OneToOneField(NomorSurat, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_nomor_surat')
 
     def __str__(self):
         return f"{self.mahasiswa} - {self.jenis_layanan}"

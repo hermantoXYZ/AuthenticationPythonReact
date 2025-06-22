@@ -542,7 +542,7 @@ class LayananSerializer(serializers.ModelSerializer):
     class Meta:
         model = Layanan
         fields = '__all__'
-        read_only_fields = ['mahasiswa', 'program_studi', 'status', 'admin_pemroses', 'hasil_proses', 'file_hasil', 'link_hasil', 'nomor_surat']
+        read_only_fields = ['mahasiswa', 'program_studi', 'status', 'admin_pemroses', 'hasil_proses', 'file_hasil', 'link_hasil']
 
     def get_mahasiswa_name(self, obj):
         if obj.mahasiswa:
