@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Surat Keterangan Berkelakuan Baik - {{ layanan.mahasiswa.full_name }}</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+        }
+        .container {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            padding: 2cm 1.5cm;
+            position: relative;
+        }
+        .kop-surat {
+            text-align: center;
+            border-bottom: 3px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            padding-left: 140px; 
+            padding-right: 140px;
+        }
+        .kop-surat .logo {
+            width: 110px;
+            height: auto;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .kop-surat .text {
+            text-align: center;
+        }
+        .kop-surat h1, .kop-surat h2, .kop-surat p {
+            margin: 0;
+            padding: 0;
+            font-weight: bold;
+        }
+        .kop-surat h1 {
+            font-size: 12pt;
+            font-weight: normal;
+        }
+        .kop-surat h2 {
+            font-size: 14pt;
+        }
+        .kop-surat p {
+            font-size: 10pt;
+            font-weight: normal;
+        }
+        .judul-surat {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 30px 0 5px 0;
+            font-size: 12pt;
+        }
+        .nomor-surat {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 12pt;
+        }
+        .paragraf {
+            text-align: justify;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .data-mahasiswa table {
+            width: 100%;
+            margin-left: 30px;
+        }
+        .data-mahasiswa td {
+            padding: 1px 0;
+            vertical-align: top;
+        }
+        .data-mahasiswa td:first-child {
+            width: 25%;
+        }
+        .data-mahasiswa td:nth-child(2) {
+            width: 2%;
+        }
+        .list-keterangan {
+            margin-left: 15px;
+            padding-left: 20px;
+            text-align: justify;
+        }
+        .signature-block {
+            margin-top: 40px;
+            float: right;
+            width: 45%;
+            text-align: left;
+        }
+        .signature-block p {
+            margin: 0;
+            line-height: 1.4;
+        }
+        .signature-block .name {
+            margin-top: 80px;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('{{ base_url }}/media/images/logo_watermark.png');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 65%;
+            opacity: 0.15;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="kop-surat">
+            <img src="{{ base_url }}/media/images/logo_unm.png" alt="Logo UNM" class="logo">
+            <div class="text">
+                <h1>KEMENTERIAN PENDIDIKAN TINGGI, SAINS DAN TEKNOLOGI</h1>
+                <h2>UNIVERSITAS NEGERI MAKASSAR (UNM)</h2>
+                <h2>FAKULTAS EKONOMI</h2>
+                <p>Alamat: Jalan Raya Pendidikan Makassar, Kode Pos – 90222</p>
+                <p>Telepon: (0411) 889464 - 881244 Fax. (0411) 889464</p>
+                <p>Laman: www.fe.unm.ac.id, Surel: tatausaha.fe@unm.ac.id</p>
+            </div>
+        </div>
+
+        <h3 class="judul-surat">SURAT KETERANGAN BERKELAKUAN BAIK</h3>
+        {% if layanan.nomor_surat %}
+        <p class="nomor-surat">Nomor: {{ layanan.nomor_surat.get_full_nomor }}</p>
+        {% else %}
+        <p class="nomor-surat">Nomor: ________/UN36.7/KM/{{ layanan.tanggal_dibuat|date:"Y" }}</p>
+        {% endif %}
+
+        <p class="paragraf">
+            Wakil Dekan Bidang Kemahasiswaan dan Alumni Fakultas Ekonomi dan Bisnis Universitas Negeri Makassar dengan ini menerangkan bahwa:
+        </p>
+
+        <div class="data-mahasiswa">
+            <table>
+                <tr>
+                    <td>Nama</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.full_name|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>NIM</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.username|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>Program Studi</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.mahasiswa_profile.program_studi.nama|default:"-" }}</td>
+                </tr>
+                 <tr>
+                    <td>Alamat</td>
+                    <td>:</td>
+                    <td>{{ layanan.data_tambahan.alamat|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td>No. HP/WA</td>
+                    <td>:</td>
+                    <td>{{ layanan.mahasiswa.phone_number|default:"-" }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <p class="paragraf">
+            Sepanjang pengetahuan kami, yang bersangkutan adalah:
+        </p>
+        
+        <ol type="a" class="list-keterangan">
+            <li>Berkelakuan baik selama menjadi mahasiswa</li>
+            <li>Tidak mempunyai catatan kriminal dari pihak kepolisian</li>
+            <li>Tidak terlibat aksi unjuk rasa yang menentang kebijakan pemerintah yang dapat merusak nama baik pribadi maupun Universitas Negeri Makassar</li>
+        </ol>
+
+        <p class="paragraf">
+            Demikian surat keterangan ini diberikan untuk dipergunakan sebagaimana mestinya.
+        </p>
+        
+        <div class="signature-block">
+            <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
+            <p>Wakil Dekan,</p>
+            <p>Bidang Kemahasiswaan dan Alumni</p>
+            <p class="name">Dr. Muhammad Hasan, S.Pd., M.Pd.</p>
+            <p>NIP. 19850906 201012 1 007</p>
+        </div>
+    </div>
+</body>
+</html> 
