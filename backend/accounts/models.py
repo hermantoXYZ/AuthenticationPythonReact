@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+import uuid
+from django.utils import timezone
 
 # Choices untuk jenis user
 class UserType(models.TextChoices):
@@ -636,9 +638,14 @@ class TandaTangan(models.Model):
     perihal = models.CharField(max_length=255, null=True, blank=True)
     jenis_tanda_tangan = models.CharField(max_length=20, choices=[('manual', 'Manual'), ('elektronik', 'Elektronik')], default='manual')
     file_tanda_tangan = models.ImageField(upload_to='ttd/manual/', null=True, blank=True)
-    tanda_tangan_elektronik = models.CharField(max_length=255, null=True, blank=True)
-    waktu_tanda_tangan = models.DateTimeField(null=True, blank=True)
+    tanda_tangan_elektronik = models.CharField(max_length=255, null=True, blank=True, editable=False)
+    waktu_tanda_tangan = models.DateTimeField(null=True, blank=True, editable=False)
     urutan = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Belum Ditandatangani'), ('signed', 'Sudah Ditandatangani')],
+        default='pending'
+    )
 
     class Meta:
         ordering = ['layanan', 'urutan'] 
@@ -662,6 +669,20 @@ class TandaTangan(models.Model):
             f"Tanda Tangan ({self.get_jenis_tanda_tangan_display()}) oleh "
             f"{self.jabatan_penandatangan} untuk '{layanan_str}' (Urutan: {self.urutan})"
         )
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        orig = None
+        if not is_new:
+            orig = TandaTangan.objects.get(pk=self.pk)
+
+        # Generate QR token and timestamp when status changes to 'signed'
+        if (is_new and self.status == 'signed') or (orig and orig.status != 'signed' and self.status == 'signed'):
+            if self.jenis_tanda_tangan == 'elektronik' and not self.tanda_tangan_elektronik:
+                self.tanda_tangan_elektronik = uuid.uuid4().hex
+            self.waktu_tanda_tangan = timezone.now()
+            
+        super().save(*args, **kwargs)
 
 class JenisLayanan(models.Model):
     nama_layanan = models.CharField(max_length=255)

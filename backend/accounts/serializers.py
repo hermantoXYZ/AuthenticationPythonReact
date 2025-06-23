@@ -736,7 +736,7 @@ class TandaTanganSerializer(serializers.ModelSerializer):
         model = TandaTangan
         fields = [
             'id', 'layanan', 'user_penandatangan', 'jabatan_penandatangan',
-            'jenis_tanda_tangan', 'urutan', 'waktu_tanda_tangan',
+            'jenis_tanda_tangan', 'urutan', 'waktu_tanda_tangan', 'status',
             'perihal', 'file_tanda_tangan', 'tanda_tangan_elektronik',
             'layanan_id', 'user_penandatangan_id'
         ]

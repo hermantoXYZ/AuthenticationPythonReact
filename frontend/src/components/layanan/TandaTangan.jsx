@@ -14,14 +14,18 @@ import {
   ArrowLeft,
   Save,
   X,
-  ClipboardList
+  ClipboardList,
+  QrCode,
 } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 const TandaTangan = () => {
   const navigate = useNavigate();
   const [signatures, setSignatures] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [selectedSignature, setSelectedSignature] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [users, setUsers] = useState([]);
   const [layananList, setLayananList] = useState([]);
@@ -31,6 +35,7 @@ const TandaTangan = () => {
     user_penandatangan_id: '',
     jenis_tanda_tangan: 'manual',
     urutan: '',
+    status: 'pending',
     file_tanda_tangan: null
   });
 
@@ -81,6 +86,7 @@ const TandaTangan = () => {
       user_penandatangan_id: '',
       jenis_tanda_tangan: 'manual',
       urutan: '',
+      status: 'pending',
       file_tanda_tangan: null
     });
     setModalVisible(true);
@@ -94,6 +100,7 @@ const TandaTangan = () => {
       user_penandatangan_id: record.user_penandatangan?.id || '',
       jenis_tanda_tangan: record.jenis_tanda_tangan,
       urutan: record.urutan,
+      status: record.status,
       file_tanda_tangan: null
     });
     setModalVisible(true);
@@ -114,12 +121,37 @@ const TandaTangan = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Use FormData for file uploads
+    const dataToSubmit = new FormData();
+    dataToSubmit.append('layanan_id', formData.layanan_id);
+    dataToSubmit.append('jabatan_penandatangan', formData.jabatan_penandatangan);
+    dataToSubmit.append('jenis_tanda_tangan', formData.jenis_tanda_tangan);
+    dataToSubmit.append('urutan', formData.urutan);
+    dataToSubmit.append('status', formData.status);
+
+    if (formData.user_penandatangan_id) {
+        dataToSubmit.append('user_penandatangan_id', formData.user_penandatangan_id);
+    }
+    
+    // Only append file if it's selected
+    if (formData.file_tanda_tangan) {
+      dataToSubmit.append('file_tanda_tangan', formData.file_tanda_tangan);
+    }
+
+    const config = {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    };
+
     try {
       if (editingId) {
-        await api.put(`/api/tanda-tangan/${editingId}/`, formData);
+        // Use PATCH for updates to handle partial data and files correctly
+        await api.patch(`/api/tanda-tangan/${editingId}/`, dataToSubmit, config);
         toast.success('Tanda tangan berhasil diperbarui');
       } else {
-        await api.post('/api/tanda-tangan/', formData);
+        await api.post('/api/tanda-tangan/', dataToSubmit, config);
         toast.success('Tanda tangan berhasil ditambahkan');
       }
       setModalVisible(false);
@@ -162,6 +194,17 @@ const TandaTangan = () => {
       file_tanda_tangan: e.target.files[0]
     }));
   };
+
+  const showQrCode = (signature) => {
+    setSelectedSignature(signature);
+    setQrModalVisible(true);
+  };
+
+  const getVerificationUrl = (signature) => {
+    if (!signature || !signature.tanda_tangan_elektronik) return "";
+    return `${window.location.origin}/verify/signature/${signature.tanda_tangan_elektronik}`;
+  }
+
 
   return (
     <div className="p-4 sm:p-6">
@@ -245,6 +288,15 @@ const TandaTangan = () => {
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{signature.urutan}</td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center gap-2">
+                            {signature.status === 'signed' && signature.jenis_tanda_tangan === 'elektronik' && signature.tanda_tangan_elektronik && (
+                              <button
+                                onClick={() => showQrCode(signature)}
+                                className="p-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Lihat QR Code"
+                              >
+                                <QrCode className="w-5 h-5" />
+                              </button>
+                            )}
                             <button
                               onClick={() => handleEdit(signature)}
                               className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -271,6 +323,52 @@ const TandaTangan = () => {
         </div>
       </div>
 
+      {qrModalVisible && selectedSignature && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md text-center p-6">
+             <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Kode QR Tanda Tangan
+                </h3>
+                <button
+                  onClick={() => setQrModalVisible(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg">
+                <QRCodeCanvas 
+                  value={getVerificationUrl(selectedSignature)} 
+                  size={256}
+                  level="H"
+                  imageSettings={{
+                      src: '/logo.png',
+                      height: 48,
+                      width: 48,
+                      excavate: true,
+                  }}
+                />
+                <p className="mt-4 text-sm text-gray-600">
+                    Pindai kode ini untuk verifikasi keaslian dokumen.
+                </p>
+                <p className="mt-2 text-xs text-gray-500 break-all">
+                    {getVerificationUrl(selectedSignature)}
+                </p>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => setQrModalVisible(false)}
+                  className="w-full sm:w-auto px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700"
+                >
+                  Tutup
+                </button>
+              </div>
+          </div>
+        </div>
+      )}
+
+
       {modalVisible && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -291,7 +389,7 @@ const TandaTangan = () => {
             <form onSubmit={handleSubmit} className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Layanan Selection */}
-                <div className="col-span-2">
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Layanan
                   </label>
@@ -416,10 +514,32 @@ const TandaTangan = () => {
                   </div>
                 </div>
 
+                {/* Status */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      required
+                    >
+                      <option value="pending">Belum Ditandatangani</option>
+                      <option value="signed">Sudah Ditandatangani</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <CheckCircle2 className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
                 {/* File Upload */}
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    File Tanda Tangan
+                    File Tanda Tangan (jika manual)
                   </label>
                   <div className="mt-1 flex justify-center px-4 sm:px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors">
                     <div className="space-y-2 text-center">
