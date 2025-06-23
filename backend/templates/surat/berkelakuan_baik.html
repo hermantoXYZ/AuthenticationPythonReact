@@ -88,20 +88,55 @@
             padding-left: 20px;
             text-align: justify;
         }
-        .signature-block {
+        .signature-section {
             margin-top: 40px;
-            float: right;
+            display: flex;
+            justify-content: flex-end;
+            page-break-inside: avoid;
+        }
+        .sig-box {
             width: 45%;
             text-align: left;
         }
-        .signature-block p {
+        .sig-box .placeholder-box, 
+        .sig-box .manual-signature, 
+        .sig-box .qr-code-container {
+            height: 100px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align content to the left */
+        }
+        .sig-box .qr-code-img {
+            width: 100px;
+            height: auto;
+        }
+        .sig-box .manual-signature img {
+            max-height: 80px;
+            width: auto;
+        }
+        .sig-box .placeholder-box {
+            border: 1px dashed #ccc;
+            color: #888;
+            font-style: italic;
+            width: 100%;
+            justify-content: center;
+        }
+        .sig-box .signed-electronically {
+            font-size: 9pt;
+            font-style: italic;
+            text-align: left;
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+        .sig-box p {
             margin: 0;
             line-height: 1.4;
         }
-        .signature-block .name {
-            margin-top: 80px;
+        .sig-box .name {
             font-weight: bold;
             text-decoration: underline;
+            margin-top: 5px;
         }
         .container::before {
             content: "";
@@ -188,12 +223,47 @@
             Demikian surat keterangan ini diberikan untuk dipergunakan sebagaimana mestinya.
         </p>
         
-        <div class="signature-block">
-            <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
-            <p>Wakil Dekan,</p>
-            <p>Bidang Kemahasiswaan dan Alumni</p>
-            <p class="name">Dr. Muhammad Hasan, S.Pd., M.Pd.</p>
-            <p>NIP. 19850906 201012 1 007</p>
+        <div class="signature-section">
+            {% for sig in signatures %}
+            <div class="sig-box">
+                <p>Makassar, {% if sig.waktu_tanda_tangan %}{{ sig.waktu_tanda_tangan|date:"d F Y" }}{% else %}{{ layanan.tanggal_dibuat|date:"d F Y" }}{% endif %}</p>
+                <p>{{ sig.jabatan }}</p>
+
+                {% if sig.status == 'signed' %}
+                    {% if sig.jenis == 'elektronik' and sig.qr_code %}
+                        <div class="qr-code-container">
+                            <img src="data:image/png;base64,{{ sig.qr_code }}" alt="QR Code" class="qr-code-img">
+                        </div>
+                        <p class="signed-electronically">Ditandatangani secara elektronik</p>
+                    {% elif sig.jenis == 'manual' and sig.file_ttd_url %}
+                        <div class="manual-signature">
+                            <img src="{{ base_url }}{{ sig.file_ttd_url }}" alt="Tanda Tangan Manual">
+                        </div>
+                    {% else %}
+                        <div class="placeholder-box">
+                            <span>[ Belum ditandatangani ]</span>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="placeholder-box">
+                        <span>[ Menunggu Tanda Tangan ]</span>
+                    </div>
+                {% endif %}
+
+                <p class="name">{{ sig.user.full_name|default:"-"|upper }}</p>
+                <p>NIP. {{ sig.user.username|default:"-" }}</p>
+            </div>
+            {% empty %}
+            <div class="sig-box">
+                <p>Makassar, {{ layanan.tanggal_dibuat|date:"d F Y" }}</p>
+                <p>[Jabatan Penandatangan]</p>
+                <div class="placeholder-box" style="margin-top: 10px;">
+                    <span>[ Tanda Tangan tidak terkonfigurasi ]</span>
+                </div>
+                <p class="name">[Nama Penandatangan]</p>
+                <p>NIP. [NIP Penandatangan]</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </body>

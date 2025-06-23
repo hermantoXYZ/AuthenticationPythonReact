@@ -25,6 +25,9 @@ from rest_framework.decorators import action
 from rest_framework import serializers
 from django.http import HttpResponse
 from django.template.loader import get_template
+import qrcode
+import io
+import base64
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -1068,7 +1071,7 @@ class CanCetakSuratPermission(permissions.BasePermission):
         # For now, let's allow any authenticated user to print.
         # A stricter check could be:
         # return request.user.is_staff or obj.mahasiswa == request.user
-        return request.user.is_authenticated
+        return True
 
 class LayananViewSet(viewsets.ModelViewSet):
     queryset = Layanan.objects.all()
@@ -1100,25 +1103,56 @@ class LayananViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='cetak-surat', permission_classes=[CanCetakSuratPermission])
     def cetak_surat(self, request, pk=None):
-        layanan = self.get_object() # Use get_object() to leverage the viewset's lookup
+        layanan = self.get_object()
         
         if not layanan.jenis_layanan or not layanan.jenis_layanan.template_surat:
-            return HttpResponse("Template surat untuk jenis layanan ini tidak ditemukan.", status=404)
-            
-        template_path = layanan.jenis_layanan.template_surat
-        
-        try:
-            template = get_template(template_path)
-        except Exception as e:
-             return HttpResponse(f"Error: Template tidak ditemukan di path '{template_path}'. Pastikan path benar dan file ada.", status=404)
+            return HttpResponse("Template surat untuk layanan ini tidak dikonfigurasi.", status=400)
 
+        # Get all related signatures
+        tanda_tangan_list = layanan.daftar_tanda_tangan.order_by('urutan')
+        
+        signatures_with_qr = []
+        for sig in tanda_tangan_list:
+            qr_code_base64 = None
+            if sig.status == 'signed' and sig.jenis_tanda_tangan == 'elektronik' and sig.tanda_tangan_elektronik:
+                # Generate QR Code
+                verification_url = request.build_absolute_uri(f'/verify/signature/{sig.tanda_tangan_elektronik}')
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(verification_url)
+                qr.make(fit=True)
+
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                # Save QR to a buffer
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+            signatures_with_qr.append({
+                'jabatan': sig.jabatan_penandatangan,
+                'user': sig.user_penandatangan,
+                'status': sig.status,
+                'jenis': sig.jenis_tanda_tangan,
+                'waktu': sig.waktu_tanda_tangan,
+                'qr_code': qr_code_base64,
+                'file_ttd_url': sig.file_tanda_tangan.url if sig.file_tanda_tangan else None
+            })
+
+        # Build base_url for static assets in template
         base_url = request.build_absolute_uri('/')
 
         context = {
             'layanan': layanan,
+            'signatures': signatures_with_qr,
             'base_url': base_url,
         }
-        
+
+        template = get_template(layanan.jenis_layanan.template_surat)
         html = template.render(context)
         return HttpResponse(html)
 

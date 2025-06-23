@@ -131,6 +131,26 @@
         .sig-header {
             min-height: 4.5em; /* Ensures consistent starting point for names */
         }
+        .qr-code-container {
+            margin-bottom: 10px;
+        }
+        .qr-code-img {
+            width: 100px;
+            height: auto;
+        }
+        .signed-electronically {
+            margin-top: 5px;
+            font-style: italic;
+        }
+        .manual-signature {
+            margin-bottom: 10px;
+        }
+        .placeholder-box {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -241,6 +261,37 @@
                 <p class="name">{{ layanan.mahasiswa.mahasiswa_profile.program_studi.kaprodi.full_name|default:"-"|upper }}</p>
                 <p class="nim-nip">NIP. {{ layanan.mahasiswa.mahasiswa_profile.program_studi.kaprodi.username|default:"-" }}</p>
             </div>
+            {% for sig in signatures %}
+            <div class="sig-box">
+                <div class="sig-header">
+                    <p>{{ sig.jabatan }}</p>
+                </div>
+
+                {% if sig.status == 'signed' %}
+                    {% if sig.jenis == 'elektronik' and sig.qr_code %}
+                        <div class="qr-code-container">
+                            <img src="data:image/png;base64,{{ sig.qr_code }}" alt="QR Code" class="qr-code-img">
+                        </div>
+                        <p class="signed-electronically">Ditandatangani secara elektronik</p>
+                    {% elif sig.jenis == 'manual' and sig.file_ttd_url %}
+                        <div class="manual-signature">
+                            <img src="{{ sig.file_ttd_url }}" alt="Tanda Tangan Manual">
+                        </div>
+                    {% else %}
+                        <div class="placeholder-box">
+                            <p>[ Belum ditandatangani ]</p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="placeholder-box">
+                        <p>[ Menunggu Tanda Tangan ]</p>
+                    </div>
+                {% endif %}
+
+                <p class="name">{{ sig.user.full_name|default:"-"|upper }}</p>
+                <p class="nim-nip">NIP. {{ sig.user.username|default:"-" }}</p>
+            </div>
+            {% endfor %}
         </div>
 
     </div>
