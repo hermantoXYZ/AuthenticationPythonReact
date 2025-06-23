@@ -48,4 +48,5 @@ urlpatterns = [
     path('users/staff-fakultas/<int:pk>/', StaffFakultasDetailView.as_view(), name='staff-fakultas-detail'),
     path('users/dekan/', DekanFakultasListView.as_view(), name='dekan-list'),
     path('users/dekan/<int:pk>/', DekanFakultasDetailView.as_view(), name='dekan-detail'),
+    path('verify/signature/<str:token>/', views.verify_signature_api, name='verify_signature_api'),
 ]

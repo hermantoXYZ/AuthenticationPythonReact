@@ -28,6 +28,7 @@ from django.template.loader import get_template
 import qrcode
 import io
 import base64
+from django.http import JsonResponse
 
 
 class NoteListCreate(generics.ListCreateAPIView):
@@ -1155,4 +1156,21 @@ class LayananViewSet(viewsets.ModelViewSet):
         template = get_template(layanan.jenis_layanan.template_surat)
         html = template.render(context)
         return HttpResponse(html)
+
+def verify_signature_api(request, token):
+    from .models import TandaTangan
+    tanda = TandaTangan.objects.filter(tanda_tangan_elektronik=token).select_related('user_penandatangan', 'layanan').first()
+    if tanda:
+        data = {
+            'found': True,
+            'jabatan': tanda.jabatan_penandatangan,
+            'nama': tanda.user_penandatangan.full_name if tanda.user_penandatangan else '-',
+            'nip': tanda.user_penandatangan.username if tanda.user_penandatangan else '-',
+            'status': tanda.status,
+            'waktu': tanda.waktu_tanda_tangan,
+            'layanan': str(tanda.layanan),
+        }
+    else:
+        data = {'found': False}
+    return JsonResponse(data)
 

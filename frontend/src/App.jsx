@@ -8,7 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import ListDekanFakultas from './components/users/ListDekanFakultas'
 import HomePage from "./components/HomePage"
 import DashboardLayout from "./components/DashboardLayout"
-
+import VerifySignature from "./components/verify/VerifySignature"
 function Logout() {
   localStorage.clear()
   return <Navigate to="/login" />
@@ -40,7 +40,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-      
+        <Route path="/verify/signature/:token" element={<VerifySignature />} />
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="*" element={<NotFound />}></Route>
