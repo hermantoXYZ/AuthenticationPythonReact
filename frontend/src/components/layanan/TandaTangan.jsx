@@ -14,7 +14,7 @@ import {
   ArrowLeft,
   Save,
   X,
-  Search
+  ClipboardList
 } from 'lucide-react';
 
 const TandaTangan = () => {
@@ -24,11 +24,11 @@ const TandaTangan = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [users, setUsers] = useState([]);
-  const [suratList, setSuratList] = useState([]);
+  const [layananList, setLayananList] = useState([]);
   const [formData, setFormData] = useState({
-    surat: '',
+    layanan_id: '',
     jabatan_penandatangan: '',
-    user_penandatangan: '',
+    user_penandatangan_id: '',
     jenis_tanda_tangan: 'manual',
     urutan: '',
     file_tanda_tangan: null
@@ -37,13 +37,13 @@ const TandaTangan = () => {
   useEffect(() => {
     fetchSignatures();
     fetchUsers();
-    fetchSuratList();
+    fetchLayananList();
   }, []);
 
   const fetchSignatures = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/layanan/tanda-tangan/');
+      const response = await api.get('/api/tanda-tangan/');
       setSignatures(response.data);
     } catch (error) {
       console.error('Error fetching signatures:', error);
@@ -63,22 +63,22 @@ const TandaTangan = () => {
     }
   };
 
-  const fetchSuratList = async () => {
+  const fetchLayananList = async () => {
     try {
-      const response = await api.get('/api/layanan/nomor-surat/');
-      setSuratList(response.data);
+      const response = await api.get('/api/layanan/');
+      setLayananList(response.data);
     } catch (error) {
-      console.error('Error fetching surat list:', error);
-      toast.error('Gagal mengambil data surat');
+      console.error('Error fetching layanan list:', error);
+      toast.error('Gagal mengambil data layanan');
     }
   };
 
   const handleAdd = () => {
     setEditingId(null);
     setFormData({
-      surat: '',
+      layanan_id: '',
       jabatan_penandatangan: '',
-      user_penandatangan: '',
+      user_penandatangan_id: '',
       jenis_tanda_tangan: 'manual',
       urutan: '',
       file_tanda_tangan: null
@@ -89,9 +89,9 @@ const TandaTangan = () => {
   const handleEdit = (record) => {
     setEditingId(record.id);
     setFormData({
-      surat: record.surat.id,
+      layanan_id: record.layanan.id,
       jabatan_penandatangan: record.jabatan_penandatangan,
-      user_penandatangan: record.user_penandatangan?.id,
+      user_penandatangan_id: record.user_penandatangan?.id || '',
       jenis_tanda_tangan: record.jenis_tanda_tangan,
       urutan: record.urutan,
       file_tanda_tangan: null
@@ -102,7 +102,7 @@ const TandaTangan = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus tanda tangan ini?')) {
     try {
-        await api.delete(`/api/layanan/tanda-tangan/${id}/`);
+        await api.delete(`/api/tanda-tangan/${id}/`);
         toast.success('Tanda tangan berhasil dihapus');
       fetchSignatures();
     } catch (error) {
@@ -116,10 +116,10 @@ const TandaTangan = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        await api.put(`/api/layanan/tanda-tangan/${editingId}/`, formData);
+        await api.put(`/api/tanda-tangan/${editingId}/`, formData);
         toast.success('Tanda tangan berhasil diperbarui');
       } else {
-        await api.post('/api/layanan/tanda-tangan/', formData);
+        await api.post('/api/tanda-tangan/', formData);
         toast.success('Tanda tangan berhasil ditambahkan');
       }
       setModalVisible(false);
@@ -194,7 +194,7 @@ const TandaTangan = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Surat</th>
+                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Layanan</th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jabatan</th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penandatangan</th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
@@ -206,9 +206,12 @@ const TandaTangan = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {signatures.map((signature) => (
                       <tr key={signature.id} className="hover:bg-gray-50">
-                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{signature.surat.perihal}</td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="font-medium">{signature.layanan?.jenis_layanan_nama || 'N/A'}</div>
+                          <div className="text-gray-500 text-xs">{signature.layanan?.mahasiswa_name || ''}</div>
+                        </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{signature.jabatan_penandatangan}</td>
-                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{signature.user_penandatangan?.full_name}</td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{signature.user_penandatangan?.full_name || '-'}</td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
                             signature.jenis_tanda_tangan === 'elektronik' 
@@ -287,28 +290,28 @@ const TandaTangan = () => {
 
             <form onSubmit={handleSubmit} className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                {/* Surat Selection */}
+                {/* Layanan Selection */}
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Surat
+                    Layanan
                   </label>
                   <div className="relative">
                     <select
-              name="surat"
-                      value={formData.surat}
+                      name="layanan_id"
+                      value={formData.layanan_id}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                       required
-            >
-                      <option value="">Pilih Surat</option>
-                {suratList.map((surat) => (
-                        <option key={surat.id} value={surat.id}>
-                    {surat.perihal}
+                    >
+                      <option value="">Pilih Layanan</option>
+                      {layananList.map((layanan) => (
+                        <option key={layanan.id} value={layanan.id}>
+                          {layanan.jenis_layanan_nama} - {layanan.mahasiswa_name}
                         </option>
-                ))}
+                      ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <FileText className="w-5 h-5 text-gray-400" />
+                      <ClipboardList className="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                 </div>
@@ -321,7 +324,7 @@ const TandaTangan = () => {
                   <div className="relative">
                     <input
                       type="text"
-              name="jabatan_penandatangan"
+                      name="jabatan_penandatangan"
                       value={formData.jabatan_penandatangan}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -341,18 +344,17 @@ const TandaTangan = () => {
                   </label>
                   <div className="relative">
                     <select
-              name="user_penandatangan"
-                      value={formData.user_penandatangan}
+                      name="user_penandatangan_id"
+                      value={formData.user_penandatangan_id}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                      required
-            >
-                      <option value="">Pilih Penandatangan</option>
-                {users.map((user) => (
+                    >
+                      <option value="">Pilih Penandatangan (Opsional)</option>
+                      {users.map((user) => (
                         <option key={user.id} value={user.id}>
-                    {user.full_name}
+                          {user.full_name}
                         </option>
-                ))}
+                      ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                       <User className="w-5 h-5 text-gray-400" />
@@ -374,7 +376,7 @@ const TandaTangan = () => {
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
                       }`}
-            >
+                    >
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                       <span className="text-xs sm:text-sm font-medium">Manual</span>
                     </button>
@@ -401,7 +403,7 @@ const TandaTangan = () => {
                   <div className="relative">
                     <input
                       type="number"
-              name="urutan"
+                      name="urutan"
                       value={formData.urutan}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

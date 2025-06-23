@@ -1048,6 +1048,10 @@ class NomorSuratViewSet(viewsets.ModelViewSet):
 class TandaTanganViewSet(viewsets.ModelViewSet):
     queryset = TandaTangan.objects.all()
     serializer_class = TandaTanganSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
 class JenisLayananViewSet(viewsets.ModelViewSet):
     queryset = JenisLayanan.objects.all()

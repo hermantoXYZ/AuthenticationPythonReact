@@ -18,7 +18,7 @@ router.register(r'ketua-prodi', KetuaProdiViewSet)
 router.register(r'users/pejabat-jurusan', PejabatJurusanViewSet, basename='pejabat-jurusan')
 router.register(r'articles', ArticleViewSet, basename='articles')
 router.register(r'nomor-surat', NomorSuratViewSet)
-router.register(r'tanda-tangan-surat', TandaTanganViewSet)
+router.register(r'tanda-tangan', TandaTanganViewSet)
 router.register(r'jenis-layanan', JenisLayananViewSet)
 router.register(r'layanan', LayananViewSet)
 

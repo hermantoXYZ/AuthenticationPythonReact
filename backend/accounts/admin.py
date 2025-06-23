@@ -409,10 +409,10 @@ class TandaTanganAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = TandaTanganResource
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ('surat', 'jabatan_penandatangan', 'user_penandatangan', 'jenis_tanda_tangan', 'status', 'waktu_tanda_tangan')
-    list_filter = ('jenis_tanda_tangan', 'status', 'jabatan_penandatangan')
-    search_fields = ('surat__nomor', 'jabatan_penandatangan', 'user_penandatangan__full_name')
-    ordering = ('surat', 'urutan')
+    list_display = ('perihal', 'jabatan_penandatangan', 'user_penandatangan', 'jenis_tanda_tangan', 'waktu_tanda_tangan')
+    list_filter = ('jenis_tanda_tangan', 'jabatan_penandatangan')
+    search_fields = ('perihal', 'jabatan_penandatangan', 'user_penandatangan__full_name')
+    ordering = ('-waktu_tanda_tangan',)
 
 @admin.register(JenisLayanan)
 class JenisLayananAdmin(ModelAdmin, ImportExportModelAdmin):

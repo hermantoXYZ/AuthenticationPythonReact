@@ -630,30 +630,38 @@ class NomorSurat(models.Model):
         return f"{self.nomor}/{self.kode}/{self.jenis}/{self.tahun}"
 
 class TandaTangan(models.Model):
-    surat = models.ForeignKey(NomorSurat, on_delete=models.CASCADE, related_name="daftar_tanda_tangan")
-    jabatan_penandatangan = models.CharField(max_length=255)  # Contoh: Dekan, Ketua Prodi, dsb
-    user_penandatangan = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="tanda_tangan_user")
-    perihal = models.CharField(max_length=255, blank=True, null=True)
-    jenis_tanda_tangan = models.CharField(
-        max_length=20,
-        choices=[('manual', 'Manual'), ('elektronik', 'Elektronik')],
-        default='manual'
-    )
+    layanan = models.ForeignKey('Layanan', on_delete=models.CASCADE, related_name='daftar_tanda_tangan')
+    jabatan_penandatangan = models.CharField(max_length=255)
+    user_penandatangan = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name="tanda_tangan_user")
+    perihal = models.CharField(max_length=255, null=True, blank=True)
+    jenis_tanda_tangan = models.CharField(max_length=20, choices=[('manual', 'Manual'), ('elektronik', 'Elektronik')], default='manual')
     file_tanda_tangan = models.ImageField(upload_to='ttd/manual/', null=True, blank=True)
     tanda_tangan_elektronik = models.CharField(max_length=255, null=True, blank=True)
     waktu_tanda_tangan = models.DateTimeField(null=True, blank=True)
     urutan = models.PositiveIntegerField(default=1)
-    status = models.CharField(
-        max_length=20,
-        choices=[('pending', 'Belum Ditandatangani'), ('signed', 'Sudah Ditandatangani')],
-        default='pending'
-    )
 
     class Meta:
-        ordering = ['urutan']
+        ordering = ['layanan', 'urutan'] 
+        verbose_name = "Tanda Tangan Layanan" 
+        verbose_name_plural = "Tanda Tangan Layanan" 
+        unique_together = ('layanan', 'urutan') 
+        indexes = [
+            models.Index(fields=['layanan', 'urutan']),
+            models.Index(fields=['jenis_tanda_tangan']),
+            models.Index(fields=['jabatan_penandatangan']),
+        ]
 
     def __str__(self):
-        return f"{self.surat} - {self.jabatan_penandatangan} - {self.user_penandatangan}"
+        layanan_str = "Layanan Tidak Dikenal"
+        if self.layanan:
+            layanan_str = str(self.layanan)
+        
+        perihal_info = self.perihal if self.perihal else "Tidak Ada Perihal"
+        
+        return (
+            f"Tanda Tangan ({self.get_jenis_tanda_tangan_display()}) oleh "
+            f"{self.jabatan_penandatangan} untuk '{layanan_str}' (Urutan: {self.urutan})"
+        )
 
 class JenisLayanan(models.Model):
     nama_layanan = models.CharField(max_length=255)
@@ -689,7 +697,7 @@ class Layanan(models.Model):
     hasil_proses = models.TextField(null=True, blank=True)
     file_hasil = models.FileField(upload_to='layanan/hasil/', null=True, blank=True)
     link_hasil = models.URLField(null=True, blank=True)
-    nomor_surat = models.OneToOneField(NomorSurat, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan_nomor_surat')
+    nomor_surat = models.OneToOneField(NomorSurat, on_delete=models.SET_NULL, null=True, blank=True, related_name='layanan')
 
     def __str__(self):
         return f"{self.mahasiswa} - {self.jenis_layanan}"

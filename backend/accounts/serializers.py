@@ -487,11 +487,6 @@ class NomorSuratSerializer(serializers.ModelSerializer):
         validated_data.pop('admin_nomor_surat', None)
         return super().update(instance, validated_data)
 
-class TandaTanganSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TandaTangan
-        fields = '__all__'
-
 class JenisLayananSerializer(serializers.ModelSerializer):
     class Meta:
         model = JenisLayanan
@@ -726,3 +721,22 @@ class LayananSerializer(serializers.ModelSerializer):
         instance.data_tambahan = data_tambahan
         instance.save()
         return instance
+
+class TandaTanganSerializer(serializers.ModelSerializer):
+    layanan = LayananSerializer(read_only=True)
+    user_penandatangan = UserBasicSerializer(read_only=True)
+    layanan_id = serializers.PrimaryKeyRelatedField(
+        queryset=Layanan.objects.all(), source='layanan', write_only=True
+    )
+    user_penandatangan_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(), source='user_penandatangan', write_only=True, allow_null=True, required=False
+    )
+
+    class Meta:
+        model = TandaTangan
+        fields = [
+            'id', 'layanan', 'user_penandatangan', 'jabatan_penandatangan',
+            'jenis_tanda_tangan', 'urutan', 'waktu_tanda_tangan',
+            'perihal', 'file_tanda_tangan', 'tanda_tangan_elektronik',
+            'layanan_id', 'user_penandatangan_id'
+        ]
