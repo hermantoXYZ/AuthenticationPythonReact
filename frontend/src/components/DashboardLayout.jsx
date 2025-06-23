@@ -78,6 +78,7 @@ import JenisLayanan from "./layanan/JenisLayanan";
 import AjukanLayanan from "./layanan/AjukanLayanan";
 import DaftarAjuanLayanan from "./layanan/DaftarAjuanLayanan";
 import NomorSurat from "./layanan/NomorSurat";
+import TugasTandaTangan from "./layanan/TugasTandaTangan";
 
 // Import halaman dari folder pages
 import AboutPage from './pages/AboutPage';
@@ -158,7 +159,8 @@ function DashboardLayout() {
             submenu: [
               { icon: List, label: "Daftar Layanan", path: "/dashboard/layanan/list" },
               { icon: Settings, label: "Jenis Layanan", path: "/dashboard/layanan/jenis" },
-              { icon: FileCheck, label: "Tanda Tangan", path: "/dashboard/layanan/tanda-tangan" }
+              { icon: FileCheck, label: "Tanda Tangan", path: "/dashboard/layanan/tanda-tangan" },
+              { icon: Edit, label: "Tugas Tanda Tangan", path: "/dashboard/layanan/tugas-tanda-tangan" },
             ]
           },
           {
@@ -251,6 +253,12 @@ function DashboardLayout() {
         return [
           ...baseMenu.slice(0, 1),
           {
+            icon: Edit,
+            label: "Tugas Tanda Tangan",
+            path: "/dashboard/layanan/tugas-tanda-tangan",
+            type: "single"
+          },
+          {
             icon: School,
             label: "Jurusan",
             key: "jurusan",
@@ -336,6 +344,12 @@ function DashboardLayout() {
         return [
           ...baseMenu.slice(0, 1),
           {
+            icon: Edit,
+            label: "Tugas Tanda Tangan",
+            path: "/dashboard/layanan/tugas-tanda-tangan",
+            type: "single"
+          },
+          {
             icon: GraduationCap,
             label: "Program Studi",
             key: "prodi",
@@ -377,6 +391,12 @@ function DashboardLayout() {
       case 'ketua_prodi':
         return [
           ...baseMenu.slice(0, 1),
+          {
+            icon: Edit,
+            label: "Tugas Tanda Tangan",
+            path: "/dashboard/layanan/tugas-tanda-tangan",
+            type: "single"
+          },
           {
             icon: FileText,
             label: "Skripsi",
@@ -1095,6 +1115,7 @@ function DashboardLayout() {
               <Route path="/layanan/ajukan" element={<AjukanLayanan />} />
               <Route path="/layanan/jenis" element={<JenisLayanan />} />
               <Route path="/layanan/tanda-tangan" element={<TandaTangan />} />
+              <Route path="/layanan/tugas-tanda-tangan" element={<TugasTandaTangan />} />
               <Route path="/layanan/list" element={<DaftarAjuanLayanan />} />
               <Route path="/layanan/nomor-surat" element={<NomorSurat />} />
 
