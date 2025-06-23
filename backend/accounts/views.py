@@ -5,13 +5,13 @@ from .serializers import (
     UserProfileSerializer, MahasiswaProfileSerializer, DosenProfileSerializer, 
     StaffProfileSerializer, StaffFakultasProfileSerializer, JurusanSerializer, 
     SkripsiJudulSerializer, PejabatJurusanSerializer, KetuaProdiSerializer,
-    ArticleSerializer, NomorSuratSerializer, TandaTanganSuratSerializer, JenisLayananSerializer, LayananSerializer
+    ArticleSerializer, NomorSuratSerializer, TandaTanganSerializer, JenisLayananSerializer, LayananSerializer
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Note, CustomUser, Fakultas, ProgramStudi, UserMahasiswa, UserDosen, 
     UserStaffProdi, UserStaffFakultas, Jurusan, SkripsiJudul, UserType, 
-    PejabatJurusan, UserKetuaProdi, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan
+    PejabatJurusan, UserKetuaProdi, Article, NomorSurat, TandaTangan, JenisLayanan, Layanan
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -1045,9 +1045,9 @@ class NomorSuratViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class TandaTanganSuratViewSet(viewsets.ModelViewSet):
-    queryset = TandaTanganSurat.objects.all()
-    serializer_class = TandaTanganSuratSerializer
+class TandaTanganViewSet(viewsets.ModelViewSet):
+    queryset = TandaTangan.objects.all()
+    serializer_class = TandaTanganSerializer
 
 class JenisLayananViewSet(viewsets.ModelViewSet):
     queryset = JenisLayanan.objects.all()

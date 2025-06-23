@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan, DataTambahanFile
+from .models import Note, CustomUser, Fakultas, ProgramStudi, UserDosen, UserMahasiswa, PejabatJurusan, UserKetuaProdi, Jurusan, UserStaffProdi, SkripsiJudul, UserStaffFakultas, UserType, Article, NomorSurat, TandaTangan, JenisLayanan, Layanan, DataTambahanFile
 import json
 
 class UserBasicSerializer(serializers.ModelSerializer):
@@ -487,9 +487,9 @@ class NomorSuratSerializer(serializers.ModelSerializer):
         validated_data.pop('admin_nomor_surat', None)
         return super().update(instance, validated_data)
 
-class TandaTanganSuratSerializer(serializers.ModelSerializer):
+class TandaTanganSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TandaTanganSurat
+        model = TandaTangan
         fields = '__all__'
 
 class JenisLayananSerializer(serializers.ModelSerializer):

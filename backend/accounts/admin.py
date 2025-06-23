@@ -7,7 +7,7 @@ from .models import (
     CustomUser, Fakultas, ProgramStudi, 
     UserDosen, UserMahasiswa, UserKetuaProdi, UserStaffProdi, 
     UserStaffFakultas, Note, Jurusan, PejabatJurusan, SkripsiJudul,
-    Article, NomorSurat, TandaTanganSurat, JenisLayanan, Layanan, DataTambahanFile
+    Article, NomorSurat, TandaTangan, JenisLayanan, Layanan, DataTambahanFile
 )
 
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -379,9 +379,9 @@ class NomorSuratResource(resources.ModelResource):
         model = NomorSurat
         exclude = ('id',)
 
-class TandaTanganSuratResource(resources.ModelResource):
+class TandaTanganResource(resources.ModelResource):
     class Meta:
-        model = TandaTanganSurat
+        model = TandaTangan
         exclude = ('id',)
 
 class JenisLayananResource(resources.ModelResource):
@@ -404,9 +404,9 @@ class NomorSuratAdmin(ModelAdmin, ImportExportModelAdmin):
     search_fields = ('nomor', 'perihal', 'tujuan')
     ordering = ('-tanggal_dibuat',)
 
-@admin.register(TandaTanganSurat)
-class TandaTanganSuratAdmin(ModelAdmin, ImportExportModelAdmin):
-    resource_class = TandaTanganSuratResource
+@admin.register(TandaTangan)
+class TandaTanganAdmin(ModelAdmin, ImportExportModelAdmin):
+    resource_class = TandaTanganResource
     import_form_class = ImportForm
     export_form_class = ExportForm
     list_display = ('surat', 'jabatan_penandatangan', 'user_penandatangan', 'jenis_tanda_tangan', 'status', 'waktu_tanda_tangan')

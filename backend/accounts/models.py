@@ -629,7 +629,7 @@ class NomorSurat(models.Model):
     def get_full_nomor(self):
         return f"{self.nomor}/{self.kode}/{self.jenis}/{self.tahun}"
 
-class TandaTanganSurat(models.Model):
+class TandaTangan(models.Model):
     surat = models.ForeignKey(NomorSurat, on_delete=models.CASCADE, related_name="daftar_tanda_tangan")
     jabatan_penandatangan = models.CharField(max_length=255)  # Contoh: Dekan, Ketua Prodi, dsb
     user_penandatangan = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="tanda_tangan_user")
