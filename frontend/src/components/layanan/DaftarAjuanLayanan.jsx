@@ -870,7 +870,7 @@ const DaftarAjuanLayanan = () => {
                         <span className="text-sm font-medium">{p.user_penandatangan?.full_name || p.nama || p.username}</span>
                         <span className="text-sm text-gray-500 ml-2">{p.jabatan_penandatangan}</span>
                         <span className="text-xs text-gray-400 ml-auto">{p.status}</span>
-                        <span className="text-xs text-gray-400 mr-2">#{p.urutan }</span>
+                        <span className="text-xs text-gray-400 mr-2">#{p.urutan + 1}</span>
 
                       </li>
                     ))}
@@ -1204,8 +1204,8 @@ const DaftarAjuanLayanan = () => {
                   <input
                     type="number"
                     min={1}
-                    value={participantOrder === '' ? '' : participantOrder}
-                    onChange={e => setParticipantOrder(e.target.value === '' ? '' : Number(e.target.value))}
+                    value={participantOrder}
+                    onChange={e => setParticipantOrder(Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                     placeholder="Urutan penandatangan (misal: 1, 2, dst)"
                     required
