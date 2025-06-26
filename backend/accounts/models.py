@@ -20,15 +20,9 @@ class CustomUser(AbstractUser):
     # Override first_name dan last_name menjadi tidak digunakan
     first_name = None
     last_name = None
-
     # Gunakan full_name sebagai pengganti
     full_name = models.CharField(max_length=150, blank=True, null=True, verbose_name="Nama Lengkap")
-    
-    user_type = models.CharField(
-        max_length=20,
-        choices=UserType.choices,
-        default=UserType.MAHASISWA
-    )
+    user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.MAHASISWA)
     profile_picture = models.ImageField(upload_to='profile_pictures/%Y/%m/', null=True, blank=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(unique=True, blank=True, null=True)
@@ -127,12 +121,7 @@ class Jurusan(models.Model):
 
 
 class PejabatJurusan(models.Model):
-    user = models.OneToOneField(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='pejabat_jurusan_profile',
-        limit_choices_to={'user_type': UserType.PEJABAT_JURUSAN}
-    )
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='pejabat_jurusan_profile', limit_choices_to={'user_type': UserType.PEJABAT_JURUSAN})
     jurusan = models.ForeignKey(Jurusan, on_delete=models.CASCADE, related_name='pejabat_jurusan_rel')
     jabatan = models.CharField(max_length=15, choices=[
         ('Ketua', 'Ketua'),
@@ -158,14 +147,7 @@ class PejabatJurusan(models.Model):
 class Fakultas(models.Model):
     nama = models.CharField(max_length=100)
     kode = models.CharField(max_length=10, unique=True)
-    dekan = models.OneToOneField(
-        CustomUser, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='fakultas_dipimpin',
-        limit_choices_to={'user_type': UserType.DEKAN_FAKULTAS}
-    )
+    dekan = models.OneToOneField(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='fakultas_dipimpin', limit_choices_to={'user_type': UserType.DEKAN_FAKULTAS})
     wakil_dekan_akademik = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL, null=True, blank=True,
@@ -420,8 +402,7 @@ class UserStaffFakultas(models.Model):
     )
     fakultas = models.ForeignKey(Fakultas, on_delete=models.CASCADE, related_name='staff')
     jabatan = models.CharField(max_length=50, blank=True)
-    nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")  # Added NIP field
-    
+    nip = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name="NIP")
     def __str__(self):
         return f"{self.user.get_full_name()} - Staff {self.fakultas.nama}"
     
@@ -449,23 +430,13 @@ class SkripsiJudul(models.Model):
         on_delete=models.CASCADE,
         related_name='pengajuan_judul'
     )
-    
-    # Judul 1
     judul_1 = models.CharField(max_length=255)
     deskripsi_1 = models.TextField()
-    
-    # Judul 2
     judul_2 = models.CharField(max_length=255)
-    deskripsi_2 = models.TextField()
-    
-    # Judul 3
+    deskripsi_2 = models.TextField()    
     judul_3 = models.CharField(max_length=255)
     deskripsi_3 = models.TextField()
-    
-    # Judul yang dipilih (setelah disetujui)
     judul_diterima = models.CharField(max_length=255, null=True, blank=True)
-    
-    # Status dan tanggal
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -509,8 +480,6 @@ class Note(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="notes")
-    
-    # Opsional: Tambahkan visibility berdasarkan level
     visibility = models.CharField(
         max_length=20,
         choices=[
@@ -565,11 +534,9 @@ class Article(models.Model):
         blank=True,
         verbose_name="Gambar Utama"
     )
-    
     # Status dan Visibilitas
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     is_featured = models.BooleanField(default=False, verbose_name="Tampilkan di Halaman Utama")
-
     # Program Studi terkait (opsional)
     related_prodi = models.ForeignKey(
         ProgramStudi,
