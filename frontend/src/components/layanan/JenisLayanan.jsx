@@ -34,7 +34,6 @@ const JenisLayanan = () => {
     deskripsi_layanan: "",
     prasyarat_layanan: "",
     konfigurasi_field: [],
-    penandatangan_otomatis: [],
   });
 
   useEffect(() => {
@@ -60,7 +59,6 @@ const JenisLayanan = () => {
       deskripsi_layanan: "",
       prasyarat_layanan: "",
       konfigurasi_field: [],
-      penandatangan_otomatis: [],
     });
     setModalVisible(true);
   };
@@ -72,7 +70,6 @@ const JenisLayanan = () => {
       deskripsi_layanan: item.deskripsi_layanan || "",
       prasyarat_layanan: item.prasyarat_layanan || "",
       konfigurasi_field: item.konfigurasi_field || [],
-      penandatangan_otomatis: item.penandatangan_otomatis || [],
     });
     setModalVisible(true);
   };
@@ -163,32 +160,6 @@ const JenisLayanan = () => {
     setFormData(prev => ({
       ...prev,
       konfigurasi_field: prev.konfigurasi_field.filter((_, i) => i !== idx)
-    }));
-  };
-
-  const addSigner = () => {
-    setFormData(prev => ({
-      ...prev,
-      penandatangan_otomatis: [
-        ...prev.penandatangan_otomatis,
-        { role: "", user_type: "dosen", order: prev.penandatangan_otomatis.length + 1 }
-      ]
-    }));
-  };
-
-  const updateSigner = (idx, key, value) => {
-    setFormData(prev => ({
-      ...prev,
-      penandatangan_otomatis: prev.penandatangan_otomatis.map((s, i) =>
-        i === idx ? { ...s, [key]: value } : s
-      )
-    }));
-  };
-
-  const removeSigner = (idx) => {
-    setFormData(prev => ({
-      ...prev,
-      penandatangan_otomatis: prev.penandatangan_otomatis.filter((_, i) => i !== idx)
     }));
   };
 
@@ -349,150 +320,73 @@ const JenisLayanan = () => {
 
                 {/* Field Tambahan (Konfigurasi Form) */}
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Field Tambahan (Konfigurasi Form)
-                </label>
-                <div className="space-y-4">
-                  {formData.konfigurasi_field.map((field, idx) => (
-                    <div
-                      key={idx}
-                      className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-5 bg-gray-50 border border-gray-200 rounded-xl shadow-md overflow-hidden"
-                    >
-                      {/* Label Field */}
-                      <span className="absolute top-0 left-0 bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded-br-lg shadow-md">
-                        Field {idx + 1}
-                      </span>
-
-                      {/* Input Fields Container */}
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 sm:mt-0">
-                        <input
-                          type="text"
-                          placeholder="Nama Field (misal: ipk_terakhir)"
-                          value={field.name}
-                          onChange={(e) => updateFieldConfig(idx, "name", e.target.value)}
-                          className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Label (misal: IPK Terakhir)"
-                          value={field.label}
-                          onChange={(e) => updateFieldConfig(idx, "label", e.target.value)}
-                          className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
-                          required
-                        />
-                        <select
-                          value={field.type}
-                          onChange={(e) => updateFieldConfig(idx, "type", e.target.value)}
-                          className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
-                        >
-                          <option value="text">Text</option>
-                          <option value="number">Number</option>
-                          <option value="date">Date</option>
-                          <option value="file">File</option>
-                        </select>
-                      </div>
-
-                      {/* Remove Button */}
-                      <button
-                        type="button"
-                        onClick={() => removeFieldConfig(idx)}
-                        className="w-full sm:w-10 sm:h-10 flex-shrink-0 p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition duration-200 ease-in-out flex items-center justify-center self-center sm:self-auto focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                        title="Hapus Field"
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Field Tambahan (Konfigurasi Form)
+                  </label>
+                  <div className="space-y-4">
+                    {formData.konfigurasi_field.map((field, idx) => (
+                      <div
+                        key={idx}
+                        className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-5 bg-gray-50 border border-gray-200 rounded-xl shadow-md overflow-hidden"
                       >
-                        {/* Pastikan ikon Trash2 sudah diimpor dari library ikon yang Anda gunakan */}
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        {/* Label Field */}
+                        <span className="absolute top-0 left-0 bg-yellow-600 text-white text-xs font-semibold px-3 py-1 rounded-br-lg shadow-md">
+                          Field {idx + 1}
+                        </span>
 
-                {/* Tombol Tambah Field */}
-                <button
-                  type="button"
-                  onClick={addFieldConfig}
-                  className="mt-6 w-full sm:w-auto px-6 py-3 bg-yellow-600 text-white rounded-lg font-semibold shadow-md hover:bg-yellow-700 transition duration-200 ease-in-out flex items-center justify-center gap-2 text-base"
-                >
-                  {/* Anda bisa menggunakan ikon plus, file, atau yang relevan di sini */}
-                  <Plus className="w-5 h-5" />
-                  Tambah Field
-                </button>
-              </div>
-                
-                {/* Konfigurasi Penandatangan */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Konfigurasi Penandatangan
-                </label>
-                <div className="space-y-4">
-                  {formData.penandatangan_otomatis.map((signer, idx) => (
-                    <div
-                      key={idx}
-                      className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-5 bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden"
-                    >
-                      {/* Label Penandatangan */}
-                      <span className="absolute top-0 left-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-br-lg shadow-md">
-                        Penandatangan {idx + 1}
-                      </span>
+                        {/* Input Fields Container */}
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 sm:mt-0">
+                          <input
+                            type="text"
+                            placeholder="Nama Field (misal: ipk_terakhir)"
+                            value={field.name}
+                            onChange={(e) => updateFieldConfig(idx, "name", e.target.value)}
+                            className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
+                            required
+                          />
+                          <input
+                            type="text"
+                            placeholder="Label (misal: IPK Terakhir)"
+                            value={field.label}
+                            onChange={(e) => updateFieldConfig(idx, "label", e.target.value)}
+                            className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
+                            required
+                          />
+                          <select
+                            value={field.type}
+                            onChange={(e) => updateFieldConfig(idx, "type", e.target.value)}
+                            className="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
+                          >
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="file">File</option>
+                          </select>
+                        </div>
 
-                      {/* Input Fields Container */}
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 sm:mt-0">
-                        <input
-                          type="text"
-                          placeholder="Jabatan (misal: Ketua Prodi)"
-                          value={signer.role}
-                          onChange={(e) => updateSigner(idx, "role", e.target.value)}
-                          className="w-full border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
-                          required
-                        />
-                        <select
-                          value={signer.user_type}
-                          onChange={(e) => updateSigner(idx, "user_type", e.target.value)}
-                          className="w-full border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeFieldConfig(idx)}
+                          className="w-full sm:w-10 sm:h-10 flex-shrink-0 p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition duration-200 ease-in-out flex items-center justify-center self-center sm:self-auto focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                          title="Hapus Field"
                         >
-                          <option value="" disabled>Pilih Tipe Pengguna</option> {/* Added a default disabled option */}
-                          {USER_TYPE_CHOICES.map((choice) => (
-                            <option key={choice.value} value={choice.value}>
-                              {choice.label}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="number"
-                          placeholder="Urutan"
-                          value={signer.order}
-                          onChange={(e) => updateSigner(idx, "order", parseInt(e.target.value, 10))}
-                          className="w-full border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-lg shadow-sm text-sm p-2.5 transition ease-in-out"
-                          required
-                          min="1"
-                        />
+                          <Trash2 className="h-5 w-5" />
+                        </button>
                       </div>
+                    ))}
+                  </div>
 
-                      {/* Remove Button */}
-                      <button
-                        type="button"
-                        onClick={() => removeSigner(idx)}
-                        className="w-full sm:w-10 sm:h-10 flex-shrink-0 p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition duration-200 ease-in-out flex items-center justify-center self-center sm:self-auto focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                        title="Hapus Penandatangan"
-                      >
-                        {/* Pastikan ikon Trash2 sudah diimpor dari library ikon yang Anda gunakan */}
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
+                  {/* Tombol Tambah Field */}
+                  <button
+                    type="button"
+                    onClick={addFieldConfig}
+                    className="mt-6 w-full sm:w-auto px-6 py-3 bg-yellow-600 text-white rounded-lg font-semibold shadow-md hover:bg-yellow-700 transition duration-200 ease-in-out flex items-center justify-center gap-2 text-base"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Tambah Field
+                  </button>
                 </div>
-
-                {/* Tombol Tambah Penandatangan */}
-                <button
-                  type="button"
-                  onClick={addSigner}
-                  className="mt-6 w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-200 ease-in-out flex items-center justify-center gap-2 text-base"
-                >
-                  {/* Pastikan ikon Users sudah diimpor */}
-                  <Users className="w-5 h-5" />
-                  Tambah Penandatangan
-                </button>
-              </div>
               </div>
 
               {/* Action Buttons */}

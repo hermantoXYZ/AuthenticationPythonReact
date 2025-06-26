@@ -94,6 +94,7 @@ const DaftarAjuanLayanan = () => {
   const [userList, setUserList] = useState([]);
   const [isAddingParticipant, setIsAddingParticipant] = useState(false);
   const [participantJabatan, setParticipantJabatan] = useState('');
+  const [participantOrder, setParticipantOrder] = useState('');
 
 
   useEffect(() => {
@@ -869,7 +870,7 @@ const DaftarAjuanLayanan = () => {
                         <span className="text-sm font-medium">{p.user_penandatangan?.full_name || p.nama || p.username}</span>
                         <span className="text-sm text-gray-500 ml-2">{p.jabatan_penandatangan}</span>
                         <span className="text-xs text-gray-400 ml-auto">{p.status}</span>
-                        <span className="text-xs text-gray-400 mr-2">#{p.urutan + 1}</span>
+                        <span className="text-xs text-gray-400 mr-2">#{p.urutan }</span>
 
                       </li>
                     ))}
@@ -1136,12 +1137,14 @@ const DaftarAjuanLayanan = () => {
                       user_id: participantUserId,
                       user_type: participantUserType,
                       jabatan: participantJabatan,
+                      order: participantOrder,
                     });
                     toast.success("Penandatangan berhasil ditambahkan");
                     setShowAddParticipantModal(false);
                     setParticipantUserId('');
                     setParticipantUserType('');
                     setParticipantJabatan('');
+                    setParticipantOrder('');
                     // Refresh detail
                     openDetail(detailLayanan);
                   } catch (err) {
@@ -1186,16 +1189,28 @@ const DaftarAjuanLayanan = () => {
                   </select>
                 </div>
                 <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Jabatan Penandatangan</label>
-                <input
-                  type="text"
-                  value={participantJabatan}
-                  onChange={e => setParticipantJabatan(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  placeholder="Contoh: Ketua Prodi"
-                  required
-                />
-              </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Jabatan Penandatangan</label>
+                  <input
+                    type="text"
+                    value={participantJabatan}
+                    onChange={e => setParticipantJabatan(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Contoh: Ketua Prodi"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Urutan Penandatangan</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={participantOrder === '' ? '' : participantOrder}
+                    onChange={e => setParticipantOrder(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Urutan penandatangan (misal: 1, 2, dst)"
+                    required
+                  />
+                </div>
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
