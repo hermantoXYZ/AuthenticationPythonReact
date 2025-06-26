@@ -6,7 +6,7 @@ from .views import (
     FakultasViewSet, DosenListView, KetuaProdiViewSet, StaffProdiListView,
     StaffProdiDetailView, StaffFakultasListView, StaffFakultasDetailView,
     MahasiswaListView, MahasiswaDetailView, DekanFakultasListView, DekanFakultasDetailView,
-    PejabatJurusanViewSet, DosenDetailView, ArticleViewSet, NomorSuratViewSet, TandaTanganViewSet, JenisLayananViewSet, LayananViewSet
+    PejabatJurusanViewSet, DosenDetailView, ArticleViewSet, NomorSuratViewSet, TandaTanganViewSet, JenisLayananViewSet, LayananViewSet, AddParticipantView
 )
 
 # Create a router and register our viewsets with it.
@@ -49,4 +49,6 @@ urlpatterns = [
     path('users/dekan/', DekanFakultasListView.as_view(), name='dekan-list'),
     path('users/dekan/<int:pk>/', DekanFakultasDetailView.as_view(), name='dekan-detail'),
     path('verify/signature/<str:token>/', views.verify_signature_api, name='verify_signature_api'),
+    path('layanan/<int:layanan_id>/add-participant/', AddParticipantView.as_view(), name='add-participant'),
+
 ]

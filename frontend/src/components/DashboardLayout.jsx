@@ -160,7 +160,6 @@ function DashboardLayout() {
               { icon: List, label: "Daftar Layanan", path: "/dashboard/layanan/list" },
               { icon: Settings, label: "Jenis Layanan", path: "/dashboard/layanan/jenis" },
               { icon: FileCheck, label: "Tanda Tangan", path: "/dashboard/layanan/tanda-tangan" },
-              { icon: Edit, label: "Tugas Tanda Tangan", path: "/dashboard/layanan/tugas-tanda-tangan" },
             ]
           },
           {

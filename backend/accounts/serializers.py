@@ -513,6 +513,24 @@ class DataTambahanFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'nama_field', 'file', 'tanggal_upload']
         read_only_fields = ['tanggal_upload']
 
+class TandaTanganSerializer(serializers.ModelSerializer):
+    user_penandatangan = UserBasicSerializer(read_only=True)
+    layanan_id = serializers.PrimaryKeyRelatedField(
+        queryset=Layanan.objects.all(), source='layanan', write_only=True
+    )
+    user_penandatangan_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(), source='user_penandatangan', write_only=True, allow_null=True, required=False
+    )
+
+    class Meta:
+        model = TandaTangan
+        fields = [
+            'id', 'layanan', 'user_penandatangan', 'jabatan_penandatangan',
+            'jenis_tanda_tangan', 'urutan', 'waktu_tanda_tangan', 'status',
+            'perihal', 'file_tanda_tangan', 'tanda_tangan_elektronik',
+            'layanan_id', 'user_penandatangan_id'
+        ]
+
 class LayananSerializer(serializers.ModelSerializer):
     mahasiswa_name = serializers.SerializerMethodField()
     mahasiswa_nim = serializers.SerializerMethodField()
@@ -533,6 +551,7 @@ class LayananSerializer(serializers.ModelSerializer):
     nomor_surat_perihal = serializers.SerializerMethodField()
     nomor_surat_tujuan = serializers.SerializerMethodField()
     file_tambahan = DataTambahanFileSerializer(many=True, read_only=True)
+    penandatangan = TandaTanganSerializer(source='daftar_tanda_tangan', many=True, read_only=True)
 
     class Meta:
         model = Layanan
@@ -721,22 +740,3 @@ class LayananSerializer(serializers.ModelSerializer):
         instance.data_tambahan = data_tambahan
         instance.save()
         return instance
-
-class TandaTanganSerializer(serializers.ModelSerializer):
-    layanan = LayananSerializer(read_only=True)
-    user_penandatangan = UserBasicSerializer(read_only=True)
-    layanan_id = serializers.PrimaryKeyRelatedField(
-        queryset=Layanan.objects.all(), source='layanan', write_only=True
-    )
-    user_penandatangan_id = serializers.PrimaryKeyRelatedField(
-        queryset=CustomUser.objects.all(), source='user_penandatangan', write_only=True, allow_null=True, required=False
-    )
-
-    class Meta:
-        model = TandaTangan
-        fields = [
-            'id', 'layanan', 'user_penandatangan', 'jabatan_penandatangan',
-            'jenis_tanda_tangan', 'urutan', 'waktu_tanda_tangan', 'status',
-            'perihal', 'file_tanda_tangan', 'tanda_tangan_elektronik',
-            'layanan_id', 'user_penandatangan_id'
-        ]

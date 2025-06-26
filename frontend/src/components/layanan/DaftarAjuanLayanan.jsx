@@ -87,6 +87,15 @@ const DaftarAjuanLayanan = () => {
   const [nomorSuratSearchTerm, setNomorSuratSearchTerm] = useState('');
   const [isLinkingNomorSurat, setIsLinkingNomorSurat] = useState(false);
 
+  // State for Add Participant Modal
+  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
+  const [participantUserType, setParticipantUserType] = useState('');
+  const [participantUserId, setParticipantUserId] = useState('');
+  const [userList, setUserList] = useState([]);
+  const [isAddingParticipant, setIsAddingParticipant] = useState(false);
+  const [participantJabatan, setParticipantJabatan] = useState('');
+
+
   useEffect(() => {
     const fetchAjuan = async () => {
       try {
@@ -837,6 +846,37 @@ const DaftarAjuanLayanan = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Daftar Penandatangan */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Daftar Penandatangan</h3>
+                    <button
+                      onClick={() => setShowAddParticipantModal(true)}
+                      className="ml-auto px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      + Ajukan Penandatangan
+                    </button>
+                  </div>
+                </div>
+
+                {detailLayanan.penandatangan && detailLayanan.penandatangan.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {detailLayanan.penandatangan.map((p) => (
+                      <li key={p.id} className="py-2 flex items-center gap-3">
+                        <User className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm font-medium">{p.user_penandatangan?.full_name || p.nama || p.username}</span>
+                        <span className="text-sm text-gray-500 ml-2">{p.jabatan_penandatangan}</span>
+                        <span className="text-xs text-gray-400 ml-auto">{p.status}</span>
+                        <span className="text-xs text-gray-400 mr-2">#{p.urutan + 1}</span>
+
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-sm">Belum ada penandatangan.</p>
+                )}
               </div>
             </div>
           </div>
@@ -1069,6 +1109,110 @@ const DaftarAjuanLayanan = () => {
                   </table>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Participant Modal */}
+        {showAddParticipantModal && (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.3)] backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md mx-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Ajukan Penandatangan</h2>
+                <button
+                  onClick={() => setShowAddParticipantModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsAddingParticipant(true);
+                  try {
+                    // Kirim ke backend
+                    await api.post(`/api/layanan/${detailLayanan.id}/add-participant/`, {
+                      user_id: participantUserId,
+                      user_type: participantUserType,
+                      jabatan: participantJabatan,
+                    });
+                    toast.success("Penandatangan berhasil ditambahkan");
+                    setShowAddParticipantModal(false);
+                    setParticipantUserId('');
+                    setParticipantUserType('');
+                    setParticipantJabatan('');
+                    // Refresh detail
+                    openDetail(detailLayanan);
+                  } catch (err) {
+                    toast.error("Gagal menambah penandatangan");
+                  } finally {
+                    setIsAddingParticipant(false);
+                  }
+                }}
+              >
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Role Penandatangan</label>
+                  <select
+                    value={participantUserType}
+                    onChange={async (e) => {
+                      setParticipantUserType(e.target.value);
+                      // Fetch user list by type
+                      const res = await api.get(`/api/users/?user_type=${e.target.value}`);
+                      setUserList(res.data);
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    required
+                  >
+                    <option value="">Pilih Role</option>
+                    <option value="ketua_prodi">Ketua Prodi</option>
+                    <option value="dekan_fakultas">Dekan Fakultas</option>
+                    <option value="staff_prodi">Staff Prodi</option>
+                    {/* Tambah sesuai kebutuhan */}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">User Penandatangan</label>
+                  <select
+                    value={participantUserId}
+                    onChange={e => setParticipantUserId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    required
+                  >
+                    <option value="">Pilih User</option>
+                    {userList.map(user => (
+                      <option key={user.id} value={user.id}>{user.full_name || user.username}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Jabatan Penandatangan</label>
+                <input
+                  type="text"
+                  value={participantJabatan}
+                  onChange={e => setParticipantJabatan(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="Contoh: Ketua Prodi"
+                  required
+                />
+              </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddParticipantModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isAddingParticipant}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isAddingParticipant ? "Menyimpan..." : "Simpan"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

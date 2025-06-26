@@ -1174,3 +1174,38 @@ def verify_signature_api(request, token):
         data = {'found': False}
     return JsonResponse(data)
 
+
+
+class AddParticipantView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, layanan_id):
+        user_id = request.data.get('user_id')
+        user_type = request.data.get('user_type')
+        jabatan = request.data.get('jabatan', user_type)  # Bisa diisi dari frontend
+
+        if not user_id or not user_type:
+            return Response({'detail': 'user_id dan user_type wajib diisi'}, status=400)
+
+        try:
+            layanan = Layanan.objects.get(id=layanan_id)
+            user = CustomUser.objects.get(id=user_id)
+        except (Layanan.DoesNotExist, CustomUser.DoesNotExist):
+            return Response({'detail': 'Layanan atau user tidak ditemukan'}, status=404)
+
+        # Cek apakah sudah ada penandatangan dengan user ini di layanan ini
+        if TandaTangan.objects.filter(layanan=layanan, user_penandatangan=user).exists():
+            return Response({'detail': 'User sudah menjadi penandatangan'}, status=400)
+
+        # Urutan otomatis
+        urutan = (TandaTangan.objects.filter(layanan=layanan).count() or 0) + 1
+
+        ttd = TandaTangan.objects.create(
+            layanan=layanan,
+            user_penandatangan=user,
+            jabatan_penandatangan=jabatan,
+            jenis_tanda_tangan='elektronik',  # Atur sesuai kebutuhan
+            urutan=urutan,
+            status='pending'
+        )
+        return Response(TandaTanganSerializer(ttd).data, status=201)
