@@ -513,8 +513,26 @@ class DataTambahanFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'nama_field', 'file', 'tanggal_upload']
         read_only_fields = ['tanggal_upload']
 
+class LayananSimpleSerializer(serializers.ModelSerializer):
+    jenis_layanan_nama = serializers.SerializerMethodField()
+    mahasiswa_name = serializers.SerializerMethodField()
+    class Meta:
+        model = Layanan
+        fields = ['id', 'jenis_layanan_nama', 'mahasiswa_name']
+    
+    def get_jenis_layanan_nama(self, obj):
+        if obj.jenis_layanan:
+            return obj.jenis_layanan.nama_layanan
+        return None
+    
+    def get_mahasiswa_name(self, obj):
+        if obj.mahasiswa:
+            return obj.mahasiswa.full_name
+        return None
+
 class TandaTanganSerializer(serializers.ModelSerializer):
     user_penandatangan = UserBasicSerializer(read_only=True)
+    layanan = LayananSimpleSerializer(read_only=True)
     layanan_id = serializers.PrimaryKeyRelatedField(
         queryset=Layanan.objects.all(), source='layanan', write_only=True
     )

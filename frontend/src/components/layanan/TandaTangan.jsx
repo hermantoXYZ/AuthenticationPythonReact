@@ -50,6 +50,7 @@ const TandaTangan = () => {
       setLoading(true);
       const response = await api.get('/api/tanda-tangan/');
       setSignatures(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error('Error fetching signatures:', error);
       toast.error('Gagal mengambil data tanda tangan');
