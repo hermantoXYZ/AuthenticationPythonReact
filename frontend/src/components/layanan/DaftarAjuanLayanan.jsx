@@ -870,7 +870,7 @@ const DaftarAjuanLayanan = () => {
                         <span className="text-sm font-medium">{p.user_penandatangan?.full_name || p.nama || p.username}</span>
                         <span className="text-sm text-gray-500 ml-2">{p.jabatan_penandatangan}</span>
                         <span className="text-xs text-gray-400 ml-auto">{p.status}</span>
-                        <span className="text-xs text-gray-400 mr-2">#{p.urutan + 1}</span>
+                        <span className="text-xs text-gray-400 mr-2">#{p.urutan }</span>
 
                       </li>
                     ))}
@@ -1137,7 +1137,7 @@ const DaftarAjuanLayanan = () => {
                       user_id: participantUserId,
                       user_type: participantUserType,
                       jabatan: participantJabatan,
-                      order: participantOrder,
+                      urutan: participantOrder,
                     });
                     toast.success("Penandatangan berhasil ditambahkan");
                     setShowAddParticipantModal(false);
