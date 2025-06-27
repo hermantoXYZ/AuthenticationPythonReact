@@ -65,6 +65,7 @@ const DaftarAjuanLayanan = () => {
   const [detailLayanan, setDetailLayanan] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [printLoading, setPrintLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // State for Nomor Surat Modal
   const [showNomorSuratModal, setShowNomorSuratModal] = useState(false);
@@ -130,9 +131,19 @@ const DaftarAjuanLayanan = () => {
         }
     };
 
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get('/api/profile/');
+        setCurrentUser(response.data);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
     fetchAjuan();
     fetchJurusan();
     fetchProdi();
+    fetchCurrentUser();
   }, []);
 
   const fetchNomorSurat = async () => {
@@ -869,9 +880,14 @@ const DaftarAjuanLayanan = () => {
                         <User className="w-4 h-4 text-blue-500" />
                         <span className="text-sm font-medium">{p.user_penandatangan?.full_name || p.nama || p.username}</span>
                         <span className="text-sm text-gray-500 ml-2">{p.jabatan_penandatangan}</span>
-                        <span className="text-xs text-gray-400 ml-auto">{p.status}</span>
-                        <span className="text-xs text-gray-400 mr-2">#{p.urutan }</span>
-
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          p.status === 'signed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {p.status === 'signed' ? '✓ Sudah TTD' : '⏳ Belum TTD'}
+                        </span>
+                        <span className="text-xs text-gray-400 ml-auto">#{p.urutan}</span>
                       </li>
                     ))}
                   </ul>
@@ -1288,8 +1304,13 @@ const DaftarAjuanLayanan = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  File
+                  Penandatangan
                 </th>
+                {currentUser?.user_type !== 'mahasiswa' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    File
+                  </th>
+                )}
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aksi
                 </th>
@@ -1330,30 +1351,79 @@ const DaftarAjuanLayanan = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(item.status)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {item.file_permohonan ? (
-                      <a
-                        href={item.file_permohonan}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="text-sm">Download</span>
-                      </a>
+                  <td className="px-6 py-4">
+                    {item.penandatangan && item.penandatangan.length > 0 ? (
+                      <div className="space-y-1 max-w-xs">
+                        {item.penandatangan.slice(0, 2).map((p, index) => (
+                          <div key={index} className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-900 truncate">
+                              {p.user_penandatangan?.full_name || p.nama || p.username}
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
+                              p.status === 'signed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {p.status === 'signed' ? '✓' : '⏳'}
+                            </span>
+                          </div>
+                        ))}
+                        {item.penandatangan.length > 2 && (
+                          <div className="text-xs text-gray-500">
+                            +{item.penandatangan.length - 2} penandatangan lainnya
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">-</span>
+                      <span className="text-gray-400 text-sm">Belum ada penandatangan</span>
                     )}
                   </td>
+                  {currentUser?.user_type !== 'mahasiswa' && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {item.file_permohonan ? (
+                        <a
+                          href={item.file_permohonan}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="text-sm">Download</span>
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openDetail(item)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Lihat Detail"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
+                      {currentUser?.user_type === 'mahasiswa' ? (
+                        // For students, show download button if there's a file
+                        item.file_permohonan ? (
+                          <a
+                            href={item.file_permohonan}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-900"
+                            title="Download Dokumen"
+                          >
+                            <Download className="h-5 w-5" />
+                          </a>
+                        ) : (
+                          <span className="text-gray-400" title="Tidak ada file">
+                            <Download className="h-5 w-5" />
+                          </span>
+                        )
+                      ) : (
+                        // For other user types, show eye button
+                        <button
+                          onClick={() => openDetail(item)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Lihat Detail"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                      )}
                       {item.status === 'Waiting' && (
                         <button
                           onClick={() => openDeleteModal(item)}
