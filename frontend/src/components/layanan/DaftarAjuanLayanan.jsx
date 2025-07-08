@@ -222,6 +222,36 @@ const DaftarAjuanLayanan = () => {
     }
   };
 
+  const handleDownloadSurat = async (layananId) => {
+    setPrintLoading(true);
+    try {
+      const response = await api.get(`/api/layanan/${layananId}/cetak-surat/`);
+      const htmlContent = response.data;
+
+      // Create a blob from the HTML content
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `surat-layanan-${layananId}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("File surat berhasil diunduh");
+    } catch (error) {
+      console.error("Gagal mengunduh surat:", error);
+      toast.error("Gagal mengunduh surat. Pastikan template dan data sudah benar.");
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
   const closeDetail = () => {
     setShowDetail(false);
     setDetailLayanan(null);
@@ -365,6 +395,40 @@ const DaftarAjuanLayanan = () => {
     );
   });
 
+  // Helper function to check if layanan is ready for download
+  const isLayananReadyForDownload = (layanan) => {
+    // Check if layanan has nomor surat
+    if (!layanan.nomor_surat) return false;
+    
+    // Check if layanan has penandatangan
+    if (!layanan.penandatangan || layanan.penandatangan.length === 0) return false;
+    
+    // Check if all signatures are completed
+    const allSigned = layanan.penandatangan.every(p => p.status === 'signed');
+    
+    return allSigned;
+  };
+
+  // Helper function to get download status message
+  const getDownloadStatusMessage = (layanan) => {
+    if (!layanan.nomor_surat) {
+      return "Nomor surat belum tersedia";
+    }
+    
+    if (!layanan.penandatangan || layanan.penandatangan.length === 0) {
+      return "Belum ada penandatangan";
+    }
+    
+    const signedCount = layanan.penandatangan.filter(p => p.status === 'signed').length;
+    const totalCount = layanan.penandatangan.length;
+    
+    if (signedCount < totalCount) {
+      return `${signedCount}/${totalCount} tanda tangan selesai`;
+    }
+    
+    return "Siap diunduh";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -408,6 +472,25 @@ const DaftarAjuanLayanan = () => {
                     <>
                       <FileText className="w-4 h-4" />
                       Cetak Surat
+                    </>
+                  )}
+                </button>
+            )}
+            {isLayananReadyForDownload(detailLayanan) && (
+                <button
+                  onClick={() => handleDownloadSurat(detailLayanan.id)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                  disabled={printLoading}
+                >
+                  {printLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Memuat...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      Download Surat
                     </>
                   )}
                 </button>
@@ -871,6 +954,32 @@ const DaftarAjuanLayanan = () => {
                       + Ajukan Penandatangan
                     </button>
                   </div>
+                  
+                  {/* Status Download Indicator */}
+                  <div className="mb-4 p-3 rounded-lg border">
+                    {isLayananReadyForDownload(detailLayanan) ? (
+                      <div className="flex items-center gap-2 text-green-700 bg-green-50 border-green-200">
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="font-medium">Surat Siap Diunduh</p>
+                          <p className="text-sm">Semua tanda tangan telah lengkap dan nomor surat tersedia</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border-amber-200">
+                        <Clock className="w-5 h-5 text-amber-600" />
+                        <div>
+                          <p className="font-medium">Menunggu Kelengkapan</p>
+                          <p className="text-sm">
+                            {!detailLayanan.nomor_surat && "Nomor surat belum tersedia"}
+                            {detailLayanan.nomor_surat && (!detailLayanan.penandatangan || detailLayanan.penandatangan.length === 0) && "Belum ada penandatangan"}
+                            {detailLayanan.nomor_surat && detailLayanan.penandatangan && detailLayanan.penandatangan.length > 0 && 
+                             !detailLayanan.penandatangan.every(p => p.status === 'signed') && "Beberapa tanda tangan belum lengkap"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {detailLayanan.penandatangan && detailLayanan.penandatangan.length > 0 ? (
@@ -1306,6 +1415,9 @@ const DaftarAjuanLayanan = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Penandatangan
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status Download
+                </th>
                 {currentUser?.user_type !== 'mahasiswa' && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     File
@@ -1378,6 +1490,19 @@ const DaftarAjuanLayanan = () => {
                       <span className="text-gray-400 text-sm">Belum ada penandatangan</span>
                     )}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {isLayananReadyForDownload(item) ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">Siap Diunduh</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm text-amber-700">{getDownloadStatusMessage(item)}</span>
+                      </div>
+                    )}
+                  </td>
                   {currentUser?.user_type !== 'mahasiswa' && (
                     <td className="px-6 py-4 whitespace-nowrap">
                       {item.file_permohonan ? (
@@ -1431,6 +1556,16 @@ const DaftarAjuanLayanan = () => {
                           title="Hapus"
                         >
                           <Trash2 className="h-5 w-5" />
+                        </button>
+                      )}
+                      {/* Download button for completed and signed layanan */}
+                      {isLayananReadyForDownload(item) && (
+                        <button
+                          onClick={() => handleDownloadSurat(item.id)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Download Surat"
+                        >
+                          <Download className="h-5 w-5" />
                         </button>
                       )}
                     </div>
